@@ -34,8 +34,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 		Member member = memberRepository.findByEmail(userDetails.getMember().getEmail())
 			.orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
 
-		String accessToken = jwtUtils.createJwt(member, 3600000L);
-		String refreshToken = jwtUtils.createJwt(member, 3600000L);
+		String accessToken = jwtUtils.createJwt(member, 360000000L);
+		String refreshToken = jwtUtils.createJwt(member, 360000000L);
 
 		CookieUtils.addRefreshTokenCookie(response, refreshToken);
 		CookieUtils.addAccessTokenCookie(response, accessToken);
