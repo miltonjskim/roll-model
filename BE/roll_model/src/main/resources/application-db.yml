@@ -1,0 +1,34 @@
+spring:
+  config:
+    activate:
+      on-profile: db
+
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+      default_batch_fetch_size: 100
+    open-in-view: false
+    defer-datasource-initialization: true
+
+  data:
+    # MONGO DB
+    mongodb:
+      uri: ${MONGODB_URI}
+      authentication-database: admin
+    # REDIS DB
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
