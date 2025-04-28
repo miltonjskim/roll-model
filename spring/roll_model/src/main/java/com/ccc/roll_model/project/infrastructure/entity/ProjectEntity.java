@@ -1,5 +1,6 @@
 package com.ccc.roll_model.project.infrastructure.entity;
 
+import com.ccc.roll_model.global.entity.BaseCreatedAndUpdatedEntity;
 import com.ccc.roll_model.member.infrastructure.MemberEntity;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
@@ -7,24 +8,25 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
-public class ProjectEntity {
+@SuperBuilder
+public class ProjectEntity extends BaseCreatedAndUpdatedEntity {
 
     @Id
     @Column(name = "project_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     private Integer projectId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     @NotNull
-    private MemberEntity memberId;
+    private MemberEntity memberEntity;
 
     @Column(name = "title")
     @NotNull
@@ -42,22 +44,14 @@ public class ProjectEntity {
     @NotNull
     private Domain domain;
 
-    @Column(name = "registered_at")
-    @NotNull
-    private LocalDateTime registeredAt;
-
-    @Column(name = "modified_at")
-    @NotNull
-    private LocalDateTime modifiedAt;
-
     @Column(name = "deleted_at")
     @Nullable
     private LocalDateTime deletedAt;
 
     @Builder
-    public ProjectEntity(MemberEntity memberId, String title, String description, Category category, Domain domain) {
+    public ProjectEntity(MemberEntity memberEntity, String title, String description, Category category, Domain domain) {
 
-        this.memberId = memberId;
+        this.memberEntity = memberEntity;
         this.title = title;
         this.description = description;
         this.category = category;
