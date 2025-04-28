@@ -1,5 +1,6 @@
 import { DashboardSummary } from "@/entities/project/model/types";
-import { StatsCard } from "./StatsCard";
+import { StatsCard } from "./statsCard";
+
 
 interface StatsGridProps {
   summary: DashboardSummary;
