@@ -1,0 +1,52 @@
+{
+	"status" : 200,
+	"message" : "Success",
+	"data": {
+		"currentPage": 1,
+    "totalPages": 2,
+    "totalElements": 15,
+    "last": false,
+    "summary": {
+      "totalProjects": 12,
+      "completedProjectCount": 8,
+      "inProgressProjectCount": 4,
+      "publicProjectCount": 5
+    },
+    "projects": [
+      {
+				"id": 1,
+        "title": "Project Name",
+        "type": "classification",
+        "status": "completed",
+        "domain": "common",
+        "accuracy": 90,
+        "rmse": null,
+        "target": "성별",
+        "dataCount": 2800000,
+        "runnung_duration": 100,
+        "likeCount": 8,
+        "downloadCount": 32,
+        "visibility" : true,
+        "createdAt": "2025-04-22T00:00:00Z",
+        "updatedAt": "2025-04-22T00:00:00Z" 
+			},
+			{
+        "id": 1, 
+        "title": "Housing Price Prediction",
+        "type": "regression",
+        "status": "progress",
+        "domain": "common",
+        "accuracy": null,
+        "rmse": null,
+        "target": "당뇨병 여부",
+        "dataCount": 2800000,
+        "runnung_duration": 100,
+        "likeCount": 8,
+        "downloadCount": 32,
+        "visibility" : true,
+        "createdAt": "2025-04-19",
+        "updatedAt": "2025-04-19"
+      }
+		]
+	}
+}
