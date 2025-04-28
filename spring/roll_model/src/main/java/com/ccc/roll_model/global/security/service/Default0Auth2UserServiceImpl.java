@@ -35,7 +35,6 @@ public class Default0Auth2UserServiceImpl extends DefaultOAuth2UserService {
 		String name = (String) attributes.get("name");
 
 		// 회원이 존재하지 않으면 새로 저장
-		System.out.println("id now22123212313");
 		Member member = memberRepository.findByEmail(email)
 			.orElseGet(() -> memberRepository.save(
 				Member.builder()
