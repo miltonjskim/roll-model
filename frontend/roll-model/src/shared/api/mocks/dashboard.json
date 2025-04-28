@@ -1,8 +1,8 @@
 {
-	"status" : 200,
-	"message" : "Success",
-	"data": {
-		"currentPage": 1,
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "currentPage": 1,
     "totalPages": 2,
     "totalElements": 15,
     "last": false,
@@ -14,7 +14,7 @@
     },
     "projects": [
       {
-				"id": 1,
+        "id": 1,
         "title": "Project Name",
         "type": "classification",
         "status": "completed",
@@ -26,12 +26,12 @@
         "runnung_duration": 100,
         "likeCount": 8,
         "downloadCount": 32,
-        "visibility" : true,
+        "visibility": true,
         "createdAt": "2025-04-22T00:00:00Z",
-        "updatedAt": "2025-04-22T00:00:00Z" 
-			},
-			{
-        "id": 1, 
+        "updatedAt": "2025-04-22T00:00:00Z"
+      },
+      {
+        "id": 2,
         "title": "Housing Price Prediction",
         "type": "regression",
         "status": "progress",
@@ -43,10 +43,10 @@
         "runnung_duration": 100,
         "likeCount": 8,
         "downloadCount": 32,
-        "visibility" : true,
+        "visibility": true,
         "createdAt": "2025-04-19",
         "updatedAt": "2025-04-19"
       }
-		]
-	}
+    ]
+  }
 }
