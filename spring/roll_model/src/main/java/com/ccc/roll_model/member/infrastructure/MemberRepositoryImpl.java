@@ -22,6 +22,12 @@ public class MemberRepositoryImpl implements MemberRepository {
 	}
 
 	@Override
+	public Optional<Member> findById(Integer memberId) {
+		return memberJpaRepository.findById(memberId)
+				.map(memberMapper::toMember);
+	}
+
+	@Override
 	public Member save(Member member) {
 		MemberEntity memberEntity = memberMapper.toEntity(member);
 		return memberMapper.toMember(memberJpaRepository.save(memberEntity));
