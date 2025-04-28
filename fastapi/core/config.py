@@ -1,21 +1,29 @@
 from fastapi import FastAPI, Request
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import time
 from fastapi.middleware.cors import CORSMiddleware
 from functools import lru_cache
+from pathlib import Path
 import logging
+import time
 
 logger = logging.getLogger()
 
 app = FastAPI()
+
+# 루트 디렉토리 경로를 찾습니다
+BASE_DIR = Path(__file__).resolve().parent.parent  # core 디렉토리의 부모 디렉토리
+
 
 class Settings(BaseSettings):
     # 앱 설정
     APP_NAME: str = "Data Processing Service"
     DEBUG: bool = False
     VERSION: str = "0.1.0"
-    SECRET_KEY: str = "fbb584f3af3c2b31c06c0b63e931cfb687e27e16c79847eb42472c0cc8722474b836e3a650c64cf374837ebeb771ec8f867165f223606263f049c1fe2e1cd42170dca2b89cd5396ce7a3328a8dea418b2be6fa4e7c08876efdf359b4535b992e7b776557214270c0f2c98031d6606ece77a6504a3db27755c4ebcfe3d1ef4fb478d5671ecd0986d03f9e2603512823d13c9be7a311ea49b80c704fa1e39817a0567063f86291f46cefe3eed3bdb99922357630036f16bd53f4b4dcbc164dc691d6c495eb8e8043e52af14333a923c9658d86c3440284d3510399c551654908280dc630b13aa09e932c6c4c260667fdc31b88e"
-    model_config = SettingsConfigDict(env_file=".env")
+    SECRET_KEY: str
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8"
+    )
 
 @lru_cache
 def get_settings():

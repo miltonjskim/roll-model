@@ -3,3 +3,4 @@ minio
 .env
 *.pyc
 .venv
+logs

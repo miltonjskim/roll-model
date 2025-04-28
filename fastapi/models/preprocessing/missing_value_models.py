@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional, Union
+from pydantic import RootModel
 
 class MissingValueImputationMethod(str, Enum):
     MEAN = "mean"
@@ -21,29 +22,27 @@ class MissingValueImputationRequest(BaseModel):
                 "method": "mean"
             }
         }
-        
+
 ##################################################3
 
 # 응답 모델 정의
 
-class ImputationRow(BaseModel):
-    # 데이터 행을 표현하는 모델 (실제 컬럼에 맞게 조정 필요)
-    # 동적 필드를 허용하기 위해 Dict[str, Any] 타입 사용
-    __root__: Dict[str, Any]
+class ImputationRow(RootModel):
+    root: Dict[str, Any]
 
 class ImputationResultDetail(BaseModel):
     column: str
     method: str
-    fillValue: Optional[Union[float, str]] = None
-    changedIndices: List[int]
-    originalRows: List[Dict[str, Any]]
-    changedRows: List[Dict[str, Any]]
+    fill_value: Optional[Union[float, str]] = None
+    changed_indices: List[int]
+    original_rows: List[Dict[str, Any]]
+    changed_rows: List[Dict[str, Any]]
     timestamp: str
 
 class MissingValueImputationResponse(BaseModel):
-    pipelineId: int
+    pipeline_id: int
     success: bool
     message: str
-    originalMissingCount: int
-    imputedCount: int
+    original_missing_count: int
+    imputed_count: int
     result: ImputationResultDetail
