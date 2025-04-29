@@ -5,7 +5,7 @@ const Navbar = () => {
 	const id = 1; // TODO: userId든 뭐든 받아와서 수정
 
 	return (
-		<nav className="flex justify-between items-center py-8 px-24">
+		<nav className="min-w-[90vw] basis-[90vw] flex justify-between items-center py-8 px-24">
 			<div>
 				<Link
 					href="/"
