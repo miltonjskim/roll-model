@@ -7,7 +7,7 @@ import { SearchBar } from "@/features/dashboard/project-search/ui/searchBar";
 import { NewProjectButton } from "@/features/dashboard/project-actions/ui/newProjectButton";
 import { useDashboard } from "./model/useDashboard";
 
-export default function DashboardPage() {
+export default function Page() {
   const {
     dashboardData,
     isLoading,
