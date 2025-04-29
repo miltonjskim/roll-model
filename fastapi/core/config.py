@@ -15,11 +15,34 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     VERSION: str = "0.1.0"
     SECRET_KEY: str
+
+    # MYSQL
+    MYSQL_HOST: str
+    MYSQL_PORT: int
+    MYSQL_USER: str
+    MYSQL_PASSWORD: str
+    MYSQL_DB: str
+    MYSQL_ROOT_PASSWORD: str
+    
+    # MONGO
+    MONGODB_HOST: str
+    MONGODB_PORT: int
+    MONGODB_USER: str
+    MONGODB_PASSWORD: str
+    MONGODB_DB: str
+    MONGODB_AUTH_SOURCE: str
+    
+    # REDIS
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_PASSWORD: str
+    REDIS_DB: int
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8"
     )
-
+    
 @lru_cache
 def get_settings():
     return Settings()
