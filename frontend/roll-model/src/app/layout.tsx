@@ -19,7 +19,7 @@ export default function RootLayout({
 			<body className="bg-[theme(color-background)]">
 				<AppProvider>
 					<Navbar />
-					<div className="bg-white w-[80vw] mx-auto rounded-md p-4">{children}</div>
+					<div className="w-[90vw] mx-auto rounded-md p-4">{children}</div>
 					<Toaster
 						richColors
 						position="top-center"
