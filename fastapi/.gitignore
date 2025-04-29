@@ -1,0 +1,6 @@
+__pycache__  
+minio
+.env
+*.pyc
+.venv
+logs
