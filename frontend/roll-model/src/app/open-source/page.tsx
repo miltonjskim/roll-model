@@ -1,5 +1,7 @@
-const OpenSource = () => {
-	return <div>OpenSource Page</div>;
-};
-
-export default OpenSource;
+export default function Page() {
+  return (
+    <>
+      <div>오픈소스</div>
+    </>
+  );
+}

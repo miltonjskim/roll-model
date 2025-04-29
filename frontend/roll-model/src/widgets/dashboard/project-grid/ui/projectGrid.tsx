@@ -1,5 +1,5 @@
-import { Project } from "@/entities/project/model/types";
-import { ProjectCard } from "@/entities/project/ui/projectCard";
+import { Project } from "@/entities/dashboard/model/types";
+import { ProjectCard } from "@/entities/dashboard/ui/projectCard";
 
 interface ProjectGridProps {
   projects: Project[];

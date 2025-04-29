@@ -1,21 +1,26 @@
 import { axiosInstance } from "@/shared/lib/axios/axiosInstance";
-import { DashboardResponse } from "@/entities/project/model/types";
+import { DashboardResponse } from "@/entities/dashboard/model/types";
 import dashboardMock from "@/shared/api/mocks/dashboard.json";
-import { ApiProjectDomain, getDomainDisplayName } from "../lib/utils/domainMapping";
+import {
+  ApiProjectDomain,
+  getDomainDisplayName,
+} from "../lib/utils/domainMapping";
 
 // API 응답 변환 함수 - 프로젝트에 displayDomain 추가
-const transformDashboardResponse = (response: DashboardResponse): DashboardResponse => {
+const transformDashboardResponse = (
+  response: DashboardResponse
+): DashboardResponse => {
   if (!response.data || !response.data.projects) return response;
-  
+
   return {
     ...response,
     data: {
       ...response.data,
-      projects: response.data.projects.map(project => ({
+      projects: response.data.projects.map((project) => ({
         ...project,
-        displayDomain: getDomainDisplayName(project.domain as ApiProjectDomain)
-      }))
-    }
+        displayDomain: getDomainDisplayName(project.domain as ApiProjectDomain),
+      })),
+    },
   };
 };
 

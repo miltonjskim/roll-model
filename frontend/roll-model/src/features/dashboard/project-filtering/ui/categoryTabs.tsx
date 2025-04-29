@@ -1,4 +1,4 @@
-import { ProjectType } from "@/entities/project/model/types";
+import { ProjectType } from "@/entities/dashboard/model/types";
 
 interface CategoryTabsProps {
   selectedCategory: "all" | ProjectType;

@@ -3,7 +3,7 @@ import {
   DashboardData,
   Project,
   ProjectType,
-} from "@/entities/project/model/types";
+} from "@/entities/dashboard/model/types";
 import {
   fetchDashboardData,
   fetchFilteredProjects,

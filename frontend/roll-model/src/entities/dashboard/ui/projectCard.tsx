@@ -1,4 +1,4 @@
-import { Project } from "@/entities/project/model/types";
+import { Project } from "@/entities/dashboard/model/types";
 import { getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
 
 interface ProjectCardProps {
@@ -23,7 +23,10 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
 
       <div className="text-sm text-gray-500 mb-4">
         <p>타입: {project.category === "CLASSIFICATION" ? "분류" : "회귀"}</p>
-        <p>도메인: {project.displayDomain || getDomainDisplayName(project.domain)}</p>
+        <p>
+          도메인:{" "}
+          {project.displayDomain || getDomainDisplayName(project.domain)}
+        </p>
         <p>목표변수: {project.target}</p>
         <p>데이터 수: {project.dataCount.toLocaleString()}</p>
         <p>버전 : {project.version}</p>
