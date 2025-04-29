@@ -1,5 +1,5 @@
 import { ProjectType } from "@/entities/open-source/model/types";
-import { SortOption } from "@/app/open-source/model/useopenSource"; 
+import { SortOption } from "@/app/open-source/model/useOpenSource";
 import React from "react";
 
 interface CategoryTabsProps {
