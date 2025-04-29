@@ -4,7 +4,9 @@ from fastapi.exceptions import HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from api.v1.preprocessing.routers import api_router
+from api.v1.health_check import router
 from core.api_response import ApiResponse
+
 from core.exception import (
     startlette_http_exception_handler,
     http_exception_handler,
@@ -19,6 +21,18 @@ import time
 import sys
 import io
 
+logger = logging.getLogger()
+
+app = FastAPI(
+    title="My Awesome API",
+    description="전처리 서버",
+    version="1.0.0",
+    openapi_url="/openapi.json",   # OpenAPI 스펙 문서 경로
+    docs_url="/docs",             # Swagger UI 경로
+    redoc_url="/redoc",           # ReDoc 경로
+    default_response_class=ApiResponse,
+)
+
 # logs 폴더 만들기
 LOG_FILE_PATH = "logs/app.log"
 os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
@@ -32,18 +46,6 @@ logging.basicConfig(
         # 파일 저장용 핸들러
         logging.FileHandler(LOG_FILE_PATH, mode="a", encoding="utf-8")
     ]
-)
-
-logger = logging.getLogger()
-
-app = FastAPI(
-    title="My Awesome API",
-    description="전처리 서버",
-    version="1.0.0",
-    openapi_url="/openapi.json",   # OpenAPI 스펙 문서 경로
-    docs_url="/docs",             # Swagger UI 경로
-    redoc_url="/redoc",           # ReDoc 경로
-    default_response_class=ApiResponse,
 )
 
 app.add_exception_handler(StarletteHTTPException, startlette_http_exception_handler)
@@ -66,6 +68,7 @@ def welcome_root():
     return "Welcome to root"
 
 app.include_router(api_router, prefix="/api", tags=["api"])
+app.include_router(router, prefix="/api", tags=["api"])
 
 # CORS 설정
 app.add_middleware(

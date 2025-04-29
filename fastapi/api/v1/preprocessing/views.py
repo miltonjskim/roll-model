@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from core.security import verify_token
 from models.preprocessing.missing_value_models import MissingValueImputationRequest
 import logging
@@ -12,8 +12,11 @@ def remove_outliers(member_id: int = Depends(verify_token)):
 
     return "Outliers Removed"
 
-@router.post('/outliers/transform')
-def imputate_outliers(member_id: int = Depends(verify_token)):
+@router.post('/outliers/imputation')
+def imputate_outliers(
+        pipeline_id: int = Path(..., description="파이프라인 ID"),                   
+        member_id: int = Depends(verify_token)
+    ):
     '''
     
     column : str
@@ -26,11 +29,18 @@ def imputate_outliers(member_id: int = Depends(verify_token)):
     return "Transform outliers"
 
 @router.post('/missing-values/remove')
-def remove_missing_values(member_id: int = Depends(verify_token)):
+def remove_missing_values(
+        pipeline_id: int = Path(..., description="파이프라인 ID"),
+        member_id: int = Depends(verify_token)
+    ):
     return "Missing values removed"
 
-@router.post('/missing-values/transform')
-def imputate_missing_values(request: MissingValueImputationRequest, member_id: int = Depends(verify_token)):
+@router.post('/missing-values/imputation')
+def imputate_missing_values(
+        request: MissingValueImputationRequest, 
+        pipeline_id: int = Path(..., description="파이프라인 ID"),
+        member_id: int = Depends(verify_token)
+    ):
     """
     결측치 처리 API 응답 시뮬레이션
     
@@ -56,6 +66,6 @@ def imputate_missing_values(request: MissingValueImputationRequest, member_id: i
         API 응답 형식의 결과
     """
 
+    # 파이프라인 ID로 mongodb 탐색
 
-
-    return "Transform missing values"
+    return "Imputate missing values"
