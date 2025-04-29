@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/app/providers/AppProvider";
 import { Toaster } from "sonner";
+import Navbar from "@/widgets/Navbar";
 
 export const metadata: Metadata = {
 	title: "Roll model",
@@ -17,7 +18,8 @@ export default function RootLayout({
 		<html lang="en">
 			<body className="bg-[theme(color-background)]">
 				<AppProvider>
-					{children}
+					<Navbar />
+					<div className="w-[90vw] mx-auto rounded-md p-4">{children}</div>
 					<Toaster
 						richColors
 						position="top-center"
