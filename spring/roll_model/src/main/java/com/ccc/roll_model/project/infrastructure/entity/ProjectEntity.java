@@ -54,13 +54,6 @@ public class ProjectEntity extends BaseCreatedAndUpdatedEntity {
     @Nullable
     private LocalDateTime deletedAt;
 
-    @Builder
-    public ProjectEntity(MemberEntity memberEntity, String title, String description, Category category, Domain domain) {
-
-        this.memberEntity = memberEntity;
-        this.title = title;
-        this.description = description;
-        this.category = category;
-        this.domain = domain;
-    }
+    @Column(name = "public_yn", nullable = false)
+    private Boolean isPublic = true;
 }

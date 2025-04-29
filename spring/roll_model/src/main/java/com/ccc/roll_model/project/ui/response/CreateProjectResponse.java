@@ -17,6 +17,7 @@ public class CreateProjectResponse {
     private final String description;
     private final Domain domain;
     private final Category type;
+    private final Boolean isPublic;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime createdAt;

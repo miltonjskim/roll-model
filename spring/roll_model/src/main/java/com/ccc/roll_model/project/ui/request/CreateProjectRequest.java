@@ -8,4 +8,5 @@ public class CreateProjectRequest {
     private String description;
     private String domain;
     private String type;
+    private Boolean isPublic;
 }
