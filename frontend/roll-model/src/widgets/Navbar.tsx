@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 const Navbar = () => {
-	const id = 1; // TODO: userId든 뭐든 받아와서 수정
-
 	return (
 		<nav className="min-w-[90vw] basis-[90vw] flex justify-between items-center py-8 px-24">
 			<div>
@@ -25,8 +23,7 @@ const Navbar = () => {
 					Guide
 				</Link>
 				<Link
-					href="/dashboard/[id]"
-					as={`/dashboard/${id}`}
+					href="/dashboard"
 					className="hover:text-[var(--primary-black)] hover:border-b-[2px] border-b-[var(--color-blue-01)] hover:text-[1.125rem] hover:font-semibold transition-all duration-300 hover:w-full">
 					Dashboard
 				</Link>
