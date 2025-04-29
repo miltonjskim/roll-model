@@ -29,6 +29,7 @@ public class ProjectController {
                 .description(request.getDescription())
                 .domain(request.getDomain())
                 .category(request.getType())
+                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
                 .build();
 
         ProjectEntity projectEntity = projectService.createProject(command);
@@ -39,6 +40,7 @@ public class ProjectController {
                 .description(projectEntity.getDescription())
                 .domain(projectEntity.getDomain())
                 .type(projectEntity.getCategory())
+                .isPublic(projectEntity.getIsPublic())
                 .createdAt(projectEntity.getRegisteredAt())
                 .build();
 

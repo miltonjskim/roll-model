@@ -61,6 +61,7 @@ public class ProjectService {
                 .description(command.getDescription())
                 .category(category)
                 .domain(domain)
+                .isPublic(command.getIsPublic())
                 .build();
         return projectRepository.save(projectEntity);
     }

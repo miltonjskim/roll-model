@@ -12,4 +12,5 @@ public class CreateProjectCommand {
     private final String description;
     private final String category;
     private final String domain;
+    private final Boolean isPublic;
 }
