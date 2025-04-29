@@ -5,6 +5,11 @@ services:
       - "8082:80"
     volumes:
       - .:/code/app
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+      - minio
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -18,3 +23,32 @@ services:
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass yourpassword --appendonly yes
+    restart: always
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=1234
+    command: ["--auth"]
+    restart: always
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "13306:3306"
+    
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=fastapi_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    restart: always
