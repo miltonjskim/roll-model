@@ -1,13 +1,13 @@
 "use client";
 
-import { StatsGrid } from "@/widgets/dashboard/dashboard-stats/ui/statsGrid";
-import { ProjectGrid } from "@/widgets/dashboard/project-grid/ui/projectGrid";
-import { CategoryTabs } from "@/features/dashboard/project-filtering/ui/categoryTabs";
-import { SearchBar } from "@/features/dashboard/project-search/ui/searchBar";
-import { NewProjectButton } from "@/features/dashboard/project-actions/ui/newProjectButton";
+import { StatsGrid } from "@/widgets/project/dashboard-stats/ui/StatsGrid";
+import { ProjectGrid } from "@/widgets/project/project-grid/ui/ProjectGrid";
+import { CategoryTabs } from "@/features/dashboard/CategoryTabs";
+import { SearchBar } from "@/features/dashboard/SearchBar";
+import { NewProjectButton } from "@/features/dashboard/NewProjectButton";
 import { useDashboard } from "./model/useDashboard";
 
-export default function DashboardPage() {
+export default function Page() {
   const {
     dashboardData,
     isLoading,
