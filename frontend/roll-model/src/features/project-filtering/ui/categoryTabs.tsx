@@ -23,21 +23,21 @@ export const CategoryTabs = ({
       </button>
       <button
         className={`px-4 py-2 rounded transition-colors ${
-          selectedCategory === "classification"
+          selectedCategory === "CLASSIFICATION"
             ? "bg-blue-600 text-white"
             : "bg-gray-200 hover:bg-gray-300 text-gray-800"
         }`}
-        onClick={() => onCategoryChange("classification")}
+        onClick={() => onCategoryChange("CLASSIFICATION")}
       >
         분류
       </button>
       <button
         className={`px-4 py-2 rounded transition-colors ${
-          selectedCategory === "regression"
+          selectedCategory === "REGRESSION"
             ? "bg-blue-600 text-white"
             : "bg-gray-200 hover:bg-gray-300 text-gray-800"
         }`}
-        onClick={() => onCategoryChange("regression")}
+        onClick={() => onCategoryChange("REGRESSION")}
       >
         회귀
       </button>

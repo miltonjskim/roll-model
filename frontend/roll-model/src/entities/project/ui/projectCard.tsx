@@ -1,4 +1,5 @@
 import { Project } from "@/entities/project/model/types";
+import { getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
 
 interface ProjectCardProps {
   project: Project;
@@ -11,20 +12,22 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         <h2 className="text-lg font-bold truncate">{project.title}</h2>
         <span
           className={`text-xs px-2 py-1 rounded ${
-            project.status === "completed"
+            project.status === "COMPLETED"
               ? "bg-green-100 text-green-800"
               : "bg-yellow-100 text-yellow-800"
           }`}
         >
-          {project.status === "completed" ? "완료" : "진행 중"}
+          {project.status === "COMPLETED" ? "완료" : "진행 중"}
         </span>
       </div>
 
       <div className="text-sm text-gray-500 mb-4">
-        <p>타입: {project.type === "classification" ? "분류" : "회귀"}</p>
-        <p>도메인: {project.domain}</p>
+        <p>타입: {project.category === "CLASSIFICATION" ? "분류" : "회귀"}</p>
+        <p>도메인: {project.displayDomain || getDomainDisplayName(project.domain)}</p>
         <p>목표변수: {project.target}</p>
         <p>데이터 수: {project.dataCount.toLocaleString()}</p>
+        <p>버전 : {project.version}</p>
+        <p>학습시간 : {project.runnungDuration}</p>
         {project.accuracy && <p>정확도: {project.accuracy}%</p>}
         {project.rmse && <p>RMSE: {project.rmse}</p>}
       </div>
