@@ -1,7 +1,7 @@
 export default function Page() {
   return (
     <>
-      <div>오픈소스</div>
+      <div>프로젝트 상세 (데이터)</div>
     </>
   );
 }
