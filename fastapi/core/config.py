@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str
     REDIS_DB: int
 
+    # API 기본 경로
+    API_V1_STR: str = "/api/v1"
+
+    # MinIO 설정
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_SECURE: bool
+    MINIO_DATASET_BUCKET: str
+    MINIO_MODEL_BUCKET: str
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8"
