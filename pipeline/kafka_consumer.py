@@ -9,6 +9,7 @@ from config import (
     DEFAULT_TARGET_COLUMN
 )
 
+
 def consume_and_submit_tasks():
     # Kafka Consumer
     consumer = Consumer(KAFKA_CONSUMER_CONFIG)
@@ -29,22 +30,32 @@ def consume_and_submit_tasks():
                 print(f"[Consumer] Received message: {payload}")
 
                 # 필수 필드 확인
-                if 'data_path' not in payload:
-                    print(f"[Consumer] Invalid message: missing 'data_path' field")
+                required_fields = ['model_type', 'train_data_path']
+                missing_fields = [field for field in required_fields if field not in payload]
+
+                if missing_fields:
+                    print(f"[Consumer] Invalid message: missing fields: {', '.join(missing_fields)}")
                     continue
 
                 # 경로 처리
-                data_path = get_absolute_path(payload['data_path'])
-                model_params = payload.get('model_params', {})
-                save_path = get_absolute_path(payload.get('save_path'))
+                data_path = get_absolute_path(payload['train_data_path'])
+                model_type = payload['model_type']
+                model_params = payload.get('parameters', {})
+
+                # 저장 경로 (선택적)
+                save_path = None
+                if 'save_path' in payload:
+                    save_path = get_absolute_path(payload['save_path'])
+
                 # 타겟 컬럼 설정
                 target_column = payload.get('target_column', DEFAULT_TARGET_COLUMN)
 
-                print(f"[Consumer] Resolved paths - data: {data_path}, save: {save_path}")
+                print(f"[Consumer] Processing - Model: {model_type}, Data: {data_path}")
+                print(f"[Consumer] Parameters: {model_params}")
                 print(f"[Consumer] Target column: {target_column}")
 
                 # Celery 태스크 제출
-                task = train_model_task.delay(data_path, model_params, save_path, target_column)
+                task = train_model_task.delay(data_path, model_type, model_params, save_path, target_column)
                 print(f"[Consumer] Submitted Celery task with ID: {task.id}")
 
             except json.JSONDecodeError:
