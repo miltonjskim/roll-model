@@ -5,7 +5,7 @@ import enum
 from db.mysql_config import Base
 
 class ProjectDataset(Base):
-    __tablename__ = "project_dataset"
+    __tablename__ = "project_datasets"
 
     project_dataset_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
