@@ -16,7 +16,7 @@ const initialProjectDetail: ProjectDetailAtom = {
   version: "",
   category: "CLASSIFICATION",
   domain: "HEALTHCARE",
-  ownerYn: true,
+  ownerYn: false,
 };
 
 export const projectDetailAtom = atom<ProjectDetailAtom>(initialProjectDetail);
