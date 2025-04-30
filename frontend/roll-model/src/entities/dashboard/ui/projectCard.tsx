@@ -1,13 +1,36 @@
 import { Project } from "@/entities/dashboard/model/types";
 import { getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
+import { projectDetailAtom } from "@/shared/model/atoms/projectDetail.atoms";
+import { useSetAtom } from "jotai";
+import { useRouter } from "next/navigation";
 
 interface ProjectCardProps {
   project: Project;
 }
 
 export const ProjectCard = ({ project }: ProjectCardProps) => {
+  const setProjectDetail = useSetAtom(projectDetailAtom);
+  const router = useRouter();
+
+  const handleProjectClick = () => {
+    // atom 상태 업데이트
+    setProjectDetail({
+      id: project.id,
+      title: project.title,
+      version: project.version,
+      category: project.category,
+      domain: project.domain,
+      ownerYn: false, // 초기값은 false로 설정
+    });
+
+    // 프로젝트 상세 페이지로 라우팅
+    router.push(`/project-detail/${project.id}`);
+  };
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+    <div
+      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={handleProjectClick}
+    >
       <div className="flex justify-between items-start mb-2">
         <h2 className="text-lg font-bold truncate">{project.title}</h2>
         <span

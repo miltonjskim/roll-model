@@ -6,6 +6,20 @@ import userEvent from "@testing-library/user-event";
 import OpenSourcePage from "../page";
 import { useOpenSource } from "../model/useOpenSource";
 
+// ProjectCardForOpenSource에 router = useRouter(); 추가해줬기 때문에 추가해줘야됨. 
+// next/navigation 모킹 추가
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn()
+  })
+}));
+
+
 // useOpenSource 훅을 모킹합니다
 // 실제 구현 대신 테스트용 가짜 구현을 제공합니다
 jest.mock("../model/useOpenSource", () => ({
