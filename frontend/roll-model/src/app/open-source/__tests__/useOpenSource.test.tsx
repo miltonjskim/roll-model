@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useOpenSource } from "../useOpenSource";
+import { useOpenSource } from "../model/useOpenSource";
 import {
   fetchOpenSourceData,
   fetchFilteredOpenSourceProjects,
