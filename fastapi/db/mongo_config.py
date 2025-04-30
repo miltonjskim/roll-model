@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger()
 settings = get_settings()
 
-MONGO_URI = f"mongodb://{settings.MONGODB_USER}:{settings.MONGODB_PASSWORD}@{settings.MONGODB_HOST}:{settings.MONGODB_PORT}/{settings.MONGODB_DB}?authSource={settings.MONGODB_AUTH_SOURCE}"
+MONGO_URI = f"mongodb://{settings.MONGODB_HOST}:{settings.MONGODB_PORT}"
 
 client = AsyncIOMotorClient(MONGO_URI)
 
