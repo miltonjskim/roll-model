@@ -1,4 +1,5 @@
-FROM python:3.13-slim
+# Python 3.11 + CUDA 11.8 이미지 사용
+FROM superlinear-ai/python-gpu:3.11-cuda11.8
 
 WORKDIR /app
 
