@@ -22,15 +22,10 @@ class Settings(BaseSettings):
     MYSQL_USER: str
     MYSQL_PASSWORD: str
     MYSQL_DB: str
-    MYSQL_ROOT_PASSWORD: str
-    
     # MONGO
     MONGODB_HOST: str
     MONGODB_PORT: int
-    MONGODB_USER: str
-    MONGODB_PASSWORD: str
     MONGODB_DB: str
-    MONGODB_AUTH_SOURCE: str
     
     # REDIS
     REDIS_HOST: str

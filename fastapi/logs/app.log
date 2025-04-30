@@ -36,3 +36,371 @@
 2025-04-29 03:11:35,807 - INFO - token: -----------------------------
 2025-04-29 03:11:35,814 - INFO - Decoded payload: {'memberId': 3, 'iat': 1745851856, 'exp': 1746211856}
 2025-04-29 03:11:35,815 - INFO - Member ID: 3
+2025-04-29 13:10:58,321 - INFO - �α� ���� �Ϸ�
+2025-04-29 13:11:01,858 - INFO - Request URL: /
+2025-04-29 13:11:03,025 - INFO - Request URL: /favicon.ico
+2025-04-29 13:11:03,025 - INFO - Response status code: 404
+2025-04-29 13:11:50,345 - INFO - Request URL: /
+2025-04-29 13:15:14,432 - INFO - Request URL: /
+2025-04-29 13:15:16,448 - INFO - Request URL: /
+2025-04-29 13:15:43,403 - INFO - �α� ���� �Ϸ�
+2025-04-29 13:15:45,538 - INFO - Request URL: /
+2025-04-29 13:15:45,540 - INFO - Response status code: 200
+2025-04-29 13:15:55,832 - INFO - Request URL: /docs/
+2025-04-29 13:15:55,832 - INFO - Response status code: 307
+2025-04-29 13:15:55,835 - INFO - Request URL: /docs
+2025-04-29 13:15:55,836 - INFO - Response status code: 200
+2025-04-29 13:15:56,376 - INFO - Request URL: /openapi.json
+2025-04-29 13:15:56,391 - INFO - Response status code: 200
+2025-04-29 13:16:08,717 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 13:16:08,719 - INFO - Response status code: 403
+2025-04-29 14:13:06,168 - INFO - �α� ���� �Ϸ�
+2025-04-29 14:32:03,583 - INFO - �α� ���� �Ϸ�
+2025-04-29 14:32:31,836 - INFO - �α� ���� �Ϸ�
+2025-04-29 14:32:40,935 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 14:32:40,936 - INFO - Response status code: 403
+2025-04-29 15:42:35,315 - INFO - �α� ���� �Ϸ�
+2025-04-29 15:42:39,772 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 15:42:39,773 - INFO - Response status code: 403
+2025-04-29 15:43:18,203 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 15:43:18,203 - INFO - Response status code: 403
+2025-04-29 15:46:59,614 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 15:46:59,615 - INFO - Response status code: 403
+2025-04-29 15:52:29,211 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 15:52:29,212 - INFO - Response status code: 403
+2025-04-29 15:54:27,288 - INFO - �α� ���� �Ϸ�
+2025-04-29 15:54:33,528 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 15:54:33,529 - INFO - Response status code: 403
+2025-04-29 16:04:43,873 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:04:59,570 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:05:02,256 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:05:08,195 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 16:05:08,196 - INFO - Response status code: 403
+2025-04-29 16:09:59,486 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:10:06,862 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 16:10:06,863 - INFO - Response status code: 403
+2025-04-29 16:10:20,238 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 16:10:20,239 - INFO - Response status code: 403
+2025-04-29 16:11:03,702 - INFO - Request URL: /docs
+2025-04-29 16:11:03,703 - INFO - Response status code: 200
+2025-04-29 16:11:04,802 - INFO - Request URL: /openapi.json
+2025-04-29 16:11:04,805 - INFO - Response status code: 200
+2025-04-29 16:11:09,099 - INFO - Request URL: /api/pipelines/{pipeline_id}/preprocessing/outliers/remove
+2025-04-29 16:11:09,100 - INFO - Response status code: 403
+2025-04-29 16:13:37,185 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:13:37,186 - INFO - Response status code: 403
+2025-04-29 16:16:44,530 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:16:44,531 - INFO - Response status code: 403
+2025-04-29 16:21:34,186 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:21:34,186 - INFO - Response status code: 403
+2025-04-29 16:23:55,334 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:23:58,199 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:23:58,202 - ERROR - ����ġ ���� ����: '_StreamingResponse' object has no attribute 'message'
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 76, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 177, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\anyio\_backends\_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(typ, value, traceback)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    |     root_logger.info(f"Response status code: {response.message}")
+    |                                               ^^^^^^^^^^^^^^^^
+    | AttributeError: '_StreamingResponse' object has no attribute 'message'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    raise exc
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    root_logger.info(f"Response status code: {response.message}")
+                                              ^^^^^^^^^^^^^^^^
+AttributeError: '_StreamingResponse' object has no attribute 'message'
+2025-04-29 16:24:17,370 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:24:17,370 - ERROR - ����ġ ���� ����: '_StreamingResponse' object has no attribute 'message'
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 76, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 177, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\anyio\_backends\_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(typ, value, traceback)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    |     return response
+    |                     
+    | AttributeError: '_StreamingResponse' object has no attribute 'message'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    raise exc
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    return response
+                    
+AttributeError: '_StreamingResponse' object has no attribute 'message'
+2025-04-29 16:24:21,318 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:24:28,087 - INFO - Request URL: /docs
+2025-04-29 16:24:29,088 - INFO - Request URL: /openapi.json
+2025-04-29 16:24:33,384 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:24:36,073 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:24:42,591 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:24:44,972 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:24:44,973 - ERROR - ����ġ ���� ����: '_StreamingResponse' object has no attribute 'message'
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 76, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 177, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\anyio\_backends\_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    |     with recv_stream, send_stream, collapse_excgroups():
+    |   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(typ, value, traceback)
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    |     root_logger.info(f"Response status code: {response.message}")
+    |                                               ^^^^^^^^^^^^^^^^
+    | AttributeError: '_StreamingResponse' object has no attribute 'message'
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 176, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\_utils.py", line 82, in collapse_excgroups
+    raise exc
+  File "C:\Users\SSAFY\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\starlette\middleware\base.py", line 178, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\SSAFY\Desktop\ssafy\fastapi_204\S12P31C204\fastapi\main.py", line 90, in log_requests
+    root_logger.info(f"Response status code: {response.message}")
+                                              ^^^^^^^^^^^^^^^^
+AttributeError: '_StreamingResponse' object has no attribute 'message'
+2025-04-29 16:25:02,769 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:25:07,152 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:25:07,153 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F3A9D3850>
+2025-04-29 16:39:09,086 - INFO - Request URL: /
+2025-04-29 16:39:09,088 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F3A9E2950>
+2025-04-29 16:39:11,351 - INFO - Request URL: /
+2025-04-29 16:39:11,352 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F3A9E2C90>
+2025-04-29 16:39:19,285 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:39:19,286 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F3A9E3E10>
+2025-04-29 16:42:31,181 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:42:31,182 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F3A9E9010>
+2025-04-29 16:42:50,521 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:42:53,891 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:42:53,892 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000018F1A3CF710>
+2025-04-29 16:43:53,431 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:43:57,538 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:43:57,539 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001AA246CF650>
+2025-04-29 16:43:58,269 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:43:58,270 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001AA246CF9D0>
+2025-04-29 16:44:03,444 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:44:03,445 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001AA246E4710>
+2025-04-29 16:46:47,854 - INFO - �α� ���� �Ϸ�
+2025-04-29 16:46:51,242 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 16:46:51,243 - ERROR - HTTP ����: Not authenticated
+2025-04-29 16:46:51,243 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000279798CF490>
+2025-04-29 16:56:16,181 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 16:56:16,182 - WARNING - 경고 메시지 테스트
+2025-04-29 16:56:16,182 - ERROR - 오류 메시지 테스트
+2025-04-29 17:03:52,230 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:03:52,231 - WARNING - 경고 메시지 테스트
+2025-04-29 17:03:52,231 - ERROR - 오류 메시지 테스트
+2025-04-29 17:42:03,373 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:42:03,373 - WARNING - 경고 메시지 테스트
+2025-04-29 17:42:03,373 - ERROR - 오류 메시지 테스트
+2025-04-29 17:43:42,218 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:43:42,218 - WARNING - 경고 메시지 테스트
+2025-04-29 17:43:42,218 - ERROR - 오류 메시지 테스트
+2025-04-29 17:44:25,046 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:44:25,046 - WARNING - 경고 메시지 테스트
+2025-04-29 17:44:25,046 - ERROR - 오류 메시지 테스트
+2025-04-29 17:45:34,909 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:45:34,909 - WARNING - 경고 메시지 테스트
+2025-04-29 17:45:34,909 - ERROR - 오류 메시지 테스트
+2025-04-29 17:46:39,153 - INFO - 로깅 설정 완료 (컬러 적용)
+2025-04-29 17:46:39,153 - WARNING - 경고 메시지 테스트
+2025-04-29 17:46:39,153 - ERROR - 오류 메시지 테스트
+2025-04-29 17:49:16,033 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 17:49:16,034 - ERROR - HTTP 에러: Not authenticated
+2025-04-29 17:49:16,034 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000224E94E1750>
+2025-04-29 17:49:16,903 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 17:49:16,903 - ERROR - HTTP 에러: Not authenticated
+2025-04-29 17:49:16,903 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000224E94E2090>
+2025-04-29 17:54:02,840 - INFO - Request URL: /api/pipelines/1/preprocessing/outliers/imputation
+2025-04-29 17:54:02,840 - ERROR - HTTP 에러: Not authenticated
+2025-04-29 17:54:02,841 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000224E94E2990>
+2025-04-29 14:57:57,894 - INFO - 애플리케이션 종료
+2025-04-29 14:57:57,903 - INFO - 애플리케이션 종료
+2025-04-29 14:57:57,920 - INFO - 애플리케이션 종료
+2025-04-29 14:57:57,985 - INFO - 애플리케이션 종료
+2025-04-29 15:06:16,744 - INFO - 애플리케이션 종료
+2025-04-29 15:06:16,771 - INFO - 애플리케이션 종료
+2025-04-29 15:06:16,802 - INFO - 애플리케이션 종료
+2025-04-29 15:06:16,809 - INFO - 애플리케이션 종료
+2025-04-29 15:06:26,211 - INFO - Request URL: /
+2025-04-29 15:06:26,214 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7ff68acb6710>
+2025-04-29 15:06:29,877 - INFO - Request URL: /favicon.ico
+2025-04-29 15:06:29,878 - ERROR - HTTP 에러: Not Found
+2025-04-29 15:06:29,879 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7ff6875a64d0>
+2025-04-29 18:06:12,544 - INFO - 애플리케이션 종료
+2025-04-29 18:06:12,545 - INFO - 애플리케이션 종료
+2025-04-29 18:06:12,566 - INFO - 애플리케이션 종료
+2025-04-29 18:06:12,582 - INFO - 애플리케이션 종료
+2025-04-29 18:08:06,656 - INFO - Request URL: /docs
+2025-04-29 18:08:06,657 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7f4671b55fd0>
+2025-04-29 18:08:07,844 - INFO - Request URL: /openapi.json
+2025-04-29 18:08:07,852 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7f4671b5ec90>
+2025-04-29 18:11:00,167 - INFO - Request URL: /docs
+2025-04-29 18:11:00,168 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7ff48682c110>
+2025-04-29 18:11:01,368 - INFO - Request URL: /openapi.json
+2025-04-29 18:11:01,373 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7ff48682c8d0>
+2025-04-29 18:11:08,362 - INFO - Request URL: /api/health/all
+2025-04-29 18:11:08,379 - INFO - Redis 서버 연결 성공
+2025-04-29 18:11:08,402 - INFO - SELECT DATABASE()
+2025-04-29 18:11:08,403 - INFO - [raw sql] {}
+2025-04-29 18:11:08,405 - INFO - SELECT @@sql_mode
+2025-04-29 18:11:08,406 - INFO - [raw sql] {}
+2025-04-29 18:11:08,407 - INFO - SELECT @@lower_case_table_names
+2025-04-29 18:11:08,408 - INFO - [raw sql] {}
+2025-04-29 18:11:08,409 - INFO - BEGIN (implicit)
+2025-04-29 18:11:08,409 - INFO - SELECT 1
+2025-04-29 18:11:08,410 - INFO - [generated in 0.00031s] {}
+2025-04-29 18:11:08,436 - INFO - ROLLBACK
+2025-04-29 18:11:08,438 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x7ff48682f010>
+2025-04-30 10:35:24,932 - INFO - Request URL: /
+2025-04-30 10:35:24,934 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001FC0FE13FD0>
+2025-04-30 10:35:31,295 - INFO - Request URL: /docs
+2025-04-30 10:35:31,296 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001FC0FE25210>
+2025-04-30 10:35:32,366 - INFO - Request URL: /openapi.json
+2025-04-30 10:35:32,372 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001FC0FE25950>
+2025-04-30 10:35:42,755 - INFO - Request URL: /api/health/all
+2025-04-30 10:35:42,991 - INFO - Redis 서버 연결 성공
+2025-04-30 10:35:43,159 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:35:43,276 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:35:43,371 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001FC0FE10A50>
+2025-04-30 10:38:24,393 - INFO - Request URL: /api/health/all
+2025-04-30 10:38:24,683 - INFO - Redis 서버 연결 성공
+2025-04-30 10:38:24,683 - ERROR - MySQL 연결 오류: Connection.__init__() got an unexpected keyword argument 'autoReconnect'
+2025-04-30 10:38:24,795 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:38:24,903 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001D81911AA50>
+2025-04-30 10:41:57,386 - INFO - Request URL: /api/health/all
+2025-04-30 10:41:57,542 - INFO - Redis 서버 연결 성공
+2025-04-30 10:41:57,543 - ERROR - MySQL 연결 오류: Connection.__init__() got an unexpected keyword argument 'useUnicode'
+2025-04-30 10:41:57,628 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:41:57,680 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001F06D664410>
+2025-04-30 10:42:35,351 - INFO - Request URL: /api/health/all
+2025-04-30 10:42:35,608 - INFO - Redis 서버 연결 성공
+2025-04-30 10:42:35,608 - ERROR - MySQL 연결 오류: Connection.__init__() got an unexpected keyword argument 'serverTimezone'
+2025-04-30 10:42:35,787 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:42:35,886 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000002A8DD367D50>
+2025-04-30 10:43:15,768 - INFO - Request URL: /api/health/all
+2025-04-30 10:43:16,385 - INFO - Redis 서버 연결 성공
+2025-04-30 10:43:16,426 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:43:16,500 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:43:16,740 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000204F471AA90>
+2025-04-30 10:48:41,851 - INFO - Request URL: /api/health/all
+2025-04-30 10:48:42,019 - INFO - Redis 서버 연결 성공
+2025-04-30 10:48:42,095 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:48:42,253 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:48:42,301 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000020D2EA86E10>
+2025-04-30 10:51:33,560 - INFO - Request URL: /api/health/all
+2025-04-30 10:51:33,748 - INFO - Redis 서버 연결 성공
+2025-04-30 10:51:33,836 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:51:34,198 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:51:34,269 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000021C6C01B310>
+2025-04-30 10:53:58,461 - INFO - Request URL: /api/health/all
+2025-04-30 10:53:58,583 - INFO - Redis 서버 연결 성공
+2025-04-30 10:53:58,621 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:53:58,713 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:53:58,756 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000002094715D490>
+2025-04-30 10:55:01,919 - INFO - Request URL: /api/health/all
+2025-04-30 10:55:02,021 - INFO - Redis 서버 연결 성공
+2025-04-30 10:55:02,066 - ERROR - MySQL 연결 오류: (pymysql.err.OperationalError) (1044, "Access denied for user 'developer'@'%' to database 'roll_model'")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-04-30 10:55:02,296 - ERROR - MongoDB 연결 오류: Authentication failed., full error: {'ok': 0.0, 'errmsg': 'Authentication failed.', 'code': 18, 'codeName': 'AuthenticationFailed'}
+2025-04-30 10:55:02,327 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000020F7B36B090>
+2025-04-30 11:08:41,603 - INFO - Request URL: /api/health/all
+2025-04-30 11:08:41,661 - INFO - Redis 서버 연결 성공
+2025-04-30 11:08:42,007 - INFO - SELECT DATABASE()
+2025-04-30 11:08:42,007 - INFO - [raw sql] {}
+2025-04-30 11:08:42,107 - INFO - SELECT @@sql_mode
+2025-04-30 11:08:42,107 - INFO - [raw sql] {}
+2025-04-30 11:08:42,161 - INFO - SELECT @@lower_case_table_names
+2025-04-30 11:08:42,161 - INFO - [raw sql] {}
+2025-04-30 11:08:42,254 - INFO - BEGIN (implicit)
+2025-04-30 11:08:42,262 - INFO - SELECT 1
+2025-04-30 11:08:42,262 - INFO - [generated in 0.00079s] {}
+2025-04-30 11:08:42,724 - INFO - ROLLBACK
+2025-04-30 11:08:42,842 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000151D1433D50>
