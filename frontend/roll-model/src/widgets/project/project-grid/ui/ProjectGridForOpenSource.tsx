@@ -1,5 +1,5 @@
 import { OpenSourceProject } from "@/entities/open-source/model/types";
-import { ProjectCardForOpenSource } from "@/entities/open-source/ui/projectCardForOpenSource";
+import { ProjectCardForOpenSource } from "@/entities/open-source/ui/ProjectCardForOpenSource";
 
 interface ProjectGridProps {
   projects: OpenSourceProject[];
