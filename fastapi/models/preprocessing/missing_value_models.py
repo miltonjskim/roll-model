@@ -4,22 +4,20 @@ from typing import Dict, Any, List, Optional, Union
 from pydantic import RootModel
 
 class MissingValueImputationMethod(str, Enum):
-    MEAN = "mean"
-    MEDIAN = "median"
-    MODE = "mode"
+    MEAN = "MEAN"
+    MEDIAN = "MEDIAN"
+    MODE = "MODE"
 
 # 요청 모델 정의
 class MissingValueImputationRequest(BaseModel):
-    pipelineId: int = Field(..., description="파이프라인 ID")
     column: str = Field(..., description="처리할 컬럼 이름")
-    method: MissingValueImputationMethod = Field(..., description="대체 방법 ('mean', 'median', 'mode')")
+    method: MissingValueImputationMethod = Field(..., description="대체 방법 ('MEAN', 'MEDIAN', 'MODE')")
 
     class Config:
         schema_extra = {
             "example": {
-                "pipeline_id": 123,
                 "column": "temperature",
-                "method": "mean"
+                "method": "MEAN"
             }
         }
 
@@ -44,5 +42,5 @@ class MissingValueImputationResponse(BaseModel):
     success: bool
     message: str
     original_missing_count: int
-    imputed_count: int
+    imputed_count: int 
     result: ImputationResultDetail
