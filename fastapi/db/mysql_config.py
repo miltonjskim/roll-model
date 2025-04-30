@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger()
 settings = get_settings()
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{settings.MYSQL_USER}:{settings.MYSQL_PASSWORD}@{settings.MYSQL_HOST}:{settings.MYSQL_PORT}/{settings.MYSQL_DB}"
-
+print(SQLALCHEMY_DATABASE_URL)
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     echo=True,  # 개발 환경에서만 SQL 쿼리 로깅
