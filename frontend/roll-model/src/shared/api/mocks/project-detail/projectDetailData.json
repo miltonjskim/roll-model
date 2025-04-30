@@ -1,0 +1,116 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "Diabetes Prediction Dataset",
+      "category": "CLASSIFICATION",
+      "domain": "HEALTHCARE",
+      "version": "1.0",
+      "ownerYn": true
+    },
+    "dataset": {
+      "id": "5f8a76b2e6e8d23c1c9e1b2a",
+      "recordCount": 768,
+      "featureCount": 8,
+      "targetVariable": "diabetes",
+      "missingRate": "5.2%"
+    },
+    "preprocessingSteps": [
+      {
+        "type": "MISSING_VALUE",
+        "parameters": {
+          "columnId": "age",
+          "imputationMethod": "MEAN"
+        },
+        "order": 1,
+        "active": true
+      },
+      {
+        "type": "OUTLIER_DETECTION",
+        "parameters": {
+          "columnId": "income",
+          "outlierMethod": "Z_SCORE",
+          "threshold": 3
+        },
+        "order": 2,
+        "active": true
+      }
+    ],
+    "dataSplit": {
+      "method": "RANDOM",
+      "trainRatio": 0.8,
+      "testRatio": 0.2,
+      "validationRatio": 0
+    },
+    "distributions": [
+      {
+        "name": "age",
+        "type": "histogram",
+        "xAxis": {
+          "label": "Age",
+          "values": [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70]
+        },
+        "yAxis": {
+          "label": "Count",
+          "values": [10, 25, 45, 78, 120, 150, 140, 95, 65, 30, 10]
+        }
+      },
+      {
+        "name": "bmi",
+        "type": "histogram",
+        "xAxis": {
+          "label": "BMI",
+          "values": [18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46]
+        },
+        "yAxis": {
+          "label": "Count",
+          "values": [5, 10, 20, 35, 55, 85, 120, 140, 110, 80, 60, 30, 10, 5, 3]
+        }
+      },
+      {
+        "name": "blood_pressure",
+        "type": "histogram",
+        "xAxis": {
+          "label": "Blood Pressure",
+          "values": [80, 90, 100, 110, 120, 130, 140, 150, 160]
+        },
+        "yAxis": {
+          "label": "Count",
+          "values": [15, 30, 60, 95, 140, 170, 120, 90, 48]
+        }
+      },
+      {
+        "name": "glucose",
+        "type": "histogram",
+        "xAxis": {
+          "label": "Glucose",
+          "values": [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170]
+        },
+        "yAxis": {
+          "label": "Count",
+          "values": [8, 15, 30, 55, 90, 135, 150, 130, 80, 45, 30]
+        }
+      }
+    ],
+    "correlationMatrix": {
+      "featureNames": [
+        "age",
+        "bmi",
+        "blood_pressure",
+        "glucose",
+        "insulin",
+        "diabetes"
+      ],
+      "matrix": [
+        [1.0, 0.25, 0.56, 0.22, 0.12, 0.19],
+        [0.25, 1.0, 0.31, 0.28, 0.58, 0.42],
+        [0.56, 0.31, 1.0, 0.45, 0.27, 0.35],
+        [0.22, 0.28, 0.45, 1.0, 0.62, 0.73],
+        [0.12, 0.58, 0.27, 0.62, 1.0, 0.68],
+        [0.19, 0.42, 0.35, 0.73, 0.68, 1.0]
+      ]
+    }
+  },
+  "error": null
+}

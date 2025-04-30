@@ -1,5 +1,5 @@
-import { atom } from 'jotai'
-import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping'
+import { atom } from "jotai";
+import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
 
 export interface ProjectDetailAtom {
   id: number;
@@ -11,12 +11,12 @@ export interface ProjectDetailAtom {
 }
 
 const initialProjectDetail: ProjectDetailAtom = {
-  id : 0,
-  title : '',
-  version: '',
-  category: 'CLASSIFICATION',
-  domain : 'HEALTHCARE',
-  ownerYn: false
-}
+  id: 0,
+  title: "",
+  version: "",
+  category: "CLASSIFICATION",
+  domain: "HEALTHCARE",
+  ownerYn: true,
+};
 
 export const projectDetailAtom = atom<ProjectDetailAtom>(initialProjectDetail);
