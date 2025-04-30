@@ -22,6 +22,7 @@ from datetime import datetime
 
 from core.storage import get_minio_client
 from schemas.mysql.project_dataset import ProjectDataset
+from schemas.mysql.member import Member
 from db.mongo_config import get_pipeline_collection
 
 logger = logging.getLogger(__name__)
