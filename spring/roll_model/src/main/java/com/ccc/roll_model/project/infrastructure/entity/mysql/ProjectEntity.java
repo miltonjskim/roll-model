@@ -1,4 +1,4 @@
-package com.ccc.roll_model.project.infrastructure.entity;
+package com.ccc.roll_model.project.infrastructure.entity.mysql;
 
 //- 프로젝트 기본 정보(ID, 제목, 설명) 필드 추가
 //- 회원과의 다대일 관계 설정

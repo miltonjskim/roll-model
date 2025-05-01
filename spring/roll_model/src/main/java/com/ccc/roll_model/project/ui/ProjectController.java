@@ -1,11 +1,12 @@
 package com.ccc.roll_model.project.ui;
 
 import com.ccc.roll_model.global.utils.ApiUtils;
-import com.ccc.roll_model.project.application.CreateProjectCommand;
+import com.ccc.roll_model.project.application.command.CreateProjectCommand;
 import com.ccc.roll_model.project.application.ProjectService;
-import com.ccc.roll_model.project.infrastructure.entity.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.ui.request.CreateProjectRequest;
 import com.ccc.roll_model.project.ui.response.CreateProjectResponse;
+import com.ccc.roll_model.project.ui.response.GetMyProjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,15 @@ public class ProjectController {
                 .isPublic(projectEntity.getPublicYn())
                 .createdAt(projectEntity.getRegisteredAt())
                 .build();
+
+        return ApiUtils.success(response);
+    }
+
+    @GetMapping
+    @RequestMapping("/my")
+    public ApiUtils.ApiResponse<GetMyProjectResponse> getMyProjects(@AuthenticationPrincipal Integer memberId) {
+
+        GetMyProjectResponse response = projectService.getMyProjects(memberId);
 
         return ApiUtils.success(response);
     }
