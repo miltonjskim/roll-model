@@ -7,7 +7,7 @@ import {
 import {
   fetchDashboardData,
   fetchFilteredProjects,
-} from "@/shared/api/projectApi";
+} from "@/shared/api/dashboardApi";
 
 export function useDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
