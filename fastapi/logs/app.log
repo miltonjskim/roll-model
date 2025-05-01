@@ -404,3 +404,29 @@ AttributeError: '_StreamingResponse' object has no attribute 'message'
 2025-04-30 11:08:42,262 - INFO - [generated in 0.00079s] {}
 2025-04-30 11:08:42,724 - INFO - ROLLBACK
 2025-04-30 11:08:42,842 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000151D1433D50>
+2025-04-30 20:06:57,078 - INFO - Request URL: /
+2025-04-30 20:06:57,084 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000015C5312F890>
+2025-04-30 20:06:57,704 - INFO - Request URL: /favicon.ico
+2025-04-30 20:06:57,705 - ERROR - HTTP 에러: Not Found
+2025-04-30 20:06:57,706 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x0000015C531B0510>
+2025-04-30 20:27:20,503 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:27:20,505 - ERROR - HTTP 에러: Method Not Allowed
+2025-04-30 20:27:20,505 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000230501E3890>
+2025-04-30 20:27:27,020 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:27:27,038 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Project(projects)], expression 'Member' failed to locate a name ('Member'). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.project.Project'> class after both dependent classes have been defined.
+2025-04-30 20:27:27,040 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000230502602B0>
+2025-04-30 20:30:19,580 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:30:19,587 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Project(projects)], expression 'schemas.mysql.member.Member' failed to locate a name ("Module 'mysql' has no mapped classes registered under the name 'member'"). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.project.Project'> class after both dependent classes have been defined.
+2025-04-30 20:30:19,588 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000284E112F890>
+2025-04-30 20:33:16,371 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:33:16,378 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Project(projects)], expression 'Member' failed to locate a name ('Member'). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.project.Project'> class after both dependent classes have been defined.
+2025-04-30 20:33:16,379 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000143D31CF890>
+2025-04-30 20:43:13,628 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:43:13,635 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Member(members)], expression 'Download' failed to locate a name ('Download'). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.member.Member'> class after both dependent classes have been defined.
+2025-04-30 20:43:13,636 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001A47B9A8410>
+2025-04-30 20:46:29,462 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:46:29,470 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Member(members)], expression 'Download' failed to locate a name ('Download'). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.member.Member'> class after both dependent classes have been defined.
+2025-04-30 20:46:29,471 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x000001C407228410>
+2025-04-30 20:49:59,703 - INFO - Request URL: /api/projects/1/dataset
+2025-04-30 20:49:59,712 - ERROR - 데이터셋 업로드 중 오류: When initializing mapper Mapper[Project(projects)], expression 'Pipeline' failed to locate a name ('Pipeline'). If this is a class name, consider adding this relationship() to the <class 'schemas.mysql.project.Project'> class after both dependent classes have been defined.
+2025-04-30 20:49:59,712 - INFO - Response status code: <starlette.middleware.base._StreamingResponse object at 0x00000278505E8410>
