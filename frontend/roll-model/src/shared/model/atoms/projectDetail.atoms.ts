@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
 
 export interface ProjectDetailAtom {
-  id: number;
+  id: string;
   title: string;
   version: number;
   category: "CLASSIFICATION" | "REGRESSION";
@@ -11,7 +11,7 @@ export interface ProjectDetailAtom {
 }
 
 const initialProjectDetail: ProjectDetailAtom = {
-  id: 0,
+  id: "",
   title: "",
   version: 1.0,
   category: "CLASSIFICATION",

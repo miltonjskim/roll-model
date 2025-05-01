@@ -11,7 +11,7 @@ import { CorrelationMatrix } from "@/entities/project-detail/ui/data-section/Cor
 
 export default function DataSectionPage() {
   const { id } = useParams();
-  const pipelineId = Number(id);
+  const pipelineId = id as string;
 
   const { projectDetailData, isLoading, isError } =
     useProjectDetailData(pipelineId);

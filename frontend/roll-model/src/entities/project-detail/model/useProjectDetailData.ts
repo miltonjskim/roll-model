@@ -5,7 +5,7 @@ import { useAtom } from "jotai";
 import { projectDetailAtom } from "@/shared/model/atoms/projectDetail.atoms";
 import { useEffect } from "react";
 
-export const useProjectDetailData = (pipelineId: number) => {
+export const useProjectDetailData = (pipelineId: string) => {
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
