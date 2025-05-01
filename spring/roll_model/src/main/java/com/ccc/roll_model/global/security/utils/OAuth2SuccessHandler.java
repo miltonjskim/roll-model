@@ -7,6 +7,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import com.ccc.roll_model.global.config.AppConfig;
+import com.ccc.roll_model.global.exception.ApiException;
+import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.global.utils.CookieUtils;
 import com.ccc.roll_model.member.domain.Member;
 import com.ccc.roll_model.member.domain.MemberRepository;
@@ -32,14 +34,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 		OAuth2UserDetails userDetails = (OAuth2UserDetails) authentication.getPrincipal();
 
 		Member member = memberRepository.findByEmail(userDetails.getMember().getEmail())
-			.orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
-
+			.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 		String accessToken = jwtUtils.createJwt(member, 360000000L);
 		String refreshToken = jwtUtils.createJwt(member, 360000000L);
 
 		CookieUtils.addRefreshTokenCookie(response, refreshToken);
 		CookieUtils.addAccessTokenCookie(response, accessToken);
 
-		response.sendRedirect(appConfig.getBaseUrl() +"/oauth/success");
+		response.sendRedirect(appConfig.getBaseUrl());
 	}
 }
