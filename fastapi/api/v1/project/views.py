@@ -21,7 +21,7 @@ import json
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
 from service.dataset_service import upload_dataset_and_save_metadata
-from schemas.mysql.project import Project
+from schemas.mysql.schemas import Project
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

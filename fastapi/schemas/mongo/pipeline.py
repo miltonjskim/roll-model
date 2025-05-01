@@ -62,8 +62,8 @@ class PipelineModel(BaseModel):
     pipeline_id: str  # MySQL의 pipeline_id와 동일
     project_id: int  # MySQL의 project_id
     member_id: int  # MySQL의 member_id
-    registered_at: datetime = Field(default_factory=datetime.utcnow)
-    modified_at: datetime = Field(default_factory=datetime.utcnow)
+    registered_at: datetime = Field(default_factory=datetime.now())
+    modified_at: datetime = Field(default_factory=datetime.now())
     original_dataset_id: Optional[PyObjectId] = None
     preprocessed_dataset_id: Optional[PyObjectId] = None
     model_id: Optional[PyObjectId] = None
