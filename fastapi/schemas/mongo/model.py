@@ -20,8 +20,8 @@ class Model(BaseModel):
     metrics: Dict[str, Any]
     feature_importance: List[FeatureImportance] = []
     file_path: str
-    registered_at: datetime = Field(default_factory=datetime.utcnow)
-    modified_at: datetime = Field(default_factory=datetime.utcnow)
+    registered_at: datetime = Field(default_factory=datetime.now())
+    modified_at: datetime = Field(default_factory=datetime.now())
     is_deleted: bool = False
 
     class Config:
