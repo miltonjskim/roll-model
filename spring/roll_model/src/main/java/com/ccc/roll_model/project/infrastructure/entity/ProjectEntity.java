@@ -11,14 +11,12 @@ import com.ccc.roll_model.member.infrastructure.MemberEntity;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
-
 @Entity
+@Table(name = "projects")
 @Getter
 @NoArgsConstructor
 @SuperBuilder
@@ -42,18 +40,20 @@ public class ProjectEntity extends BaseCreatedAndUpdatedEntity {
     @Nullable
     private String description;
 
-    @Column(name = "category")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false)
     @NotNull
     private Category category;
 
-    @Column(name = "domain")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "domain", nullable = false)
     @NotNull
     private Domain domain;
 
-    @Column(name = "deleted_at")
+    @Column(name = "deleted_yn")
     @Nullable
-    private LocalDateTime deletedAt;
+    private Boolean deletedYn;
 
     @Column(name = "public_yn", nullable = false)
-    private Boolean isPublic = true;
+    private Boolean publicYn = false;
 }
