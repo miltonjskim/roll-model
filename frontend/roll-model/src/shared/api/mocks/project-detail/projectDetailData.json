@@ -6,7 +6,7 @@
       "title": "Diabetes Prediction Dataset",
       "category": "CLASSIFICATION",
       "domain": "HEALTHCARE",
-      "version": "1.0",
+      "version": 1.0,
       "ownerYn": true
     },
     "dataset": {
