@@ -1,5 +1,5 @@
 from core.config import get_settings
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from typing import  AsyncGenerator
 import logging
 
@@ -26,3 +26,15 @@ async def close_mongo_connection():
     """애플리케이션 종료 시 MongoDB 연결을 종료합니다."""
     client.close()
     logger.info("MongoDB 연결 종료")
+
+def get_pipeline_collection() -> AsyncIOMotorCollection:
+    """파이프라인 컬렉션을 반환합니다."""
+    return db["pipelines"]
+
+def get_dataset_collection() -> AsyncIOMotorCollection:
+    """데이터셋 컬렉션을 반환합니다."""
+    return db["datasets"]
+
+def get_model_collection() -> AsyncIOMotorCollection:
+    """모델 컬렉션을 반환합니다."""
+    return db["models"]
