@@ -10,15 +10,19 @@ import lombok.Builder;
 public class MemberMapper {
 
 	public Member toMember(MemberEntity entity) {
-		return Member.builder()
+		if (entity != null) {
+			return Member.builder()
 				.memberId(entity.getMemberId())
 				.nickname(entity.getNickname())
 				.email(entity.getEmail())
 				.provider(entity.getProvider())
 				.registeredAt(entity.getRegisteredAt())
 				.modifiedAt(entity.getModifiedAt())
-				.deletedAt(entity.getDeletedAt())
+				.deletedYn(entity.getDeletedYn())
 				.build();
+		} else {
+			return null;
+		}
 	}
 
 	public MemberEntity toEntity(Member member) {
@@ -29,7 +33,7 @@ public class MemberMapper {
 				.provider(member.getProvider())
 				.registeredAt(member.getRegisteredAt())
 				.modifiedAt(member.getModifiedAt())
-				.deletedAt(member.getDeletedAt())
+				.deletedYn(member.getDeletedYn())
 				.build();
 	}
 }

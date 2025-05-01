@@ -1,6 +1,8 @@
 package com.ccc.roll_model.member.ui;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,12 +14,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 public class MemberController {
 	private final MemberService memberService;
 
-	@PostMapping("/check")
-	public void loginCheck(@AuthenticationPrincipal Integer memberId) {
-		System.out.println("로그인 성공: "+ memberId);
+	@GetMapping("/token/{memberId}")
+	public String getAccessToken(@PathVariable Integer memberId) {
+		return memberService.getAccessToken(memberId);
 	}
 }
