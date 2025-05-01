@@ -247,7 +247,7 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
         }
 
         # MongoDB에 삽입
-        result = pipeline_collection.insert_one(pipeline_doc)
+        result = await pipeline_collection.insert_one(pipeline_doc)
 
         return result.inserted_id
 
