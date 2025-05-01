@@ -1,4 +1,3 @@
-// /app/project-detail/[id]/data-section/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
