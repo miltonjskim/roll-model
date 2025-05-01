@@ -1,6 +1,5 @@
 package com.ccc.roll_model.project.ui;
 
-import com.ccc.roll_model.global.security.utils.OAuth2UserDetails;
 import com.ccc.roll_model.global.utils.ApiUtils;
 import com.ccc.roll_model.project.application.CreateProjectCommand;
 import com.ccc.roll_model.project.application.ProjectService;
@@ -29,7 +28,7 @@ public class ProjectController {
                 .description(request.getDescription())
                 .domain(request.getDomain())
                 .category(request.getType())
-                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
+                .publicYn(request.getIsPublic() != null ? request.getIsPublic() : true)
                 .build();
 
         ProjectEntity projectEntity = projectService.createProject(command);
@@ -40,7 +39,7 @@ public class ProjectController {
                 .description(projectEntity.getDescription())
                 .domain(projectEntity.getDomain())
                 .type(projectEntity.getCategory())
-                .isPublic(projectEntity.getIsPublic())
+                .isPublic(projectEntity.getPublicYn())
                 .createdAt(projectEntity.getRegisteredAt())
                 .build();
 

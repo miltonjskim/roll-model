@@ -29,8 +29,7 @@ public class ProjectService {
         Category category = null;
         switch(command.getCategory()) {
             case "REGRESSION": category = Category.REGRESSION; break;
-            case "BINARY_CLASSIFICATION": category = Category.BINARY_CLASSIFICATION; break;
-            case "MULTI_CLASSIFICATION": category = Category.MULTI_CLASSIFICATION; break;
+            case "CLASSIFICATION": category = Category.CLASSIFICATION; break;
             default: break;
         }
         if(category == null) {
@@ -61,7 +60,8 @@ public class ProjectService {
                 .description(command.getDescription())
                 .category(category)
                 .domain(domain)
-                .isPublic(command.getIsPublic())
+                .publicYn(command.getPublicYn())
+                .deletedYn(false)
                 .build();
         return projectRepository.save(projectEntity);
     }
