@@ -1,5 +1,5 @@
 // /entities/project-detail/ui/PreprocessingPipelineCard.tsx
-import { PreprocessingStep } from "@/entities/project-detail/model/types";
+import { PreprocessingStep } from "@/entities/project-detail/model/dataTypes";
 
 interface PreprocessingPipelineCardProps {
   steps: PreprocessingStep[];

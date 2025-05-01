@@ -1,5 +1,5 @@
 // /entities/project-detail/ui/DataSplitCard.tsx
-import { DataSplit } from "@/entities/project-detail/model/types";
+import { DataSplit } from "@/entities/project-detail/model/dataTypes";
 
 interface DataSplitCardProps {
   dataSplit: DataSplit;

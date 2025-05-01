@@ -1,5 +1,5 @@
 // /entities/project-detail/ui/DatasetInfoCard.tsx
-import { Dataset } from "@/entities/project-detail/model/types";
+import { Dataset } from "@/entities/project-detail/model/dataTypes";
 
 interface DatasetInfoCardProps {
   dataset: Dataset;
@@ -12,7 +12,9 @@ export const DatasetInfoCard = ({ dataset }: DatasetInfoCardProps) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 p-3 rounded">
           <div className="text-sm text-gray-500">총 데이터 수</div>
-          <div className="text-xl font-bold">{dataset.recordCount.toLocaleString()}</div>
+          <div className="text-xl font-bold">
+            {dataset.recordCount.toLocaleString()}
+          </div>
         </div>
         <div className="bg-gray-50 p-3 rounded">
           <div className="text-sm text-gray-500">컬럼 수</div>

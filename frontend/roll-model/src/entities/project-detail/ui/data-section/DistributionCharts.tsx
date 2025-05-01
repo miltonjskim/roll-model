@@ -1,5 +1,5 @@
 // /entities/project-detail/ui/DistributionCharts.tsx
-import { Distribution } from "@/entities/project-detail/model/types";
+import { Distribution } from "@/entities/project-detail/model/dataTypes";
 import {
   BarChart,
   Bar,

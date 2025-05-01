@@ -3,11 +3,11 @@
 
 import { useParams } from "next/navigation";
 import { useProjectDetailData } from "@/entities/project-detail/model/useProjectDetailData";
-import { DatasetInfoCard } from "@/entities/project-detail/ui/DatasetInfoCard";
-import { PreprocessingPipelineCard } from "@/entities/project-detail/ui/PreprocessingPipelineCard";
-import { DataSplitCard } from "@/entities/project-detail/ui/DataSplitCard";
-import { DistributionCharts } from "@/entities/project-detail/ui/DistributionCharts";
-import { CorrelationMatrix } from "@/entities/project-detail/ui/CorrelationMatrix";
+import { DatasetInfoCard } from "@/entities/project-detail/ui/data-section/DatasetInfoCard";
+import { PreprocessingPipelineCard } from "@/entities/project-detail/ui/data-section/PreprocessingPipelineCard";
+import { DataSplitCard } from "@/entities/project-detail/ui/data-section/DataSplitCard";
+import { DistributionCharts } from "@/entities/project-detail/ui/data-section/DistributionCharts";
+import { CorrelationMatrix } from "@/entities/project-detail/ui/data-section/CorrelationMatrix";
 
 export default function DataSectionPage() {
   const { id } = useParams();

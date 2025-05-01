@@ -1,4 +1,4 @@
-import { ProjectDetailDataResponse } from "@/entities/project-detail/model/types";
+import { ProjectDetailDataResponse } from "@/entities/project-detail/model/dataTypes";
 import { axiosInstance } from "../lib/axios/axiosInstance";
 import projectDetailDataMock from "@/shared/api/mocks/project-detail/projectDetailData.json";
 
