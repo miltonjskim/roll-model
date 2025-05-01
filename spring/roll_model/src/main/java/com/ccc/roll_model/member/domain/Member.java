@@ -2,7 +2,6 @@ package com.ccc.roll_model.member.domain;
 
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +14,7 @@ public class Member {
 	private Member.Provider provider;
 	private LocalDateTime registeredAt;
 	private LocalDateTime modifiedAt;
-	private LocalDateTime deletedAt;
+	private Boolean deletedYn;
 
 
 	// Provider Enum
