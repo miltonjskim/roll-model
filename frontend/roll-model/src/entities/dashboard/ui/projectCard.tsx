@@ -1,0 +1,79 @@
+import { Project } from "@/entities/dashboard/model/types";
+import { getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
+import { projectDetailAtom } from "@/shared/model/atoms/projectDetail.atoms";
+import { useSetAtom } from "jotai";
+import { useRouter } from "next/navigation";
+
+interface ProjectCardProps {
+  project: Project;
+}
+
+export const ProjectCard = ({ project }: ProjectCardProps) => {
+  const setProjectDetail = useSetAtom(projectDetailAtom);
+  const router = useRouter();
+
+  const handleProjectClick = () => {
+    // atom 상태 업데이트
+    setProjectDetail({
+      id: project.id,
+      title: project.title,
+      version: project.version,
+      category: project.category,
+      domain: project.domain,
+      ownerYn: false, // 초기값은 false로 설정
+    });
+
+    // 프로젝트 상세 페이지로 라우팅
+    router.push(`/project-detail/${project.id}`);
+  };
+  return (
+    <div
+      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={handleProjectClick}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="text-lg font-bold truncate">{project.title}</h2>
+        <span
+          className={`text-xs px-2 py-1 rounded ${
+            project.status === "COMPLETED"
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {project.status === "COMPLETED" ? "완료" : "진행 중"}
+        </span>
+      </div>
+
+      <div className="text-sm text-gray-500 mb-4">
+        <p>타입: {project.category === "CLASSIFICATION" ? "분류" : "회귀"}</p>
+        <p>
+          도메인:{" "}
+          {project.displayDomain || getDomainDisplayName(project.domain)}
+        </p>
+        <p>목표변수: {project.target}</p>
+        <p>데이터 수: {project.dataCount.toLocaleString()}</p>
+        <p>버전 : {project.version}</p>
+        <p>학습시간 : {project.runnungDuration}</p>
+        {project.accuracy && <p>정확도: {project.accuracy}%</p>}
+        {project.rmse && <p>RMSE: {project.rmse}</p>}
+      </div>
+
+      <div className="flex justify-between text-xs text-gray-500">
+        <span className="flex items-center">
+          <span className="mr-1">❤️</span> {project.likeCount}
+        </span>
+        <span className="flex items-center">
+          <span className="mr-1">⬇️</span> {project.downloadCount}
+        </span>
+        <span className="flex items-center">
+          <span className="mr-1">{project.visibility ? "🌐" : "🔒"}</span>
+          {project.visibility ? "공개" : "비공개"}
+        </span>
+        <span className="flex items-center">
+          <span className="mr-1">⏱️</span>
+          {new Date(project.updatedAt).toLocaleDateString()}
+        </span>
+      </div>
+    </div>
+  );
+};
