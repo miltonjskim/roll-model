@@ -68,6 +68,9 @@ public class SecurityConfig {
 				.authorizationEndpoint(authorization -> authorization
 					.baseUri("/api/oauth2/authorization")
 				)
+				.redirectionEndpoint(redirectionEndpointConfig -> redirectionEndpointConfig
+					.baseUri("/api/login/oauth2/code/*")
+				)
 				.userInfoEndpoint(user -> user
 					.userService(defaultOAuth2UserService)
 				)
@@ -85,7 +88,6 @@ public class SecurityConfig {
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE"));
 		configuration.setAllowedHeaders(Arrays.asList("*"));
 		configuration.setAllowCredentials(true);
-
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", configuration); // 모든 경로에 대해 이 설정 적용
 		return source;

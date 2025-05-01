@@ -43,7 +43,7 @@ public class JWTFilter extends OncePerRequestFilter {
 		// 1. 토큰이 필요하지 않은 API URL 리스트
 		List<String> allowedPaths = Arrays.asList(
 			"/api/auth/**",
-			"/login/oauth2/code/**"
+			"/api/login/**"
 		);
 
 		// 2. 토큰이 필요하지 않은 URL이나 OPTIONS 요청일 경우 그냥 통과
