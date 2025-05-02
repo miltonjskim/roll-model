@@ -15,19 +15,38 @@ import io
 import json
 import logging
 import pandas as pd
-from typing import Dict, Any, BinaryIO, Optional, List
+from typing import Dict, Any, BinaryIO
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from datetime import datetime
 
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
+from db.mongo_config import get_pipeline_collection
+import math
+import numpy as np
 from schemas.mysql.schemas import Member
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import DatasetDomain, DatasetCategory, ColumnType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
+def replace_nan_values(obj):
+    """NaN 값을 None으로 변환"""
+    if isinstance(obj, dict):
+        return {k: replace_nan_values(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan_values(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj):
+            return "NaN"
+        return obj
+    elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.floating):
+        if np.isnan(obj):
+            return "NaN"
+        return float(obj)
+    else:
+        return obj
 
 """
 1️⃣ 데이터셋을 MinIO, MongoDB에 업로드하고 메타데이터 저장

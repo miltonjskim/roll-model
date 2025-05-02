@@ -19,7 +19,7 @@ import io
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 async def upload_dataset_and_save_etag(
@@ -192,8 +192,3 @@ async def delete_dataset(
         db.rollback()
         logger.error(f"데이터셋 삭제 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"데이터셋 삭제 중 오류 발생: {str(e)}")
-    
-async def get_data_file(object_name: str):
-    minio_client = get_minio_client()
-    bucket_name = "datasets"
-    return minio_client.get_file(bucket_name, object_name)

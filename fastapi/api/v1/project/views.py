@@ -14,17 +14,17 @@
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path
 from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional
+from fastapi.encoders import jsonable_encoder
 import logging
 import json
 
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
-from service.dataset_service import upload_dataset_and_save_metadata
+from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
@@ -77,8 +77,8 @@ async def upload_project_dataset(
                 error_code="INVALID_JSON",
                 error_message="JSON 형식이 올바르지 않습니다"
             )
-
         # 파일 유효성 검사
+
         if not dataFile.content_type or not dataFile.content_type.endswith(('csv', 'text/csv', 'application/csv')):
             return ApiResponse(
                 status_code=400,
@@ -109,10 +109,11 @@ async def upload_project_dataset(
             file=dataFile,
             config_json=config
         )
-
+        # NaN, INF 수동 인코딩
+        safe_result = jsonable_encoder(replace_nan_values(result))
         # 응답 구성
         return ApiResponse(
-            data=result,
+            data=safe_result,
             message="데이터 업로드 및 분석 완료",
             status_code=200
         )

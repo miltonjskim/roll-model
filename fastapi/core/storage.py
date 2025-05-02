@@ -18,7 +18,7 @@ from minio.error import S3Error
 import io
 import os
 from fastapi import HTTPException
-from typing import Optional, BinaryIO
+from typing import Optional, BinaryIO, Any, Dict
 import logging
 from datetime import timedelta
 
@@ -155,6 +155,82 @@ class MinioClient:
         except S3Error as e:
             logger.error(f"파일 '{object_name}' 삭제 중 오류: {str(e)}")
             return False
+
+    async def get_object_by_etag(self, bucket_name: str, etag: str) -> Optional[Dict[str, Any]]:
+        """etag로 MinIO 객체를 조회합니다."""
+        try:
+            # 버킷 내 객체 리스트 조회
+            objects = self.client.list_objects(bucket_name, recursive=True)
+
+            # etag와 일치하는 객체 찾기
+            for obj in objects:
+                # MinIO는 etag 값을 ""로 감싸서 저장합니다
+                # 예: "a1b2c3d4e5f6g7h8i9j0" -> a1b2c3d4e5f6g7h8i9j0
+                obj_etag = obj.etag.strip('"')
+
+                if obj_etag == etag:
+                    # 객체 정보 조회
+                    obj_data = self.client.get_object(bucket_name, obj.object_name)
+                    obj_stats = self.client.stat_object(bucket_name, obj.object_name)
+
+                    return {
+                        "bucket_name": bucket_name,
+                        "object_name": obj.object_name,
+                        "etag": obj_etag,
+                        "size": obj.size,
+                        "last_modified": obj.last_modified,
+                        "content_type": obj_stats.content_type,
+                        "metadata": obj_stats.metadata,
+                        "data": obj_data
+                    }
+
+            # 일치하는 객체가 없는 경우
+            return None
+
+        except S3Error as err:
+            print(f"S3 Error: {err}")
+            return None
+        except Exception as err:
+            print(f"Error: {err}")
+            return None
+
+    async def get_object_data_by_etag(self, bucket_name: str, etag: str) -> Optional[BinaryIO]:
+        """etag로 MinIO 객체의 데이터만 조회합니다."""
+        try:
+            result = await self.get_object_by_etag(bucket_name, etag)
+            if result:
+                return result["data"]
+            return None
+        except Exception as err:
+            print(f"Error: {err}")
+            return None
+
+    async def save_object_with_etag(self, bucket_name: str, object_name: str, data: BinaryIO, content_type: str) -> \
+    Optional[str]:
+        """객체를 저장하고 생성된 etag를 반환합니다."""
+        try:
+            # 버킷이 없으면 생성
+            if not self.client.bucket_exists(bucket_name):
+                self.client.make_bucket(bucket_name)
+
+            # 객체 업로드
+            result = self.client.put_object(
+                bucket_name=bucket_name,
+                object_name=object_name,
+                data=data,
+                length=-1,  # 자동으로 데이터 길이 계산
+                content_type=content_type
+            )
+
+            # etag 반환 (따옴표 제거)
+            return result.etag.strip('"')
+
+        except S3Error as err:
+            print(f"S3 Error: {err}")
+            return None
+        except Exception as err:
+            print(f"Error: {err}")
+            return None
 
 
 def test_file_persistence():
