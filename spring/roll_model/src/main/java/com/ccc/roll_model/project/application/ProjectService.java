@@ -129,11 +129,11 @@ public class ProjectService {
                     // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
                     return GetMyProjectResponse.Project.builder()
                             .id(pipeline.getPipelineId())
-                            .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : "N/A")
+                            .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
                             .title(project.getTitle())
-                            .category(project.getCategory() != null ? project.getCategory().name().toLowerCase() : "unknown")
-                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name().toLowerCase() : "unknown")
-                            .domain(project.getDomain() != null ? project.getDomain().name().toLowerCase() : "unknown")
+                            .category(project.getCategory() != null ? project.getCategory().name().toLowerCase() : null)
+                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name().toLowerCase() : null)
+                            .domain(project.getDomain() != null ? project.getDomain().name().toLowerCase() : null)
                             .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
                                     ? model.getPerformance().getClassification().getAccuracy()
                                     : null)
