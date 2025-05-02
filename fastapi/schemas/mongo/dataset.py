@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from bson import ObjectId
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from pipeline import PyObjectId
+from ..mongo.pipeline import PyObjectId
 import enum
 
 class ColumnType(str, enum.Enum):
