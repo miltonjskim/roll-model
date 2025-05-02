@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useOpenSource } from "../model/useOpenSource";
 import {
   fetchOpenSourceData,
   fetchFilteredOpenSourceProjects,
 } from "@/shared/api/openSourceApi";
+import { useOpenSource } from "@/app/open-source/model/useOpenSource";
 
 // API 호출을 모킹(실제 api호출안함)합니다 : 이걸해주는게 jest.mock
 // jest.fn()읉 통해 모킹함수 생성 => 이걸로 "호출 여부, 호출 횟수, 전달된 인자" 등 알아냄
