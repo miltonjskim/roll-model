@@ -6,7 +6,7 @@
 - 데이터셋 파일 업로드 및 저장
 - 업로드된 데이터셋 분석 및 요약 정보 제공
 - MinIO에 파일 저장 및 MySQL에 ETag 저장
-- MongoDB 파이프라인 생성
+- MongoDB에 파이프라인 및 데이터셋 정보 저장
 
 파이프라인의 시작점
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
@@ -39,12 +39,18 @@ async def upload_project_dataset(
     - **project_id**: 데이터셋을 업로드할 프로젝트 ID
     - **config**: 데이터셋 설정 (JSON 문자열)
       - delimiter: 구분자 타입 (comma, semicolon, tab, other)
+      - customDelimiter: 사용자 정의 구분자 (delimiter가 'other'인 경우)
       - encoding: 파일 인코딩 (UTF-8, CP949 등)
       - hasHeader: 헤더 존재 여부
-      - columns: 컬럼 정보 배열
+      - columns: 컬럼 정보 배열 (name, type - string/datetime/integer/boolean/double)
     - **dataFile**: 업로드할 CSV 파일
 
-    파일 MinIO에 저장 -> ETag MySQL에 저장 -> 데이터셋 분석 정보 반환
+    처리 과정:
+    1. 파일 MinIO에 저장
+    2. ETag MySQL에 저장
+    3. 데이터셋 분석 수행
+    4. MongoDB에 파이프라인 및 데이터셋 정보 저장
+    5. 분석 결과 및 생성된 ID 반환
     """
     try:
         # 설정 유효성 검사
@@ -56,6 +62,14 @@ async def upload_project_dataset(
                     status_code=400,
                     error_code="INVALID_CONFIG",
                     error_message="delimiter 필드가 필요합니다"
+                )
+
+            # other delimiter인 경우 customDelimiter 확인
+            if config_data.get("delimiter") == "other" and "customDelimiter" not in config_data:
+                return ApiResponse(
+                    status_code=400,
+                    error_code="INVALID_CONFIG",
+                    error_message="'other' 구분자를 사용할 경우 customDelimiter 필드가 필요합니다"
                 )
         except json.JSONDecodeError:
             return ApiResponse(
