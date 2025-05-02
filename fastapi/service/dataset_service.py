@@ -15,18 +15,35 @@ import io
 import json
 import logging
 import pandas as pd
-from typing import Dict, Any, BinaryIO, Optional, List
+from typing import Dict, Any, BinaryIO
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from datetime import datetime
 
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
-from schemas.mysql.schemas import Member
 from db.mongo_config import get_pipeline_collection
+import math
+import numpy as np
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
+def replace_nan_values(obj):
+    """NaN 값을 None으로 변환"""
+    if isinstance(obj, dict):
+        return {k: replace_nan_values(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan_values(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj):
+            return "NaN"
+        return obj
+    elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.floating):
+        if np.isnan(obj):
+            return "NaN"
+        return float(obj)
+    else:
+        return obj
 
 async def upload_dataset_and_save_metadata(
         db: Session,
@@ -234,7 +251,7 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
         pipeline_collection = get_pipeline_collection()
 
         # 현재 시간
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now().isoformat() + "Z"
 
         # 파이프라인 문서 생성
         pipeline_doc = {
