@@ -11,6 +11,24 @@ class ColumnType(str, enum.Enum):
     TEXT = "TEXT"
     DATETIME = "DATETIME"
 
+# 데이터셋 도메인 정의
+class DatasetDomain(str, enum.Enum):
+    FINANCE = "FINANCE"         # 금융/핀테크 관련 프로젝트
+    HEALTHCARE = "HEALTHCARE"   # 의료/헬스케어 관련 프로젝트
+    RETAIL = "RETAIL"           # 소매/이커머스 관련 프로젝트
+    MARKETING = "MARKETING"     # 마케팅/광고 관련 프로젝트
+    MANUFACTURING = "MANUFACTURING"  # 제조/산업 관련 프로젝트
+    EDUCATION = "EDUCATION"     # 교육/학습 관련 프로젝트
+    REAL_ESTATE = "REAL_ESTATE" # 부동산/건설 관련 프로젝트
+    LOGISTICS = "LOGISTICS"     # 운송/물류 관련 프로젝트
+    ENTERTAINMENT = "ENTERTAINMENT"  # 엔터테인먼트/미디어 관련 프로젝트
+    GENERAL = "GENERAL"         # 일반/기타 범용 프로젝트
+
+# 데이터셋 카테고리 정의
+class DatasetCategory(str, enum.Enum):
+    REGRESSION = "REGRESSION"       # 회귀 (연속형 변수)
+    CLASSIFICATION = "CLASSIFICATION"  # 분류 (범주형 변수)
+
 class DatasetColumn(BaseModel):
     name: str
     type: ColumnType
