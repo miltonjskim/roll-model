@@ -1,4 +1,4 @@
-package com.ccc.roll_model.project.application;
+package com.ccc.roll_model.project.application.command;
 
 import lombok.Builder;
 import lombok.Data;
