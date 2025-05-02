@@ -39,7 +39,7 @@ public class OAuth2FailureHandler implements AuthenticationFailureHandler {
 		String encodedMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
 		String encodedErrorCode = URLEncoder.encode(errorCode, StandardCharsets.UTF_8);
 
-		String redirectUrl = appConfig.getBaseUrl() + "/oauth/failure?error=" + encodedErrorCode + "&message=" + encodedMessage;
+		String redirectUrl = appConfig.getBaseUrl() + "/";
 		response.sendRedirect(redirectUrl);
 	}
 }
