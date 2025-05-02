@@ -3,14 +3,14 @@ import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
 export type ProjectType = "CLASSIFICATION" | "REGRESSION";
 
 export interface OpenSourceProject {
-  id: number;
+  id: string;
   title: string; // 제목
-  version: string; // 버전
+  version: number; // 버전
   writerId: number; // 작성자 ID
   writerNickname: string; // 작성자 닉네임
   category: ProjectType; // 분류 or 회귀
   domain: ApiProjectDomain; // 의료 금융 등
-  displayDomain?: string;   // 화면 표시용 한글 도메인
+  displayDomain?: string; // 화면 표시용 한글 도메인
   accuracy: number | null; // 정확도
   rmse: number | null; // 회귀일때의 정확도
   target: string; // 목표변수

@@ -1,14 +1,28 @@
+// app/project-detail/[id]/version-section/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
-import { useProjectDetailVersion } from "@/entities/project-detail/model/useProjectDetailVersion";
+import { useProjectDetailVersion } from "@/app/project-detail/[id]/version-section/model/useProjectDetailVersion";
+import { ReactFlowProvider } from "reactflow";
+import VersionGraphDagre from "@/entities/project-detail/ui/version-section/VersionGraphDagre";
+import VersionDetailCard from "@/entities/project-detail/ui/version-section/VersionDetailCard";
+import { useProjectDetailVersionSelection } from "./model/useProjectDetailVersionSelection";
 
 export default function VersionSectionPage() {
   const { id } = useParams();
   const pipelineId = id as string;
 
+  // API 데이터 페칭 훅
   const { projectDetailVersion, isLoading, isError } =
     useProjectDetailVersion(pipelineId);
+
+  // 버전 선택 관리 훅
+  const {
+    selectedVersion,
+    selectedPipeline,
+    versionHistory,
+    handleSelectVersion,
+  } = useProjectDetailVersionSelection(projectDetailVersion);
 
   if (isLoading) {
     return (
@@ -26,7 +40,38 @@ export default function VersionSectionPage() {
     );
   }
 
-  const { projectInfo, versionHistory, pipelines } = projectDetailVersion;
+  return (
+    <div className="py-6">
+      <h1 className="text-2xl font-bold mb-6">버전 정보</h1>
 
-  return <div>버전탭</div>;
+      <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+        <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
+          {/* 왼쪽: 버전 그래프 */}
+          <div className="w-full lg:w-full">
+            {versionHistory.length > 0 && (
+              <ReactFlowProvider>
+                <VersionGraphDagre
+                  versionHistory={versionHistory}
+                  selectedVersion={selectedVersion}
+                  onSelectVersion={handleSelectVersion}
+                  selectedPipeline={selectedPipeline}
+                />
+              </ReactFlowProvider>
+            )}
+          </div>
+
+          {/* 오른쪽: 버전 상세 정보 */}
+          {/* <div className="w-full lg:w-1/2">
+            {selectedPipeline ? (
+              <VersionDetailCard pipeline={selectedPipeline} />
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
+                버전을 선택하여 상세 정보를 확인하세요.
+              </div>
+            )}
+          </div> */}
+        </div>
+      </div>
+    </div>
+  );
 }

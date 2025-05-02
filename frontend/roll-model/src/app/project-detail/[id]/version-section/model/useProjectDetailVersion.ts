@@ -26,15 +26,6 @@ export const useProjectDetailVersion = (pipelineId: string) => {
     }
   }, [data, pipelineId, setProjectDetail]);
   // 함수형을 쓰라는데, 왜?
-  // useEffect(() => {
-  //   if (data?.data?.projectInfo) {
-  //     setProjectDetail(prevDetail => ({
-  //       ...prevDetail,
-  //       ...data.data.projectInfo,
-  //       id: pipelineId,
-  //     }));
-  //   }
-  // }, [data, pipelineId, setProjectDetail]);
 
   return {
     projectDetailVersion: data?.data,
