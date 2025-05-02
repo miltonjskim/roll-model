@@ -293,7 +293,6 @@ async def store_dataset_to_mongodb(
     file_size: int,
     object_name: str
 ) -> str:
-
     try:
         dataset_collection = get_dataset_collection()
         now = datetime.utcnow().isoformat() + "Z"
@@ -329,18 +328,19 @@ async def store_dataset_to_mongodb(
         if delimiter == "other" and "customDelimiter" in config:
             custom_delimiter = config["customDelimiter"]
 
-        # MongoDB 데이터셋 문서 생성
+        # MongoDB 데이터셋 문서 생성 (is_deleted 제거, is_preprocessed 추가)
         dataset_doc = {
             "project_id": project_id,
             "member_id": member_id,
             "registered_at": now,
             "modified_at": now,
-            "file_path": f"storage/datasets/{object_name}",
+            "dataset_file_path": f"storage/datasets/{object_name}",  # file_path → dataset_file_path로 변경
             "file_size": file_size,
+            "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
-            "is_deleted": False,
-            "category": DatasetCategory.CLASSIFICATION.value,  # 기본값
-            "domain": DatasetDomain.GENERAL.value,  # 기본값
+            "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
+            "category": DatasetCategory.CLASSIFICATION.value,
+            "domain": DatasetDomain.GENERAL.value,
             "metadata": {
                 "row_count": dataset_analysis["total_rows"],
                 "column_count": dataset_analysis["total_columns"],
@@ -349,8 +349,8 @@ async def store_dataset_to_mongodb(
                 "delimiter": delimiter,
                 "custom_delimiter": custom_delimiter,
                 "encoding": config.get("encoding", "UTF-8"),
-                "has_header": config.get("hasHeader", False),
-                "file_type": file_type
+                "has_header": config.get("hasHeader", False)
+                # statistics 필드는 현재 구현에서 제외 (필요시 나중에 추가)
             }
         }
 

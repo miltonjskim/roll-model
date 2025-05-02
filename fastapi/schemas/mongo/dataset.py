@@ -40,7 +40,7 @@ class DatasetModel(BaseModel):
     member_id: int
     name: Optional[str] = None  # 선택적 필드
     description: Optional[str] = None # 선택적 필드
-    file_path: str
+    dataset_file_path: str
     file_size: int
     columns: List[DatasetColumn] = []
     registered_at: datetime = Field(default_factory=datetime.now())
