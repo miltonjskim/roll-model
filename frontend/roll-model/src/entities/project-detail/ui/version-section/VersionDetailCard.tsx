@@ -9,7 +9,7 @@ interface VersionDetailCardProps {
   className?: string;
 }
 
-export const VersionDetailCard: React.FC<VersionDetailCardProps> = ({ pipeline, className = '' }) => {
+export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCardProps) => {
   if (!pipeline) return null;
 
   // 날짜 포맷팅 함수 (실제 구현은 utils 폴더에 있어야 함)
