@@ -20,8 +20,8 @@ class DatasetModel(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     project_id: int
     member_id: int
-    name: str
-    description: Optional[str] = None
+    name: Optional[str] = None  # 선택적 필드
+    description: Optional[str] = None # 선택적 필드
     file_path: str
     file_size: int
     columns: List[DatasetColumn] = []
