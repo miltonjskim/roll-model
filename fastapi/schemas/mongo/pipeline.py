@@ -3,25 +3,53 @@ from bson import ObjectId
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import enum
+import json
 
-class PyObjectId(ObjectId):
+from typing import Annotated, Union
+from bson import ObjectId
+from pydantic import AfterValidator
+
+class RedisJSONEncoder(json.JSONEncoder):
+    """ObjectId와 datetime을 처리하기 위한 JSON 인코더"""
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+from bson import ObjectId
+from pydantic_core import core_schema
+
+class PyObjectId(str):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+            cls, _source_type: Any, _handler: Any
+    ) -> core_schema.CoreSchema:
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.str_schema(),
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(ObjectId),
+                core_schema.chain_schema([
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(cls.validate),
+                ])
+            ]),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda x: str(x)
+            ),
+        )
 
     @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
+    def validate(cls, value) -> ObjectId:
+        if not ObjectId.is_valid(value):
             raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+        return ObjectId(value)
 
+# Enums
 class PipelineStatus(str, enum.Enum):
     CREATED = "CREATED"
-    RUNNING = "RUNNING" 
+    RUNNING = "RUNNING"
     LEARNING = "LEARNING"
     PREPROCESSING = "PREPROCESSING"
     COMPLETED = "COMPLETED"
@@ -38,11 +66,13 @@ class PreprocessingStepType(str, enum.Enum):
     FEATURE_SCALING = "FEATURE_SCALING"
     FEATURE_ENCODING = "FEATURE_ENCODING"
 
+# Pydantic models
 class PreprocessingStep(BaseModel):
     type: PreprocessingStepType
     parameters: Dict[str, Any]
     order: int
     active: bool = True
+    preprocessed_dataset_etag: Optional[str] = ""
 
 class DataSplit(BaseModel):
     train_ratio: float
@@ -50,30 +80,28 @@ class DataSplit(BaseModel):
     validation_ratio: float
     random_seed: int
 
-# 모델링 정보 모델
 class ModelingInfo(BaseModel):
     algorithm: AlgorithmType
     data_split: DataSplit
     parameters: Dict[str, Any]
     target_feature: str
 
-class PipelineModel(BaseModel):
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    pipeline_id: str  # MySQL의 pipeline_id와 동일
-    project_id: int  # MySQL의 project_id
-    member_id: int  # MySQL의 member_id
-    registered_at: datetime = Field(default_factory=datetime.now())
-    modified_at: datetime = Field(default_factory=datetime.now())
-    original_dataset_id: Optional[PyObjectId] = None
-    preprocessed_dataset_id: Optional[PyObjectId] = None
+class PipelineHistoryItem(BaseModel):
     model_id: Optional[PyObjectId] = None
     preprocessing_steps: List[PreprocessingStep] = []
     modeling_info: Optional[ModelingInfo] = None
     status: PipelineStatus = PipelineStatus.CREATED
-    is_public: bool = False
-    metrics: Optional[Dict[str, Any]] = None
+
+class PipelineModel(BaseModel):
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    project_id: int
+    member_id: int
+    registered_at: datetime = Field(default_factory=datetime.now)
+    modified_at: datetime = Field(default_factory=datetime.now)
+    original_dataset_etag: str = None
+    history: List[PipelineHistoryItem] = []
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
