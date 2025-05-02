@@ -23,11 +23,25 @@ from datetime import datetime
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
 from schemas.mysql.schemas import Member
-from db.mongo_config import get_pipeline_collection
+from db.mongo_config import get_pipeline_collection, get_dataset_collection
+from schemas.mongo.dataset import DatasetDomain, DatasetCategory, ColumnType
 
 logger = logging.getLogger(__name__)
 
 
+"""
+1️⃣ 데이터셋을 MinIO에 업로드하고 메타데이터 저장
+
+Args:
+    db: 데이터베이스 세션
+    project_id: 프로젝트 ID
+    member_id: 회원 ID
+    file: 업로드된 파일
+    config_json: 데이터셋 설정 JSON 문자열
+
+Returns:
+    Dict: 업로드 및 분석 결과 정보
+"""
 async def upload_dataset_and_save_metadata(
         db: Session,
         project_id: int,
@@ -35,19 +49,7 @@ async def upload_dataset_and_save_metadata(
         file: UploadFile,
         config_json: str
 ) -> Dict[str, Any]:
-    """
-    데이터셋을 MinIO에 업로드하고 메타데이터 저장
 
-    Args:
-        db: 데이터베이스 세션
-        project_id: 프로젝트 ID
-        member_id: 회원 ID
-        file: 업로드된 파일
-        config_json: 데이터셋 설정 JSON 문자열
-
-    Returns:
-        Dict: 업로드 및 분석 결과 정보
-    """
     try:
         # 설정 파싱
         config = json.loads(config_json)
@@ -130,19 +132,20 @@ async def upload_dataset_and_save_metadata(
         raise HTTPException(status_code=500, detail=f"처리 중 오류 발생: {str(e)}")
 
 
+"""
+2️⃣ 데이터셋 파일을 분석하여 요약 정보 생성
+
+이 함수는 나중에 utils/dataset_analyzer.py로 분리 가능
+
+Args:
+    file_io: 파일 객체
+    config: 데이터셋 설정
+
+Returns:
+    Dict: 분석 결과
+"""
 async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    데이터셋 파일을 분석하여 요약 정보 생성
 
-    이 함수는 나중에 utils/dataset_analyzer.py로 분리 가능
-
-    Args:
-        file_io: 파일 객체
-        config: 데이터셋 설정
-
-    Returns:
-        Dict: 분석 결과
-    """
     try:
         # 구분자 매핑
         delimiter_map = {
@@ -218,18 +221,19 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         raise HTTPException(status_code=500, detail=f"데이터셋 분석 중 오류: {str(e)}")
 
 
+"""
+3️⃣ MongoDB에 파이프라인 문서 생성
+
+Args:
+    project_id: 프로젝트 ID
+    member_id: 회원 ID
+    etag: 원본 데이터셋 ETag
+
+Returns:
+    ObjectId: 생성된 파이프라인 문서의 ID
+"""
 async def create_pipeline_document(project_id: int, member_id: int, etag: str) -> Any:
-    """
-    MongoDB에 파이프라인 문서 생성
 
-    Args:
-        project_id: 프로젝트 ID
-        member_id: 회원 ID
-        etag: 원본 데이터셋 ETag
-
-    Returns:
-        ObjectId: 생성된 파이프라인 문서의 ID
-    """
     try:
         pipeline_collection = get_pipeline_collection()
 
@@ -254,3 +258,104 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
     except Exception as e:
         logger.error(f"파이프라인 문서 생성 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"파이프라인 문서 생성 중 오류: {str(e)}")
+
+
+"""
+분석된 데이터셋 정보를 MongoDB에 저장
+
+Args:
+    project_id (int): 프로젝트 ID
+    member_id (int): 회원 ID
+    file_name (str): 업로드된 파일명
+    etag (str): MinIO에 저장된 파일의 ETag
+    dataset_analysis (Dict[str, Any]): 데이터셋 분석 결과
+    config (Dict[str, Any]): 데이터셋 설정 정보
+    file_size (int): 파일 크기 (바이트)
+    object_name (str): MinIO에 저장된 객체 이름
+
+Returns:
+    str: 생성된 MongoDB 문서의 ID
+
+Raises:
+    HTTPException: MongoDB 저장 중 오류 발생 시
+"""
+async def store_dataset_to_mongodb(
+    project_id: int,
+    member_id: int,
+    file_name: str,
+    etag: str,
+    dataset_analysis: Dict[str, Any],
+    config: Dict[str, Any],
+    file_size: int,
+    object_name: str
+) -> str:
+
+    try:
+        dataset_collection = get_dataset_collection()
+        now = datetime.utcnow().isoformat() + "Z"
+
+        # 사용자가 제공한 타입을 우리 시스템의 ColumnType으로 매핑
+        type_mapping = {
+            "string": ColumnType.CATEGORICAL.value,
+            "datetime": ColumnType.DATETIME.value,
+            "integer": ColumnType.NUMERIC.value,
+            "boolean": ColumnType.CATEGORICAL.value,
+            "double": ColumnType.NUMERIC.value
+        }
+
+        # 데이터 타입 매핑
+        data_types = {}
+        if "columns" in config and len(config["columns"]) > 0:
+            for column in config["columns"]:
+                col_name = column["name"]
+                col_type = column.get("type", "string")  # 기본값은 string
+                data_types[col_name] = type_mapping.get(col_type.lower(), ColumnType.CATEGORICAL.value)
+
+        # 결측치 정보 변환
+        missing_value_count = {}
+        for col, details in dataset_analysis["missing_values"]["details"].items():
+            missing_value_count[col] = details["count"]
+
+        # 파일 타입 (항상 CSV)
+        file_type = "CSV"
+
+        # 커스텀 구분자 처리
+        delimiter = config.get("delimiter", "comma")
+        custom_delimiter = None
+        if delimiter == "other" and "customDelimiter" in config:
+            custom_delimiter = config["customDelimiter"]
+
+        # MongoDB 데이터셋 문서 생성
+        dataset_doc = {
+            "project_id": project_id,
+            "member_id": member_id,
+            "registered_at": now,
+            "modified_at": now,
+            "file_path": f"storage/datasets/{object_name}",
+            "file_size": file_size,
+            "etag": etag,
+            "is_deleted": False,
+            "category": DatasetCategory.CLASSIFICATION.value,  # 기본값
+            "domain": DatasetDomain.GENERAL.value,  # 기본값
+            "metadata": {
+                "row_count": dataset_analysis["total_rows"],
+                "column_count": dataset_analysis["total_columns"],
+                "data_types": data_types,
+                "missing_value_count": missing_value_count,
+                "delimiter": delimiter,
+                "custom_delimiter": custom_delimiter,
+                "encoding": config.get("encoding", "UTF-8"),
+                "has_header": config.get("hasHeader", False),
+                "file_type": file_type
+            }
+        }
+
+        # MongoDB에 문서 저장
+        result = await dataset_collection.insert_one(dataset_doc)
+        logger.info(f"MongoDB에 데이터셋 저장 완료: {result.inserted_id}")
+
+        return str(result.inserted_id)
+
+    except Exception as e:
+        logger.error(f"MongoDB에 데이터셋 저장 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"MongoDB에 데이터셋 저장 중 오류: {str(e)}")
