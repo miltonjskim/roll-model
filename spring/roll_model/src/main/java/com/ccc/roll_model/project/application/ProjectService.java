@@ -135,7 +135,7 @@ public class ProjectService {
                             .status(pipeline.getStatus() != null ? pipeline.getStatus().name().toLowerCase() : "unknown")
                             .domain(project.getDomain() != null ? project.getDomain().name().toLowerCase() : "unknown")
                             .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
-                                    ? model.getPerformance().getClassification().getAccuracy() * 100.0
+                                    ? model.getPerformance().getClassification().getAccuracy()
                                     : null)
                             .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
                                     ? model.getPerformance().getRegression().getRmse()
