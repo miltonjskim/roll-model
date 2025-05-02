@@ -16,7 +16,7 @@ import java.util.Map;
 @Document(collection = "models")
 public class ModelDocument {
     private ObjectId id; // 모델 고유 식별자
-    private ObjectId pipelineId; // 학습에 사용된 파이프라인 ID
+    private String pipelineId; // 학습에 사용된 파이프라인 ID
     private Integer projectId; // 소속 프로젝트 ID (정수)
     private Integer memberId; // 모델 등록한 회원 ID
 
