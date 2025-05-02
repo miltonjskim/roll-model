@@ -30,17 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 """
-1️⃣ 데이터셋을 MinIO에 업로드하고 메타데이터 저장
-
-Args:
-    db: 데이터베이스 세션
-    project_id: 프로젝트 ID
-    member_id: 회원 ID
-    file: 업로드된 파일
-    config_json: 데이터셋 설정 JSON 문자열
-
-Returns:
-    Dict: 업로드 및 분석 결과 정보
+1️⃣ 데이터셋을 MinIO, MongoDB에 업로드하고 메타데이터 저장
 """
 async def upload_dataset_and_save_metadata(
         db: Session,
@@ -49,23 +39,15 @@ async def upload_dataset_and_save_metadata(
         file: UploadFile,
         config_json: str
 ) -> Dict[str, Any]:
-
     try:
-        # 설정 파싱
         config = json.loads(config_json)
-
-        # 파일 읽기
         file_content = await file.read()
         file_io = io.BytesIO(file_content)
-
-        # MinIO 클라이언트 가져오기
         minio_client = get_minio_client()
-        bucket_name = "datasets"  # 환경 변수에서 가져올 수 있음
-
-        # 객체 이름 생성 (프로젝트 ID 기반)
+        bucket_name = "datasets"
         object_name = f"project_{project_id}/{file.filename}"
 
-        # 파일 업로드
+        # MinIO에 파일 업로드
         upload_success = minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
@@ -77,38 +59,46 @@ async def upload_dataset_and_save_metadata(
             logger.error(f"파일 {object_name} 업로드 실패")
             raise HTTPException(status_code=500, detail="파일 업로드 실패")
 
-        # 업로드된 객체의 etag 가져오기
+        # MinIO에서 파일 메타데이터 가져오기
         stat = minio_client.client.stat_object(bucket_name, object_name)
-        etag = stat.etag
+        etag = stat.etag.strip('"')
+        file_size = stat.size  # 파일 크기 가져오기
 
-        # 따옴표가 포함된 경우 제거
-        etag = etag.strip('"')
-
-        # MySQL DB에 etag 저장
+        # MySQL에 데이터셋 ETag 저장
         project_dataset = ProjectDataset(
             project_id=project_id,
             dataset_etag=etag
         )
 
-        # 데이터베이스에 저장
         db.add(project_dataset)
         db.commit()
         db.refresh(project_dataset)
 
         logger.info(f"프로젝트 {project_id}의 데이터셋 ETag가 성공적으로 저장되었습니다: {etag}")
 
-        # 파일 다시 읽기 (분석용)
+        # 데이터셋 분석
         file_io.seek(0)
-
-        # 파일 분석 (이 부분은 별도 함수로 분리 가능)
         dataset_analysis = await analyze_dataset(file_io, config)
 
-        # MongoDB에 파이프라인 정보 저장
+        # MongoDB에 파이프라인 생성
         pipeline_id = await create_pipeline_document(project_id, member_id, etag)
 
-        # 결과 구성
+        # MongoDB에 데이터셋 정보 저장
+        dataset_id = await store_dataset_to_mongodb(
+            project_id=project_id,
+            member_id=member_id,
+            file_name=file.filename,
+            etag=etag,
+            dataset_analysis=dataset_analysis,
+            config=config,
+            file_size=file_size,
+            object_name=object_name
+        )
+
+        # 응답 결과 생성
         result = {
             "pipelineId": str(pipeline_id),
+            "datasetId": dataset_id,  # 새로 생성된 데이터셋 ID 추가
             "summary": {
                 "totalRows": dataset_analysis["total_rows"],
                 "totalColumns": dataset_analysis["total_columns"],
@@ -120,13 +110,17 @@ async def upload_dataset_and_save_metadata(
             "original_datasets": dataset_analysis["data_sample"]
         }
 
+        # 커스텀 구분자가 있는 경우 추가
+        if config.get("delimiter") == "other" and "customDelimiter" in config:
+            result["summary"]["delimiter"] = "other"
+            result["summary"]["customDelimiter"] = config["customDelimiter"]
+
         return result
 
     except json.JSONDecodeError as e:
         logger.error(f"설정 JSON 파싱 오류: {str(e)}")
         raise HTTPException(status_code=400, detail=f"설정 파싱 오류: {str(e)}")
     except Exception as e:
-        # 트랜잭션 롤백
         db.rollback()
         logger.error(f"데이터셋 업로드 및 메타데이터 저장 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"처리 중 오류 발생: {str(e)}")
@@ -261,7 +255,7 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
 
 
 """
-분석된 데이터셋 정보를 MongoDB에 저장
+4️⃣ 분석된 데이터셋 정보를 MongoDB에 저장
 
 Args:
     project_id (int): 프로젝트 ID
