@@ -158,9 +158,7 @@ Returns:
     Dict: 분석 결과
 """
 async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
-
     try:
-        # 구분자 매핑
         delimiter_map = {
             "comma": ",",
             "semicolon": ";",
@@ -172,7 +170,6 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         encoding = config.get("encoding", "UTF-8")
         has_header = config.get("hasHeader", False)
 
-        # pandas로 CSV 읽기
         df = pd.read_csv(
             file_io,
             delimiter=delimiter,
@@ -180,21 +177,16 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
             header=0 if has_header else None
         )
 
-        # 헤더가 없는 경우, 컬럼 이름 할당
         if not has_header:
-            # config에서 컬럼 정보가 제공된 경우 사용
             if "columns" in config and len(config["columns"]) == len(df.columns):
                 column_names = [col["name"] for col in config["columns"]]
                 df.columns = column_names
             else:
-                # 제공되지 않은 경우 기본 컬럼명 생성
                 df.columns = [f"Column{i + 1}" for i in range(len(df.columns))]
 
-        # 기본 정보
         total_rows = len(df)
         total_columns = len(df.columns)
 
-        # 결측치 분석
         missing_columns = []
         missing_details = {}
 
@@ -202,8 +194,8 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
             missing_count = df[col].isna().sum()
             if missing_count > 0:
                 missing_percentage = round((missing_count / total_rows) * 100, 2)
-                # 결측치가 있는 행의 인덱스 (최대 20개만)
-                missing_indices = df[df[col].isna()].index.tolist()[:20]
+                # 모든 결측치 행 인덱스 가져오기 (제한 없음)
+                missing_indices = df[df[col].isna()].index.tolist()
 
                 missing_columns.append(col)
                 missing_details[col] = {
@@ -212,11 +204,10 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
                     "rowIndices": missing_indices
                 }
 
-        # 데이터 샘플 (처음 몇 개 행만)
-        sample_size = min(2, total_rows)  # 여기서는 예시로 2개만 표시
+        # 모든 데이터 포함
         data_sample = {
             "columns": df.columns.tolist(),
-            "data": df.head(sample_size).to_dict(orient="records")
+            "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
         }
 
         return {
