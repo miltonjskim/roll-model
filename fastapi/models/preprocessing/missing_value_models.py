@@ -1,7 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional, Union
-from pydantic import RootModel
 
 class MissingValueImputationMethod(str, Enum):
     MEAN = "MEAN"
@@ -14,7 +13,7 @@ class MissingValueImputationRequest(BaseModel):
     method: MissingValueImputationMethod = Field(..., description="대체 방법 ('MEAN', 'MEDIAN', 'MODE')")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "column": "temperature",
                 "method": "MEAN"
@@ -24,10 +23,6 @@ class MissingValueImputationRequest(BaseModel):
 ##################################################3
 
 # 응답 모델 정의
-
-class ImputationRow(RootModel):
-    root: Dict[str, Any]
-
 class ImputationResultDetail(BaseModel):
     column: str
     method: str
@@ -40,7 +35,6 @@ class ImputationResultDetail(BaseModel):
 class MissingValueImputationResponse(BaseModel):
     pipeline_id: int
     success: bool
-    message: str
     original_missing_count: int
     imputed_count: int 
     result: ImputationResultDetail
