@@ -1,10 +1,7 @@
 import { axiosInstance } from "@/shared/lib/axios/axiosInstance";
 import { OpenSourceResponse } from "@/entities/open-source/model/types";
 import openSourceMock from "@/shared/api/mocks/openSource.json";
-import {
-  ApiProjectDomain,
-  getDomainDisplayName,
-} from "../lib/utils/domainMapping";
+import { ApiProjectDomain, getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
 
 // API 응답 변환 함수 - 프로젝트에 displayDomain 추가
 const transformOpenSourceResponse = (

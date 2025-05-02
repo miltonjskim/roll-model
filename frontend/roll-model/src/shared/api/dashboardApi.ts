@@ -1,10 +1,8 @@
 import { axiosInstance } from "@/shared/lib/axios/axiosInstance";
 import { DashboardResponse } from "@/entities/dashboard/model/types";
 import dashboardMock from "@/shared/api/mocks/dashboard.json";
-import {
-  ApiProjectDomain,
-  getDomainDisplayName,
-} from "../lib/utils/domainMapping";
+import { ApiProjectDomain, getDomainDisplayName } from "@/shared/lib/utils/domainMapping";
+
 
 // API 응답 변환 함수 - 프로젝트에 displayDomain 추가
 const transformDashboardResponse = (
