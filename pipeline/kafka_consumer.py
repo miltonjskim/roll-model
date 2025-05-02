@@ -37,25 +37,37 @@ def consume_and_submit_tasks():
                     print(f"[Consumer] Invalid message: missing fields: {', '.join(missing_fields)}")
                     continue
 
-                # 경로 처리
-                data_path = get_absolute_path(payload['train_data_path'])
+                # 데이터 경로 처리 - 원래 경로 그대로 유지
+                data_path = payload['train_data_path']
+                print(f"[Consumer] Original data path: {data_path}")
+
                 model_type = payload['model_type']
                 model_params = payload.get('parameters', {})
 
                 # 저장 경로 (선택적)
-                save_path = None
-                if 'save_path' in payload:
-                    save_path = get_absolute_path(payload['save_path'])
+                save_path = payload.get('save_path')
 
                 # 타겟 컬럼 설정
                 target_column = payload.get('target_column', DEFAULT_TARGET_COLUMN)
+
+                # 파이프라인 ID (선택적)
+                pipeline_id = payload.get('pipeline_id')
+                if pipeline_id:
+                    print(f"[Consumer] Pipeline ID: {pipeline_id}")
 
                 print(f"[Consumer] Processing - Model: {model_type}, Data: {data_path}")
                 print(f"[Consumer] Parameters: {model_params}")
                 print(f"[Consumer] Target column: {target_column}")
 
                 # Celery 태스크 제출
-                task = train_model_task.delay(data_path, model_type, model_params, save_path, target_column)
+                task = train_model_task.delay(
+                    data_path,
+                    model_type,
+                    model_params,
+                    save_path,
+                    target_column,
+                    pipeline_id
+                )
                 print(f"[Consumer] Submitted Celery task with ID: {task.id}")
 
             except json.JSONDecodeError:
