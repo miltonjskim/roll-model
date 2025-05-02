@@ -47,9 +47,11 @@ public class ProjectController {
         return ApiUtils.success(response);
     }
 
-    @GetMapping
-    @RequestMapping("/my")
+    @GetMapping("/my")
     public ApiUtils.ApiResponse<GetMyProjectResponse> getMyProjects(@AuthenticationPrincipal Integer memberId) {
+//        if (memberId != null) {
+//            throw new IllegalArgumentException("인증 정보(memberId): " + memberId);
+//        }
 
         GetMyProjectResponse response = projectService.getMyProjects(memberId);
 

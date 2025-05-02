@@ -28,7 +28,7 @@ public class ProjectEntity extends BaseCreatedAndUpdatedEntity {
     private Integer projectId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     @NotNull
     private MemberEntity memberEntity;
 

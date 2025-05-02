@@ -17,7 +17,7 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
     @Column(name = "pipeline_id")
     private String pipelineId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id")
     private ProjectEntity projectEntity;
 
@@ -54,4 +54,10 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
 
     @Column(name = "parent_pipeline_id", nullable = false)
     private String parentPipelineId;
+
+    // 프로젝트 ID를 얻기 위한 안전한 메소드 추가
+    public Integer getProjectId() {
+        return projectEntity != null ? projectEntity.getProjectId() : null;
+    }
+
 }
