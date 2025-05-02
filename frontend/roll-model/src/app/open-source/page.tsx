@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useOpenSource } from "./model/useOpenSource";
+import { useOpenSource } from "./model/useopenSource";
 import { CategoryTabsForOpenSource } from "@/features/dashboard/CategoryTabsForOpenSource";
 import { SearchBar } from "@/features/dashboard/SearchBar"; // 검색 컴포넌트 가정
 import { ProjectGridForOpenSource } from "@/widgets/project/project-grid/ui/ProjectGridForOpenSource";

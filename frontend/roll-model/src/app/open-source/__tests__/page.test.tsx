@@ -4,7 +4,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import OpenSourcePage from "../page";
-import { useOpenSource } from "../model/useOpenSource";
+import { useOpenSource } from "../model/useopenSource";
 
 // ProjectCardForOpenSource에 router = useRouter(); 추가해줬기 때문에 추가해줘야됨. 
 // next/navigation 모킹 추가
