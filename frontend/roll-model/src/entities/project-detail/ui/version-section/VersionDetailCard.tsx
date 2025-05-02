@@ -9,10 +9,7 @@ interface VersionDetailCardProps {
   className?: string;
 }
 
-export const VersionDetailCard: React.FC<VersionDetailCardProps> = ({
-  pipeline,
-  className = '',
-}) => {
+export const VersionDetailCard: React.FC<VersionDetailCardProps> = ({ pipeline, className = '' }) => {
   if (!pipeline) return null;
 
   // 날짜 포맷팅 함수 (실제 구현은 utils 폴더에 있어야 함)
@@ -33,9 +30,7 @@ export const VersionDetailCard: React.FC<VersionDetailCardProps> = ({
     <div className={`rounded-lg bg-white p-6 shadow-sm ${className} border border-1`}>
       <div className="mb-4 flex items-start justify-between">
         <h2 className="text-xl font-bold text-gray-900">당뇨병 예측 모델</h2>
-        <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-          의학
-        </div>
+        <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">의학</div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6">
@@ -74,12 +69,8 @@ export const VersionDetailCard: React.FC<VersionDetailCardProps> = ({
       </div>
 
       <div className="flex justify-end space-x-3">
-        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">
-          상세
-        </button>
-        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">
-          모델 학습
-        </button>
+        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">상세</button>
+        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">모델 학습</button>
       </div>
     </div>
   );
