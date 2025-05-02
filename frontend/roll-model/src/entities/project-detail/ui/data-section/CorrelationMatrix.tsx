@@ -1,6 +1,5 @@
 // /entities/project-detail/ui/CorrelationMatrix.tsx
 import { CorrelationMatrix as CorrelationMatrixType } from "@/entities/project-detail/model/dataTypes";
-import { useState } from "react";
 
 interface CorrelationMatrixProps {
   correlationMatrix: CorrelationMatrixType;

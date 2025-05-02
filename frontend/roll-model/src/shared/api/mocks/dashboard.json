@@ -14,8 +14,8 @@
     },
     "projects": [
       {
-        "id": 1,
-        "version": "2.0",
+        "id": "1",
+        "version": 2.0,
         "title": "Project n1",
         "category": "CLASSIFICATION",
         "status": "COMPLETED",
@@ -32,8 +32,8 @@
         "updatedAt": "2025-04-22T00:00:00Z"
       },
       {
-        "id": 2,
-        "version": "3.1",
+        "id": "2",
+        "version": 3.1,
         "title": "Housing Price Prediction",
         "category": "REGRESSION",
         "status": "PREPROCESSED",
@@ -50,8 +50,8 @@
         "updatedAt": "2025-04-19"
       },
       {
-        "id": 3,
-        "version": "4.2",
+        "id": "3",
+        "version": 4.2,
         "title": "의료 영상 진단 분류",
         "category": "CLASSIFICATION",
         "status": "COMPLETED",
@@ -68,8 +68,8 @@
         "updatedAt": "2025-04-18T14:20:00Z"
       },
       {
-        "id": 4,
-        "version": "5.3",
+        "id": "4",
+        "version": 5.3,
         "title": "주식 가격 예측 모델",
         "category": "REGRESSION",
         "status": "COMPLETED",
@@ -86,8 +86,8 @@
         "updatedAt": "2025-04-12T18:45:00Z"
       },
       {
-        "id": 5,
-        "version": "6.4",
+        "id": "5",
+        "version": 6.4,
         "title": "고객 이탈 예측",
         "category": "CLASSIFICATION",
         "status": "PREPROCESSED",
@@ -104,8 +104,8 @@
         "updatedAt": "2025-04-08T16:30:00Z"
       },
       {
-        "id": 6,
-        "version": "19.91",
+        "id": "6",
+        "version": 19.91,
         "title": "학생 성적 예측",
         "category": "REGRESSION",
         "status": "PREPROCESSED",

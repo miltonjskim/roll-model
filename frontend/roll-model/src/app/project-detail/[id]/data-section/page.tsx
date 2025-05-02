@@ -1,8 +1,7 @@
-// /app/project-detail/[id]/data-section/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
-import { useProjectDetailData } from "@/entities/project-detail/model/useProjectDetailData";
+import { useProjectDetailData } from "@/app/project-detail/[id]/data-section/model/useProjectDetailData";
 import { DatasetInfoCard } from "@/entities/project-detail/ui/data-section/DatasetInfoCard";
 import { PreprocessingPipelineCard } from "@/entities/project-detail/ui/data-section/PreprocessingPipelineCard";
 import { DataSplitCard } from "@/entities/project-detail/ui/data-section/DataSplitCard";
@@ -11,7 +10,7 @@ import { CorrelationMatrix } from "@/entities/project-detail/ui/data-section/Cor
 
 export default function DataSectionPage() {
   const { id } = useParams();
-  const pipelineId = Number(id);
+  const pipelineId = id as string;
 
   const { projectDetailData, isLoading, isError } =
     useProjectDetailData(pipelineId);

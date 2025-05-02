@@ -5,7 +5,7 @@ export interface ProjectInfo {
   title: string;
   category: "CLASSIFICATION" | "REGRESSION";
   domain: ApiProjectDomain;
-  version: string;
+  version: number;
   ownerYn: boolean;
 }
 
