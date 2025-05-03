@@ -12,7 +12,7 @@
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
 """
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, Path
+from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 import logging
@@ -20,7 +20,8 @@ import json
 
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
-from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
+from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values, \
+    calculate_and_update_statistics
 from schemas.mysql.schemas import Project
 
 router = APIRouter()
@@ -28,10 +29,11 @@ logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
+    background_tasks: BackgroundTasks,
     project_id: int = Path(..., title="프로젝트 ID"),
     config: str = Form(..., description="데이터셋 설정 JSON"),
     dataFile: UploadFile = File(..., description="CSV 파일"),
-    db: Session = Depends(get_mysql_db)
+    db: Session = Depends(get_mysql_db),
 ):
     """
     프로젝트에 원본 데이터셋 업로드
@@ -107,7 +109,8 @@ async def upload_project_dataset(
             project_id=project_id,
             member_id=member_id,
             file=dataFile,
-            config_json=config
+            config_json=config,
+            background_tasks=background_tasks,
         )
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result))
