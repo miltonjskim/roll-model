@@ -131,9 +131,9 @@ public class ProjectService {
                             .id(pipeline.getPipelineId())
                             .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
                             .title(project.getTitle())
-                            .category(project.getCategory() != null ? project.getCategory().name().toLowerCase() : null)
-                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name().toLowerCase() : null)
-                            .domain(project.getDomain() != null ? project.getDomain().name().toLowerCase() : null)
+                            .category(project.getCategory() != null ? project.getCategory().name() : null)
+                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
+                            .domain(project.getDomain() != null ? project.getDomain().name() : null)
                             .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
                                     ? model.getPerformance().getClassification().getAccuracy()
                                     : null)
