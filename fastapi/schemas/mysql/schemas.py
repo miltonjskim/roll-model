@@ -94,6 +94,7 @@ class Pipeline(Base):
     registered_at = Column(DateTime, nullable=False, server_default=func.now())
     modified_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_yn = Column(Boolean, nullable=False, default=False)
+    parent_pipeline_id = Column(String(36), nullable=False)
 
     # 관계 설정
     project = relationship("Project", back_populates="pipelines")

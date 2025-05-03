@@ -7,6 +7,7 @@
 - 업로드된 데이터셋 분석 및 요약 정보 제공
 - MinIO에 파일 저장 및 MySQL에 ETag 저장
 - MongoDB에 파이프라인 및 데이터셋 정보 저장
+- MySQL에 파이프라인 데이터 저장
 
 파이프라인의 시작점
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
@@ -28,10 +29,10 @@ logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
-    project_id: int = Path(..., title="프로젝트 ID"),
-    config: str = Form(..., description="데이터셋 설정 JSON"),
-    dataFile: UploadFile = File(..., description="CSV 파일"),
-    db: Session = Depends(get_mysql_db)
+        project_id: int = Path(..., title="프로젝트 ID"),
+        config: str = Form(..., description="데이터셋 설정 JSON"),
+        dataFile: UploadFile = File(..., description="CSV 파일"),
+        db: Session = Depends(get_mysql_db)
 ):
     """
     프로젝트에 원본 데이터셋 업로드
@@ -49,8 +50,10 @@ async def upload_project_dataset(
     1. 파일 MinIO에 저장
     2. ETag MySQL에 저장
     3. 데이터셋 분석 수행
-    4. MongoDB에 파이프라인 및 데이터셋 정보 저장
-    5. 분석 결과 및 생성된 ID 반환
+    4. MongoDB에 파이프라인 생성 및 ID 가져오기
+    5. MySQL에 파이프라인 데이터 저장 (MongoDB ID 사용)
+    6. MongoDB에 데이터셋 정보 저장
+    7. 분석 결과 및 생성된 ID 반환
     """
     try:
         # 설정 유효성 검사
@@ -77,8 +80,8 @@ async def upload_project_dataset(
                 error_code="INVALID_JSON",
                 error_message="JSON 형식이 올바르지 않습니다"
             )
-        # 파일 유효성 검사
 
+        # 파일 유효성 검사
         if not dataFile.content_type or not dataFile.content_type.endswith(('csv', 'text/csv', 'application/csv')):
             return ApiResponse(
                 status_code=400,
@@ -101,25 +104,48 @@ async def upload_project_dataset(
 
         member_id = project.member_id
 
-        # 데이터셋 업로드 및 분석
-        result = await upload_dataset_and_save_metadata(
-            db=db,
-            project_id=project_id,
-            member_id=member_id,
-            file=dataFile,
-            config_json=config
-        )
+        # 데이터셋 업로드 및 분석 - 트랜잭션 시작
+        db.begin_nested()  # 중첩 트랜잭션 시작 (SAVEPOINT 생성)
+
+        try:
+            # 데이터셋 업로드 및 분석
+            result = await upload_dataset_and_save_metadata(
+                db=db,
+                project_id=project_id,
+                member_id=member_id,
+                file=dataFile,
+                config_json=config
+            )
+
+            # 명시적으로 트랜잭션 커밋 (SAVEPOINT 커밋)
+            db.commit()
+            logger.info(f"프로젝트 {project_id}의 데이터셋 처리 완료 - 트랜잭션 커밋됨")
+
+        except Exception as service_error:
+            # 서비스 호출 중 오류 발생 시 롤백 (SAVEPOINT로 롤백)
+            db.rollback()
+            logger.error(f"데이터셋 업로드 및 분석 중 오류: {str(service_error)}")
+            raise service_error  # 예외 다시 발생시켜 외부 핸들러로 전달
+
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result))
+
         # 응답 구성
         return ApiResponse(
             data=safe_result,
-            message="데이터 업로드 및 분석 완료",
+            message="데이터셋 업로드 및 분석 완료",
             status_code=200
         )
 
     except Exception as e:
         logger.error(f"데이터셋 업로드 중 오류: {str(e)}")
+        # 예외 발생 시 명시적 롤백
+        try:
+            db.rollback()
+            logger.info("오류로 인한 트랜잭션 롤백 완료")
+        except Exception as rollback_error:
+            logger.error(f"롤백 중 오류: {str(rollback_error)}")
+
         return ApiResponse(
             status_code=500,
             error_code="UPLOAD_ERROR",
