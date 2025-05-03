@@ -66,10 +66,10 @@ public class SecurityConfig {
 			// OAuth2 로그인 설정
 			.oauth2Login(oauth -> oauth
 				.authorizationEndpoint(authorization -> authorization
-					.baseUri("/api/oauth2/authorization")
+					.baseUri("/api/v1/oauth2/authorization")
 				)
 				.redirectionEndpoint(redirectionEndpointConfig -> redirectionEndpointConfig
-					.baseUri("/api/login/oauth2/code/*")
+					.baseUri("/api/v1/login/oauth2/code/*")
 				)
 				.userInfoEndpoint(user -> user
 					.userService(defaultOAuth2UserService)
