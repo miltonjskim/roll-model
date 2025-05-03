@@ -12,7 +12,7 @@ spring:
             client-name: github
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: ${BASE_URL}/api/login/oauth2/code/github
+            redirect-uri: ${BASE_URL}/api/v1/login/oauth2/code/github
             scope:
               - read:user
               - user:email
@@ -20,7 +20,7 @@ spring:
             client-name: google
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: ${BASE_URL}/api/login/oauth2/code/google
+            redirect-uri: ${BASE_URL}/api/v1/login/oauth2/code/google
             scope:
               - profile
               - email
