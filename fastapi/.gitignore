@@ -4,3 +4,5 @@ minio
 *.pyc
 .venv
 *.log
+.idea
+.vscode

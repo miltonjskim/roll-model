@@ -20,11 +20,11 @@ class Model(BaseModel):
     metrics: Dict[str, Any]
     feature_importance: List[FeatureImportance] = []
     file_path: str
-    registered_at: datetime = Field(default_factory=datetime.utcnow)
-    modified_at: datetime = Field(default_factory=datetime.utcnow)
+    registered_at: datetime = Field(default_factory=datetime.now())
+    modified_at: datetime = Field(default_factory=datetime.now())
     is_deleted: bool = False
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}

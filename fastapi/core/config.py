@@ -22,21 +22,27 @@ class Settings(BaseSettings):
     MYSQL_USER: str
     MYSQL_PASSWORD: str
     MYSQL_DB: str
-    MYSQL_ROOT_PASSWORD: str
-    
     # MONGO
     MONGODB_HOST: str
     MONGODB_PORT: int
-    MONGODB_USER: str
-    MONGODB_PASSWORD: str
     MONGODB_DB: str
-    MONGODB_AUTH_SOURCE: str
     
     # REDIS
     REDIS_HOST: str
     REDIS_PORT: int
     REDIS_PASSWORD: str
     REDIS_DB: int
+
+    # API 기본 경로
+    API_V1_STR: str = "/api/v1"
+
+    # MinIO 설정
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_SECURE: bool
+    MINIO_DATASET_BUCKET: str
+    MINIO_MODEL_BUCKET: str
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
