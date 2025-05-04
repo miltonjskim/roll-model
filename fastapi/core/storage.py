@@ -209,19 +209,28 @@ class MinioClient:
     Optional[str]:
         """객체를 저장하고 생성된 etag를 반환합니다."""
         try:
+
+            # 버퍼 크기 계산
+            current_position = data.tell()
+            data.seek(0, 2)  # 끝으로 이동
+            size = data.tell()  # 크기 확인
+            data.seek(0)  # 처음으로 돌아감
+            
+            logger.info(f"데이터 버퍼 크기: {size} 바이트")
+            
             # 버킷이 없으면 생성
             if not self.client.bucket_exists(bucket_name):
                 self.client.make_bucket(bucket_name)
 
-            # 객체 업로드
+            # 객체 업로드 (명시적 크기 지정)
             result = self.client.put_object(
                 bucket_name=bucket_name,
                 object_name=object_name,
                 data=data,
-                length=-1,  # 자동으로 데이터 길이 계산
+                length=size,  # 명시적 크기 지정
                 content_type=content_type
             )
-
+            logger.info(f"minio 저장 결과값 : {result}")
             # etag 반환 (따옴표 제거)
             return result.etag.strip('"')
 
