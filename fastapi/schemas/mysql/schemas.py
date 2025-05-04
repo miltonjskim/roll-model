@@ -12,7 +12,7 @@ class ProviderType(str, enum.Enum):
 class PipelineStatus(str, enum.Enum):
     CREATED = "CREATED"
     LEARNING = "LEARNING"
-    PREPROCESSING = "PREPROCESSING"
+    PREPROCESSED = "PREPROCESSED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
@@ -90,7 +90,7 @@ class Pipeline(Base):
     data_count = Column(Integer, nullable=True)
     target_feature = Column(String(20), nullable=True)
     status = Column(Enum(PipelineStatus), nullable=False, default=PipelineStatus.CREATED)
-    version = Column(Float, nullable=False, default=1.0)
+    version = Column(Float, nullable=True, default=None)
     registered_at = Column(DateTime, nullable=False, server_default=func.now())
     modified_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_yn = Column(Boolean, nullable=False, default=False)

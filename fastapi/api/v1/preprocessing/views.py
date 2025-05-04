@@ -2,7 +2,6 @@ import io
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Path, HTTPException
-from numpy.distutils.fcompiler import has_f90_header
 from sqlalchemy.orm import Session
 
 from core.security import verify_token
@@ -11,7 +10,7 @@ from db.mysql_config import get_mysql_db
 from models.preprocessing.missing_value_models import MissingValueImputationRequest, ImputationResultDetail, \
     MissingValueImputationResponse
 from schemas.mongo.pipeline import PreprocessingStep, PreprocessingStepType, PipelineHistoryItem
-from schemas.mysql.schemas import Pipeline, PipelineStatus
+from schemas.mysql.schemas import PipelineStatus, Pipeline
 from service.dataset_service import store_dataset_to_mongodb, analyze_dataset
 from service.db.pipeline_cache_service import PipelineCacheService, get_pipeline_cache_service
 from service.preprocessing.missing_value_handler import MissingValueHandler
@@ -103,7 +102,8 @@ async def remove_missing_values(
     # 결측치 처리
     minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
     logger.info(f" minio 호출 결과 : {minio_output['data']}")
-    handler = MissingValueHandler(minio_output["data"])
+    data_io = io.BytesIO(minio_output["data"])
+    handler = MissingValueHandler(data_io)
     result = handler.handle_missing_values(column=request.column, method=request.method)
     logger.info(f"result: {result}")
     df = result["data"]
@@ -237,7 +237,8 @@ async def imputate_missing_values(
     # 결측치 처리
     minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
     logger.info(f" minio 호출 결과 : {minio_output['data']}")
-    handler = MissingValueHandler(minio_output["data"])
+    data_io = io.BytesIO(minio_output["data"])
+    handler = MissingValueHandler(data_io)
     result = handler.handle_missing_values(column=request.column, method=request.method)
     logger.info(f"result: {result}")
     df = result["data"]
@@ -298,7 +299,7 @@ async def imputate_missing_values(
 
     # 새 history 항목을 리스트에 추가
     await pipeline_cache_service.add_pipeline_history(pipeline, history_item)
-    
+
     imputation_detail = ImputationResultDetail(
         column=result["column"],
         method=result["method"],
@@ -367,6 +368,7 @@ async def complete_preprocessing(
         bucket_name = "datasets"
         
         # 3. 최종 데이터셋 데이터 가져오기
+        logger.info(f"required etag : {final_dataset_etag}")
         minio_output = await minio_client.get_object_by_etag(bucket_name, final_dataset_etag)
         if not minio_output or not minio_output.get("data"):
             raise HTTPException(status_code=404, detail="최종 데이터셋을 찾을 수 없습니다")
@@ -374,15 +376,11 @@ async def complete_preprocessing(
         # 데이터프레임으로 변환
         file_content = minio_output.get("data")
         buffer = io.BytesIO(file_content)
-
-        # 4. 몽고DB 파이프라인 상태 업데이트
-        updates = {
-            "status": "PREPROCESSED",  # 상태를 완료로 변경
-        }
         
-        updated_pipeline = await pipeline_cache_service.update_pipeline(
+        updated_pipeline = await pipeline_cache_service.update_pipeline_status(
             pipeline_id=pipeline_id,
-            updates=updates,
+            new_status=PipelineStatus.PREPROCESSED,
+            project_id=pipeline.project_id,
             member_id=member_id
         )
         
@@ -390,9 +388,10 @@ async def complete_preprocessing(
             raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
 
         # 타입 추론
+        buffer.seek(0)
         df = pd.read_csv(buffer)
         columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
-
+        logger.info(df.head)
         # 데이터 타입 추론
         inferred_columns = []
         for col in columns:
@@ -428,7 +427,7 @@ async def complete_preprocessing(
             "hasHeader": True,
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }
-
+        
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
         dataset_analysis = await analyze_dataset(buffer, config)
         # MongoDB에 전처리된 데이터셋 저장
@@ -448,12 +447,11 @@ async def complete_preprocessing(
         pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
         if not pipeline:
             logger.error(f"파이프라인 ID {pipeline_id}에 해당하는 레코드를 찾을 수 없습니다.")
-            return None
+            raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
 
             # 파이프라인 상태 업데이트
-        pipeline.status = PipelineStatus.PREPROCESSING
+        pipeline.status = PipelineStatus.PREPROCESSED
         pipeline.modified_at = datetime.now()
-
         # 변경사항 커밋
         db.commit()
         db.refresh(pipeline)
@@ -461,7 +459,10 @@ async def complete_preprocessing(
         response = {
             "status": 200,
             "message": "전처리 완료",
-            "data": None
+            "data": {
+                "pipelineId": pipeline_id,
+                "columns": inferred_columns,
+            }
         }
         
         return response

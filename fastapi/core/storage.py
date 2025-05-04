@@ -157,41 +157,39 @@ class MinioClient:
             return False
 
     async def get_object_by_etag(self, bucket_name: str, etag: str) -> Optional[Dict[str, Any]]:
-        """etag로 MinIO 객체를 조회합니다."""
+        """etag를 기반으로 객체를 가져옵니다."""
         try:
-            # 버킷 내 객체 리스트 조회
+            # 버킷 내 모든 객체 조회
             objects = self.client.list_objects(bucket_name, recursive=True)
-
-            # etag와 일치하는 객체 찾기
+            
+            # etag 일치하는 객체 찾기
             for obj in objects:
-                # MinIO는 etag 값을 ""로 감싸서 저장합니다
-                # 예: "a1b2c3d4e5f6g7h8i9j0" -> a1b2c3d4e5f6g7h8i9j0
-                obj_etag = obj.etag.strip('"')
-
-                if obj_etag == etag:
-                    # 객체 정보 조회
-                    obj_data = self.client.get_object(bucket_name, obj.object_name)
-                    obj_stats = self.client.stat_object(bucket_name, obj.object_name)
-
+                if obj.etag.strip('"') == etag:
+                    # 객체 데이터 가져오기
+                    response = self.client.get_object(
+                        bucket_name=bucket_name,
+                        object_name=obj.object_name
+                    )
+                    
+                    # 중요: HTTPResponse를 바이트로 변환
+                    data = response.read()
+                    
+                    # 객체 정보 반환
                     return {
-                        "bucket_name": bucket_name,
+                        "data": data,
                         "object_name": obj.object_name,
-                        "etag": obj_etag,
                         "size": obj.size,
-                        "last_modified": obj.last_modified,
-                        "content_type": obj_stats.content_type,
-                        "metadata": obj_stats.metadata,
-                        "data": obj_data
+                        "etag": etag
                     }
-
+                    
             # 일치하는 객체가 없는 경우
             return None
-
+            
         except S3Error as err:
-            print(f"S3 Error: {err}")
+            logger.error(f"S3 Error: {err}")
             return None
         except Exception as err:
-            print(f"Error: {err}")
+            logger.error(f"Error: {err}")
             return None
 
     async def get_object_data_by_etag(self, bucket_name: str, etag: str) -> Optional[BinaryIO]:
