@@ -14,7 +14,6 @@
 import io
 import json
 import logging
-import uuid
 
 import pandas as pd
 from typing import Dict, Any, BinaryIO, List
@@ -130,7 +129,6 @@ async def upload_dataset_and_save_metadata(
             file_size=file_size,
             object_name=object_name
         )
-
         # 응답 결과 생성
         result = {
             "pipelineId": mysql_pipeline_id,  # MySQL 파이프라인 ID (MongoDB ObjectID 문자열)
@@ -145,12 +143,11 @@ async def upload_dataset_and_save_metadata(
             "missingValues": dataset_analysis["missing_values"],
             "originalDatasets": dataset_analysis["data_sample"]
         }
-
         # 몽고DB에 데이터가 생긴 이후에 백그라운트 작업 진행
         background_tasks.add_task(
             calculate_and_update_statistics,
             result.get("datasetId"),
-            result.get("dataSample").get("data"),
+            result.get("originalDatasets").get("data"),
             config.get("columns")
         )
 
@@ -295,13 +292,13 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         }
 
         return {
-            "totalRows": total_rows,
-            "totalColumns": total_columns,
-            "missingValues": {
+            "total_rows": total_rows,
+            "total_columns": total_columns,
+            "missing_values": {
                 "columns": missing_columns,
                 "details": missing_details
             },
-            "dataSample": data_sample
+            "data_sample": data_sample
         }
 
     except Exception as e:
@@ -460,11 +457,11 @@ async def calculate_and_update_statistics(
     Args:
         dataset_id: MongoDB에 저장된 데이터셋 ID
         data: 데이터셋 데이터 (pandas DataFrame으로 변환될 딕셔너리 리스트)
-        columns: 데이터셋 컬럼 이름 목록
+        columns: [{"name":...,"type":...}, {}]
         data_types: 컬럼별 데이터 타입 매핑
     """
     try:
-
+        logger.info("백그라운드 작업 중..")
         # 데이터프레임으로 변환
         df = pd.DataFrame(data)
 
@@ -476,15 +473,17 @@ async def calculate_and_update_statistics(
 
         # 각 컬럼 타입에 따라 통계 계산
         for col in columns:
-            if col in df.columns:
+            col_name = col.get("name")
+            if col_name in df.columns:
                 col_type = col.get("type", ColumnType.CATEGORICAL.value)
 
                 # 숫자형 변수 처리
-                if col_type in [ColumnType.NUMERIC.value]:
+                # logger.info(f"{col_type}, {ColumnType.NUMERIC.value}")
+                if col_type in ["integer", "double", "numeric", "number", "float"]:
                     try:
                         # 숫자형으로 변환
-                        numeric_data = pd.to_numeric(df[col], errors='coerce')
-                        numeric_columns.append(col)
+                        numeric_data = pd.to_numeric(df[col_name], errors='coerce')
+                        numeric_columns.append(col_name)
 
                         # NaN 제외한 데이터만 사용
                         clean_data = numeric_data.dropna()
@@ -495,7 +494,7 @@ async def calculate_and_update_statistics(
                             hist_values = hist.tolist()
 
                             # 기본 통계량 계산
-                            numeric_features[col] = {
+                            numeric_features[col_name] = {
                                 "mean": float(clean_data.mean()),
                                 "median": float(clean_data.median()),
                                 "std": float(clean_data.std() if len(clean_data) > 1 else 0),
@@ -504,13 +503,13 @@ async def calculate_and_update_statistics(
                                 "histogram": hist_values
                             }
                     except Exception as e:
-                        logger.warning(f"컬럼 {col}의 숫자형 통계 계산 중 오류: {str(e)}")
+                        logger.warning(f"컬럼 {col_name}의 숫자형 통계 계산 중 오류: {str(e)}")
 
                 # 범주형 변수 처리
-                elif col_type in [ColumnType.CATEGORICAL.value]:
+                elif col_type in ["string", "categorical", "boolean", "text", "char"]:
                     try:
                         # 값별 빈도수 계산
-                        value_counts = df[col].value_counts().to_dict()
+                        value_counts = df[col_name].value_counts().to_dict()
 
                         # NaN 또는 None 값 제외
                         value_counts = {
@@ -518,13 +517,13 @@ async def calculate_and_update_statistics(
                             if k is not None and not (isinstance(k, float) and math.isnan(k))
                         }
 
-                        categorical_features[col] = {
+                        categorical_features[col_name] = {
                             "value_counts": value_counts,
                             "unique_count": len(value_counts)
                         }
                     except Exception as e:
-                        logger.warning(f"컬럼 {col}의 범주형 통계 계산 중 오류: {str(e)}")
-
+                        logger.warning(f"컬럼 {col_name}의 범주형 통계 계산 중 오류: {str(e)}")
+        logger.info("행렬 계산 작업 중..")
         # 상관관계 행렬 계산 (숫자형 변수가 2개 이상일 경우)
         if len(numeric_columns) > 1:
             try:
@@ -535,7 +534,9 @@ async def calculate_and_update_statistics(
                 correlation_matrix = corr_matrix
             except Exception as e:
                 logger.warning(f"상관관계 행렬 계산 중 오류: {str(e)}")
-
+        logger.info(f"생성된 숫자형 통계: {list(numeric_features.keys())}")
+        logger.info(f"생성된 범주형 통계: {list(categorical_features.keys())}")
+        logger.info(f"상관관계 행렬 생성 여부: {correlation_matrix is not None}")
         # 모든 통계 정보를 담은 객체 생성
         statistics = {
             "numeric_features": numeric_features,
@@ -545,6 +546,7 @@ async def calculate_and_update_statistics(
         if correlation_matrix:
             statistics["correlation_matrix"] = correlation_matrix
 
+        logger.info("데이터 셋 업데이트 중..")
         # MongoDB에 통계 정보 업데이트
         dataset_collection = get_dataset_collection()
         await dataset_collection.update_one(
