@@ -403,38 +403,47 @@ async def complete_preprocessing(
         df = pd.read_csv(buffer)
         columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
         logger.info(df.head)
-        
+
         # 데이터 타입 추론
         inferred_columns = []
         for col in columns:
             # 해당 열에 NaN 값이 있는지 확인
             has_nan = df[col].isna().any()
-            
+
             # 데이터 타입 추론 로직
             sample_data = df[col].dropna().iloc[:10] if len(df[col].dropna()) > 0 else []
 
-            # 타입 추론
-            inferred_type = "string"  # 기본값
+            # 기본값 설정
+            inferred_type = "string"
 
             if len(sample_data) > 0:
-                # 날짜 형식 확인
-                try:
-                    pd.to_datetime(sample_data.iloc[0])
+                # 날짜 형식 확인 - try-except 대신 더 명시적인 방법 사용
+                first_val = sample_data.iloc[0]
+                is_datetime = False
+
+                # 문자열인 경우만 날짜 확인 시도
+                if isinstance(first_val, str):
+                    # 일반적인 날짜 패턴을 정규식으로 확인하거나
+                    # 또는 pd.to_datetime의 errors='coerce' 사용해서 변환 성공 여부 확인
+                    date_attempt = pd.to_datetime(first_val, errors='coerce')
+                    is_datetime = not pd.isna(date_attempt)
+
+                if is_datetime:
                     inferred_type = "datetime"
-                except:
-                    # 숫자 형식 확인
-                    if pd.api.types.is_numeric_dtype(sample_data):
-                        # NaN이 있으면서 정수 같은 값들이라면 실제로는 float으로 처리됨
-                        if has_nan and all(sample_data.dropna().apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
-                            inferred_type = "double"  # NaN이 있으므로 float으로 처리
-                        # NaN이 없고 모든 값이 정수처럼 보이면 integer
-                        elif not has_nan and all(sample_data.dropna().apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
-                            inferred_type = "integer"
-                        else:
-                            inferred_type = "double"
-                    # 불리언 값 확인
-                    elif all(sample_data.isin([True, False, "True", "False", "true", "false", 0, 1])):
-                        inferred_type = "boolean"
+                # 숫자 형식 확인
+                elif pd.api.types.is_numeric_dtype(sample_data):
+                    # NaN이 있으면서 정수 같은 값들이라면 float으로 처리
+                    if has_nan and all(sample_data.apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                        inferred_type = "double"
+                    # NaN이 없고 모든 값이 정수처럼 보이면 integer
+                    elif not has_nan and all(
+                            sample_data.apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                        inferred_type = "integer"
+                    else:
+                        inferred_type = "double"
+                # 불리언 값 확인
+                elif all(sample_data.isin([True, False, "True", "False", "true", "false", 0, 1])):
+                    inferred_type = "boolean"
 
             inferred_columns.append({"name": col, "type": inferred_type})
 
