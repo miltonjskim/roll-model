@@ -13,7 +13,7 @@
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
 """
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, Path
+from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 import logging
@@ -21,7 +21,8 @@ import json
 
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
-from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
+from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values, \
+    calculate_and_update_statistics
 from schemas.mysql.schemas import Project
 
 router = APIRouter()
@@ -29,10 +30,11 @@ logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
-        project_id: int = Path(..., title="프로젝트 ID"),
-        config: str = Form(..., description="데이터셋 설정 JSON"),
-        dataFile: UploadFile = File(..., description="CSV 파일"),
-        db: Session = Depends(get_mysql_db)
+    background_tasks: BackgroundTasks,
+    project_id: int = Path(..., title="프로젝트 ID"),
+    config: str = Form(..., description="데이터셋 설정 JSON"),
+    dataFile: UploadFile = File(..., description="CSV 파일"),
+    db: Session = Depends(get_mysql_db),
 ):
     """
     프로젝트에 원본 데이터셋 업로드
@@ -104,29 +106,15 @@ async def upload_project_dataset(
 
         member_id = project.member_id
 
-        # 데이터셋 업로드 및 분석 - 트랜잭션 시작
-        db.begin_nested()  # 중첩 트랜잭션 시작 (SAVEPOINT 생성)
-
-        try:
-            # 데이터셋 업로드 및 분석
-            result = await upload_dataset_and_save_metadata(
-                db=db,
-                project_id=project_id,
-                member_id=member_id,
-                file=dataFile,
-                config_json=config
-            )
-
-            # 명시적으로 트랜잭션 커밋 (SAVEPOINT 커밋)
-            db.commit()
-            logger.info(f"프로젝트 {project_id}의 데이터셋 처리 완료 - 트랜잭션 커밋됨")
-
-        except Exception as service_error:
-            # 서비스 호출 중 오류 발생 시 롤백 (SAVEPOINT로 롤백)
-            db.rollback()
-            logger.error(f"데이터셋 업로드 및 분석 중 오류: {str(service_error)}")
-            raise service_error  # 예외 다시 발생시켜 외부 핸들러로 전달
-
+        # 데이터셋 업로드 및 분석
+        result = await upload_dataset_and_save_metadata(
+            db=db,
+            project_id=project_id,
+            member_id=member_id,
+            file=dataFile,
+            config_json=config,
+            background_tasks=background_tasks,
+        )
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result))
 

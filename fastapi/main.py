@@ -5,7 +5,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
 from api.v1.preprocessing.routers import api_router as preprocessing_router
 from api.v1.project.routers import api_router as project_router
-from api.v1.health_check import router as health_check_router
 from core.api_response import ApiResponse
 
 from core.exception import (
@@ -68,9 +67,8 @@ def welcome_root():
     '''
     return "Welcome to root"
 
-app.include_router(preprocessing_router, prefix="/api", tags=["api"])
-app.include_router(project_router, prefix="/api", tags=["api"])
-app.include_router(health_check_router, prefix="/api", tags=["api"])
+app.include_router(preprocessing_router, prefix="/api/v2", tags=["api"])
+app.include_router(project_router, prefix="/api/v2", tags=["api"])
 
 # CORS 설정
 app.add_middleware(
