@@ -51,7 +51,7 @@ class PipelineStatus(str, enum.Enum):
     CREATED = "CREATED"
     RUNNING = "RUNNING"
     LEARNING = "LEARNING"
-    PREPROCESSING = "PREPROCESSING"
+    PREPROCESSED = "PREPROCESSED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
@@ -73,6 +73,7 @@ class PreprocessingStep(BaseModel):
     order: int
     active: bool = True
     preprocessed_dataset_etag: Optional[str] = ""
+    preprocessed_dataset_object_name: Optional[str] = ""
 
 class DataSplit(BaseModel):
     train_ratio: float
