@@ -105,17 +105,17 @@ async def remove_missing_values(
     data_io = io.BytesIO(minio_output["data"])
     handler = MissingValueHandler(data_io)
     result = handler.handle_missing_values(column=request.column, method=request.method)
+    data_io.close()
     logger.info(f"result: {result}")
     df = result["data"]
     
+    # MinIO에 저장할 객체 경로 생성
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
     buffer = io.BytesIO()
     df.to_csv(buffer, index=False)
     buffer.seek(0)  # 버퍼의 포인터를 처음으로 되돌림
 
-    # MinIO에 저장할 객체 경로 생성
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
-    
     # MinIO에 저장하고 etag 받기
     etag = await minio_client.save_object_with_etag(
         bucket_name=bucket_name,
@@ -123,6 +123,8 @@ async def remove_missing_values(
         data=buffer,
         content_type="text/csv"
     )
+    buffer.close()
+
     # 결과 redis 저장
     logger.info(f"etag : {etag}")
     # pipeline.history 확인 및 처리
@@ -135,7 +137,8 @@ async def remove_missing_values(
             },
             order=1,
             active=True,
-            preprocessed_dataset_etag=etag
+            preprocessed_dataset_etag=etag,
+            preprocessed_dataset_object_name=object_name
         )
         # history가 비어 있는 경우, 새로운 history 항목 생성
         history_item = PipelineHistoryItem(
@@ -151,7 +154,8 @@ async def remove_missing_values(
             },
             order=pipeline.history[-1].preprocessing_steps[-1].order+1,
             active=True,
-            preprocessed_dataset_etag=etag
+            preprocessed_dataset_etag=etag,
+            preprocessed_dataset_object_name=object_name
         )
         history_item = pipeline.history[-1].preprocessing_steps.copy()
         history_item.append(step)
@@ -237,20 +241,24 @@ async def imputate_missing_values(
     # 결측치 처리
     minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
     logger.info(f" minio 호출 결과 : {minio_output['data']}")
+    # 결측치 처리
+    minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
+    logger.info(f" minio 호출 결과 : {minio_output['data']}")
+
     data_io = io.BytesIO(minio_output["data"])
     handler = MissingValueHandler(data_io)
     result = handler.handle_missing_values(column=request.column, method=request.method)
+    data_io.close()
     logger.info(f"result: {result}")
     df = result["data"]
     
+    # MinIO에 저장할 객체 경로 생성
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
     buffer = io.BytesIO()
     df.to_csv(buffer, index=False)
     buffer.seek(0)  # 버퍼의 포인터를 처음으로 되돌림
 
-    # MinIO에 저장할 객체 경로 생성
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
-    
     # MinIO에 저장하고 etag 받기
     etag = await minio_client.save_object_with_etag(
         bucket_name=bucket_name,
@@ -258,6 +266,7 @@ async def imputate_missing_values(
         data=buffer,
         content_type="text/csv"
     )
+    buffer.close()
     # 결과 redis 저장
     logger.info(f"etag : {etag}")
     # pipeline.history 확인 및 처리
@@ -270,7 +279,8 @@ async def imputate_missing_values(
             },
             order=1,
             active=True,
-            preprocessed_dataset_etag=etag
+            preprocessed_dataset_etag=etag,
+            preprocessed_dataset_object_name=object_name
         )
         # history가 비어 있는 경우, 새로운 history 항목 생성
         history_item = PipelineHistoryItem(
@@ -286,7 +296,8 @@ async def imputate_missing_values(
             },
             order=pipeline.history[-1].preprocessing_steps[-1].order+1,
             active=True,
-            preprocessed_dataset_etag=etag
+            preprocessed_dataset_etag=etag,
+            preprocessed_dataset_object_name=object_name
         )
         
         # 새로운 PipelineHistoryItem 객체 생성 (기존 단계들 복사 + 새 단계 추가)
@@ -392,9 +403,13 @@ async def complete_preprocessing(
         df = pd.read_csv(buffer)
         columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
         logger.info(df.head)
+        
         # 데이터 타입 추론
         inferred_columns = []
         for col in columns:
+            # 해당 열에 NaN 값이 있는지 확인
+            has_nan = df[col].isna().any()
+            
             # 데이터 타입 추론 로직
             sample_data = df[col].dropna().iloc[:10] if len(df[col].dropna()) > 0 else []
 
@@ -409,8 +424,11 @@ async def complete_preprocessing(
                 except:
                     # 숫자 형식 확인
                     if pd.api.types.is_numeric_dtype(sample_data):
-                        # 정수인지 실수인지 확인
-                        if all(sample_data.dropna().apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                        # NaN이 있으면서 정수 같은 값들이라면 실제로는 float으로 처리됨
+                        if has_nan and all(sample_data.dropna().apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                            inferred_type = "double"  # NaN이 있으므로 float으로 처리
+                        # NaN이 없고 모든 값이 정수처럼 보이면 integer
+                        elif not has_nan and all(sample_data.dropna().apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
                             inferred_type = "integer"
                         else:
                             inferred_type = "double"
@@ -431,7 +449,7 @@ async def complete_preprocessing(
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
         dataset_analysis = await analyze_dataset(buffer, config)
         # MongoDB에 전처리된 데이터셋 저장
-
+        buffer.close()
         await store_dataset_to_mongodb(
             project_id=pipeline.project_id,
             member_id=member_id,

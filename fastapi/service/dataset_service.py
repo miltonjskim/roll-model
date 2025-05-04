@@ -102,7 +102,7 @@ async def upload_dataset_and_save_metadata(
         # 데이터셋 분석
         file_io.seek(0)
         dataset_analysis = await analyze_dataset(file_io, config)
-
+        file_io.close()
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
         mongo_pipeline_id = await create_pipeline_document(project_id, member_id, etag)
 
