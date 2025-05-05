@@ -3,39 +3,35 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
-import { accessTokenAtom, refreshTokenAtom } from "@/features/auth/model/authAtoms";
+import { userAtom, isLoggedInAtom } from "@/features/auth/model/authAtoms";
+import { axiosInstance } from "@/shared/lib/axios/axiosInstance";
+import { showErrorToast } from "@/shared/lib/toast/toast";
 
 const CallbackPage = () => {
-	const router = useRouter();
-	const setAccessToken = useSetAtom(accessTokenAtom);
-	const setRefreshToken = useSetAtom(refreshTokenAtom);
+  const router = useRouter();
+  const setUser = useSetAtom(userAtom);
+  const setIsLoggedIn = useSetAtom(isLoggedInAtom);
 
-	useEffect(() => {
-		const cookieHeader = document.cookie.split("; ").find((row) => row.startsWith("tokens="));
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axiosInstance.get("/api/me", {
+          withCredentials: true,
+        });
+        setUser(response.data);
+        setIsLoggedIn(true);
+        router.push("/");
+      } catch (error) {
+        setIsLoggedIn(false);
+        showErrorToast("로그인 정보 확인에 실패했습니다.")
+        router.push("/");
+      }
+    };
 
-		if (!cookieHeader) {
-			alert("토큰이 존재하지 않습니다.");
-			router.push("/");
-			return;
-		}
+    fetchUser();
+  }, [router, setUser, setIsLoggedIn]);
 
-		const tokens = decodeURIComponent(cookieHeader.split("=")[1]);
-		const params = new URLSearchParams(tokens);
-
-		const accessToken = params.get("accessToken");
-		const refreshToken = params.get("refreshToken");
-
-		if (accessToken && refreshToken) {
-			setAccessToken(accessToken);
-			setRefreshToken(refreshToken);
-			router.push("/");
-		} else {
-			alert("토큰 파싱에 실패했습니다.");
-			router.push("/");
-		}
-	}, [router, setAccessToken, setRefreshToken]);
-
-	return <div className="text-center py-10 text-xl">로그인 중입니다...</div>;
+  return <div className="text-center py-10 text-xl">로그인 중입니다...</div>;
 };
 
 export default CallbackPage;
