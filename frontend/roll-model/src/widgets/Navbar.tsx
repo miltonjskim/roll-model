@@ -1,7 +1,15 @@
+"use client"
+
+import { isLoggedInAtom, userAtom } from "@/features/auth/model/authAtoms";
+import { useAtomValue } from "jotai";
 import Image from "next/image";
 import Link from "next/link";
 
 const Navbar = () => {
+
+  const isLoggedIn = useAtomValue(isLoggedInAtom)
+  const user = useAtomValue(userAtom)
+
 	return (
 		<nav className="min-w-[90vw] basis-[90vw] flex justify-between items-center py-8 px-24">
 			<div>
@@ -38,7 +46,7 @@ const Navbar = () => {
 					Workspace
 				</Link>
 			</div>
-			<div>user</div>
+			<div>{ isLoggedIn? 'user' : 'login'}</div>
 		</nav>
 	);
 };

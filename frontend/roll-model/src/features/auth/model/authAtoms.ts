@@ -1,4 +1,10 @@
 import { atom } from "jotai";
 
-export const accessTokenAtom = atom<string | null>(null);
-export const refreshTokenAtom = atom<string | null>(null);
+export interface UserInfo {
+  id: number;
+  nickname: string;
+  email: string;
+}
+
+export const userAtom = atom<UserInfo | null>(null);
+export const isLoggedInAtom = atom<boolean>(false);
