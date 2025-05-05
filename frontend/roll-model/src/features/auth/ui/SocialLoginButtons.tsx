@@ -1,8 +1,6 @@
 'use client';
 
-import { useSetAtom } from 'jotai';
 import { Button } from '@/components/ui/button';
-import { accessTokenAtom, refreshTokenAtom } from '@/features/auth/model/authAtoms';
 import { socialLogin } from '@/features/auth/service/socialLogin';
 
 export const SocialLoginButtons = () => {
