@@ -1,0 +1,22 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    group:
+      prod:
+        - db
+        - auth
+        - storage
+        - fastapi
+        - ai
+    active: ${SPRING_PROFILES_ACTIVE}
+
+# 서버 포트 설정
+server:
+  servlet:
+    encoding:
+      charset: utf-8
+      force: true
+  baseUrl: ${BASE_URL}
+  port: ${SERVER_PORT}
+
