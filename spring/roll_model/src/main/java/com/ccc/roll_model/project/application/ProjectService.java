@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -99,64 +100,87 @@ public class ProjectService {
 
         // 2. 개별 프로젝트 세부 정보 생성
         List<GetMyProjectResponse.Project> projectDetails = projects.stream()
-                .filter(project -> {
-                    if (project == null) {
-                        logger.info("Found a null project in the list for memberId {}.", memberId);
-                        throw new IllegalArgumentException("프로젝트 데이터가 null입니다.");
-                    }
-                    return pipelineRepository.countByProjectId(project.getProjectId()) > 0;
-                })
+                .filter(project -> project != null && pipelineRepository.countByProjectId(project.getProjectId()) > 0)
                 .map(project -> {
-                    // Pipeline 처리 개선
-                    PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDesc(project.getProjectId())
-                            .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트에 대한 파이프라인 데이터가 없습니다."));
-                    logger.info("Fetched pipeline for projectId {}: {}", project.getProjectId(), pipeline);
+                    try {
+                        logger.info("Processing project with ID: {}", project.getProjectId());
 
-                    if (pipeline.getStatus() != null) {
-                        switch (pipeline.getStatus()) {
-                            case COMPLETED -> stats[0]++;
-                            case LEARNING -> stats[1]++;
+                        // Pipeline 처리
+                        PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDesc(project.getProjectId())
+                                .orElse(null);
+                        if (pipeline == null) {
+                            logger.info("No pipeline found for project ID: {}", project.getProjectId());
+                            return null;
                         }
+                        logger.info("Fetched pipeline for project ID {}: {}", project.getProjectId(), pipeline);
+
+                        // MongoDB: 데이터셋 데이터
+                        DatasetDocument dataset = datasetRepository.findByMemberIdAndProjectId(memberId, project.getProjectId());
+                        if (dataset == null) {
+                            logger.info("No dataset found for project ID: {}", project.getProjectId());
+                            return null;
+                        }
+                        logger.info("Fetched dataset for project ID {}: {}", project.getProjectId(), dataset);
+
+                        // MongoDB: 모델 데이터
+                        ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
+                        logger.info("Fetched model for project ID {}: {}", project.getProjectId(), model);
+
+                        // 모델 데이터가 없어도 status가 PREPROCESSED인 경우 응답에 포함
+                        // model이 null이고 status가 PREPROCESSED가 아닌 경우에만 null을 반환
+                        if (model == null && (pipeline.getStatus() == null || pipeline.getStatus() != Status.PREPROCESSED)) {
+                            logger.info("Model is null and status is not PREPROCESSED for project ID: {}", project.getProjectId());
+                            return null;
+                        }
+
+                        // Count 집계 및 상태 확인
+                        if (pipeline.getStatus() != null) {
+                            if (model != null && pipeline.getStatus() == Status.COMPLETED) {
+                                stats[0]++; // completed
+                            } else if (pipeline.getStatus() == Status.PREPROCESSED) {
+                                stats[1]++; // in progress
+                            }
+
+                            // public 여부 체크 - completed, in progress 상관없이
+                            if (Boolean.TRUE.equals(project.getPublicYn())) {
+                                stats[2]++; // public projects
+                            }
+                        }
+
+                        logger.info("Constructed project detail for project ID: {}", project.getProjectId());
+                        // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
+                        return GetMyProjectResponse.Project.builder()
+                                .id(pipeline.getPipelineId())
+                                .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
+                                .title(project.getTitle())
+                                .category(project.getCategory() != null ? project.getCategory().name() : null)
+                                .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
+                                .domain(project.getDomain() != null ? project.getDomain().name() : null)
+                                .accuracy(model != null && model.getPerformance() != null && model.getPerformance().getClassification() != null
+                                        ? model.getPerformance().getClassification().getAccuracy()
+                                        : null)
+                                .rmse(model != null && model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                        ? model.getPerformance().getRegression().getRmse()
+                                        : null)
+                                .runningDuration(model != null && model.getLearningDuration() != null ? model.getLearningDuration() : 0)
+                                .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
+                                .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
+                                .likeCount(pipeline.getLikeCount())
+                                .downloadCount(pipeline.getDownloadCount())
+                                .publicYn(Boolean.TRUE.equals(project.getPublicYn()))
+                                .createdAt(project.getRegisteredAt() != null
+                                        ? project.getRegisteredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                        : null)
+                                .updatedAt(project.getModifiedAt() != null
+                                        ? project.getModifiedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                        : null)
+                                .build();
+                    } catch (Exception e) {
+                        logger.warn("Error while processing project {}: {}", project.getProjectId(), e.getMessage());
+                        return null;
                     }
-                    if (Boolean.TRUE.equals(pipeline.getPublicYn())) {
-                        stats[2]++;
-                    }
-
-                    // MongoDB: 모델 데이터
-                    ModelDocument model = Optional.ofNullable(modelRepository.findByProjectId(project.getProjectId()))
-                            .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트에 대한 모델 데이터가 없습니다."));
-                    logger.info("Fetched model for projectId {}: {}", project.getProjectId(), model);
-
-                    // MongoDB: 데이터셋 데이터
-                    DatasetDocument dataset = Optional.ofNullable(
-                                    datasetRepository.findByMemberIdAndProjectId(memberId, project.getProjectId()))
-                            .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트에 대한 데이터셋 데이터가 없습니다."));
-                    logger.info("Fetched dataset for projectId {}, memberId {}: {}", project.getProjectId(), memberId, dataset);
-
-                    // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
-                    return GetMyProjectResponse.Project.builder()
-                            .id(pipeline.getPipelineId())
-                            .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
-                            .title(project.getTitle())
-                            .category(project.getCategory() != null ? project.getCategory().name() : null)
-                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
-                            .domain(project.getDomain() != null ? project.getDomain().name() : null)
-                            .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
-                                    ? model.getPerformance().getClassification().getAccuracy()
-                                    : null)
-                            .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
-                                    ? model.getPerformance().getRegression().getRmse()
-                                    : null)
-                            .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
-                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
-                            .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
-                            .likeCount(pipeline.getLikeCount())
-                            .downloadCount(pipeline.getDownloadCount())
-                            .publicYn(Boolean.TRUE.equals(project.getPublicYn()))
-                            .createdAt(project.getRegisteredAt())
-                            .updatedAt(project.getModifiedAt())
-                            .build();
                 })
+                .filter(project -> project != null)
                 .collect(Collectors.toList());
         logger.info("Constructed project details for memberId {}: {}", memberId, projectDetails);
 
@@ -174,7 +198,6 @@ public class ProjectService {
 
         return response;
     }
-
     @Transactional(readOnly = true)
     public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
                                                        String sort, String domain, int size, int page) {
@@ -296,8 +319,12 @@ public class ProjectService {
                             .likeCount(pipeline.getLikeCount())
                             .downloadCount(pipeline.getDownloadCount())
                             .likeYn(likeYn)
-                            .createdAt(project.getRegisteredAt())
-                            .updatedAt(project.getModifiedAt())
+                            .createdAt(project.getRegisteredAt() != null
+                                    ? project.getRegisteredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                    : null)
+                            .updatedAt(project.getModifiedAt() != null
+                                    ? project.getModifiedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                    : null)
                             .build();
                 })
                 .filter(project -> project != null)

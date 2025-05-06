@@ -46,7 +46,7 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @Column(name = "version", nullable = false)
+    @Column(name = "version")
     private Float version = 1.0f;
 
     @Column(name = "deleted_yn", nullable = false)

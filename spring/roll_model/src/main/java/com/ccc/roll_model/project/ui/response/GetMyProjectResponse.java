@@ -47,7 +47,7 @@ public class GetMyProjectResponse {
         private int likeCount;
         private int downloadCount;
         private boolean publicYn;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
+        private String createdAt;
+        private String updatedAt;
     }
 }
