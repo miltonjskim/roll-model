@@ -1,5 +1,5 @@
-# Python 3.11 + CUDA 11.8 이미지 사용
-FROM superlinear-ai/python-gpu:3.11-cuda11.8
+# Python 3.10 + CUDA 11.8 이미지 사용
+FROM superlinear-ai/python-gpu:3.10-cuda11.8
 
 WORKDIR /app
 

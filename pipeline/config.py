@@ -38,12 +38,17 @@ KAFKA_CONSUMER_CONFIG = {
 }
 
 # MinIO 설정
-MINIO_ENDPOINT = os.environ.get('MINIO_ENDPOINT', 'k12c204.p.ssafy.io:9000')
-MINIO_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY', 'rollmodel')
-MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY', 'rollmodel204')
+MINIO_ENDPOINT = os.environ.get('MINIO_ENDPOINT')
+MINIO_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY')
+MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY')
 MINIO_SECURE = os.environ.get('MINIO_SECURE', 'False').lower() == 'true'
-MINIO_MODELS_BUCKET = os.environ.get('MINIO_MODELS_BUCKET', 'ml-models')
-MINIO_DATASETS_BUCKET = os.environ.get('MINIO_DATASETS_BUCKET', 'ml-datasets')
+MINIO_MODELS_BUCKET = os.environ.get('MINIO_MODELS_BUCKET')
+MINIO_DATASETS_BUCKET = os.environ.get('MINIO_DATASETS_BUCKET')
+
+# MongoDB 설정
+MONGODB_URI = os.environ.get('MONGODB_URI')
+MONGODB_DATABASE = os.environ.get('MONGODB_DATABASE')
+MONGODB_COLLECTION = os.environ.get('MONGODB_COLLECTION')
 
 def get_absolute_path(path):
     """상대 경로를 절대 경로로 변환"""
