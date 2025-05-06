@@ -1,5 +1,7 @@
 package com.ccc.roll_model.pipeline.domain.model.parameters.classification;
 
+import java.util.Map;
+
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
 
 import lombok.AllArgsConstructor;
@@ -12,12 +14,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GradientBoostingClassifierParams implements ModelParameter {
-	private Integer nEstimators;
-	private Double learningRate;
-	private Integer maxDepth;
+	private Integer n_estimators;
+	private Double learning_rate;
+	private Integer max_depth;
 
 	@Override
 	public boolean validateParameters() {
-		return nEstimators != null && nEstimators > 0;
+		return n_estimators != null && n_estimators > 0;
 	}
 }

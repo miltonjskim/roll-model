@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RandomForestClassifierParams implements ModelParameter {
-	private Integer nEstimators;
-	private Integer maxDepth;
-	private String maxFeatures;
+	private Integer n_estimators;
+	private Integer max_depth;
+	private String max_features;
 
 	@Override
 	public boolean validateParameters() {
-		return nEstimators != null && nEstimators > 0;
+		return n_estimators != null && n_estimators > 0;
 	}
 }

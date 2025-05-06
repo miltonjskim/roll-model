@@ -34,6 +34,7 @@ public class DatasetDocument {
     private Long fileSize; // 파일 크기
     private String fileType; // 파일 형식 (예: CSV, JSON 등)
     private Boolean isPreprocessed; // 전처리 여부
+    private String etag;
 
     // ------ 중첩 클래스 정의 ------
 

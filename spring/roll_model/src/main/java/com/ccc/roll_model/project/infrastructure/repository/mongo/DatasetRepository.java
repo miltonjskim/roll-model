@@ -11,4 +11,6 @@ public interface DatasetRepository extends MongoRepository<DatasetDocument, Obje
 
     // 프로젝트 ID로만 데이터셋 정보 검색
     DatasetDocument findByProjectId(Integer projectId);
+
+    DatasetDocument findByEtag(String etag);
 }
