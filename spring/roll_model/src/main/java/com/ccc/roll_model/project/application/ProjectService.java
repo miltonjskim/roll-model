@@ -114,14 +114,6 @@ public class ProjectService {
                         }
                         logger.info("Fetched pipeline for project ID {}: {}", project.getProjectId(), pipeline);
 
-                        // MongoDB: 모델 데이터
-                        ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
-                        if (model == null) {
-                            logger.info("No model found for project ID: {}", project.getProjectId());
-                            return null;
-                        }
-                        logger.info("Fetched model for project ID {}: {}", project.getProjectId(), model);
-
                         // MongoDB: 데이터셋 데이터
                         DatasetDocument dataset = datasetRepository.findByMemberIdAndProjectId(memberId, project.getProjectId());
                         if (dataset == null) {
@@ -130,15 +122,29 @@ public class ProjectService {
                         }
                         logger.info("Fetched dataset for project ID {}: {}", project.getProjectId(), dataset);
 
-                        // Count를 집계할 때 필요한 데이터가 모두 존재하는 경우에만 포함
-                        if (pipeline.getStatus() != null) {
-                            switch (pipeline.getStatus()) {
-                                case COMPLETED -> stats[0]++;
-                                case LEARNING -> stats[1]++;
-                            }
+                        // MongoDB: 모델 데이터
+                        ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
+                        logger.info("Fetched model for project ID {}: {}", project.getProjectId(), model);
+
+                        // 모델 데이터가 없어도 status가 PREPROCESSED인 경우 응답에 포함
+                        // model이 null이고 status가 PREPROCESSED가 아닌 경우에만 null을 반환
+                        if (model == null && (pipeline.getStatus() == null || pipeline.getStatus() != Status.PREPROCESSED)) {
+                            logger.info("Model is null and status is not PREPROCESSED for project ID: {}", project.getProjectId());
+                            return null;
                         }
-                        if (Boolean.TRUE.equals(pipeline.getPublicYn())) {
-                            stats[2]++;
+
+                        // Count 집계 및 상태 확인
+                        if (pipeline.getStatus() != null) {
+                            if (model != null && pipeline.getStatus() == Status.COMPLETED) {
+                                stats[0]++; // completed
+                            } else if (pipeline.getStatus() == Status.PREPROCESSED) {
+                                stats[1]++; // in progress
+                            }
+
+                            // public 여부 체크 - completed, in progress 상관없이
+                            if (Boolean.TRUE.equals(project.getPublicYn())) {
+                                stats[2]++; // public projects
+                            }
                         }
 
                         logger.info("Constructed project detail for project ID: {}", project.getProjectId());
@@ -150,13 +156,13 @@ public class ProjectService {
                                 .category(project.getCategory() != null ? project.getCategory().name() : null)
                                 .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
                                 .domain(project.getDomain() != null ? project.getDomain().name() : null)
-                                .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
+                                .accuracy(model != null && model.getPerformance() != null && model.getPerformance().getClassification() != null
                                         ? model.getPerformance().getClassification().getAccuracy()
                                         : null)
-                                .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                .rmse(model != null && model.getPerformance() != null && model.getPerformance().getRegression() != null
                                         ? model.getPerformance().getRegression().getRmse()
                                         : null)
-                                .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
+                                .runningDuration(model != null && model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                                 .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
                                 .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
                                 .likeCount(pipeline.getLikeCount())
@@ -192,7 +198,6 @@ public class ProjectService {
 
         return response;
     }
-
     @Transactional(readOnly = true)
     public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
                                                        String sort, String domain, int size, int page) {
