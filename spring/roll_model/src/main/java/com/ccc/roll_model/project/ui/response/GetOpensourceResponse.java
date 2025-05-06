@@ -41,7 +41,7 @@ public class GetOpensourceResponse {
         private int likeCount;
         private int downloadCount;
         private boolean likeYn;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
+        private String createdAt;
+        private String updatedAt;
     }
 }
