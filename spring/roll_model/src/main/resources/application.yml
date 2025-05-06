@@ -10,7 +10,23 @@ spring:
         - fastapi
         - ai
     active: ${SPRING_PROFILES_ACTIVE}
-
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topic:
+      processing-data:
+        name: train-requests
+        partitions: 1
+        replicas: 1
+    properties:
+      spring.json.trusted.packages: "*"
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info
 # 서버 포트 설정
 server:
   servlet:
@@ -28,7 +44,7 @@ server:
 
 logging:
   level:
-#    javax.management.remote.rmi: ERROR
-#    sun.rmi: ERROR
-#    jdk.internal.httpclient: ERROR
+    #    javax.management.remote.rmi: ERROR
+    #    sun.rmi: ERROR
+    #    jdk.internal.httpclient: ERROR
     root: INFO
