@@ -44,7 +44,6 @@ public class DatasetDocument {
     private Boolean isPreprocessed; // 전처리 여부
     private String etag;
 
-
     // ------ 중첩 클래스 정의 ------
 
     @Getter

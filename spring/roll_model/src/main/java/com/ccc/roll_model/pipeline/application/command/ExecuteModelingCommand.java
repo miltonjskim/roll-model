@@ -18,6 +18,7 @@ public class ExecuteModelingCommand {
 
 	// 유효성 검사 등 추가 로직이 필요하다면 여기에 구현
 	public boolean validate() {
+		System.out.println(pipelineId + ":" + memberId + ":" + modelingInfo);
 		return pipelineId != null && memberId != null && modelingInfo != null;
 	}
 
