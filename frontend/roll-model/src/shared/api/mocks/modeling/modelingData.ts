@@ -1,5 +1,5 @@
 // 파이프라인 id 하드코딩 => 수정해야됨
-export const PIPELINE_ID = 'pipeline3452';
+export const PIPELINE_ID = '681825a6f680e4bba1df3e78';
 // 변수리스트 하드코딩 => 수정해야됨
 export const TARGET_VARIABLES = ['age', 'entropy', 'name', 'adress', 'type', 'usage', 'stack', 'score', 'col-9', 'col-10'];
 // 카테고리 하드코딩 => 수정해야됨
@@ -7,7 +7,7 @@ export const INITIAL_CATEGORY = 'CLASSIFICATION'; // REGRESSION
 
 export const CLASSIFICATION_MODELS = [
   {
-    id: 'logisticRegression',
+    id: 'LogisticRegression',
     name: '로지스틱 회귀 (Logistic Regression)',
     description: '이진 분류 및 다중 분류 문제에 사용되는 통계적 모델입니다. 간단하고 해석이 용이하며 빠른 학습이 특징입니다.',
     parameters: [
@@ -50,7 +50,7 @@ export const CLASSIFICATION_MODELS = [
     ],
   },
   {
-    id: 'supportVectorClassifier',
+    id: 'SVC',
     name: '서포트 벡터 머신 (SVC)',
     description: '고차원 공간에서 데이터를 분류하는 모델로 복잡한 패턴을 잘 찾아내며 오버피팅에 강합니다.',
     parameters: [
@@ -104,7 +104,7 @@ export const CLASSIFICATION_MODELS = [
     ],
   },
   {
-    id: 'kNeighborsClassifier',
+    id: 'KNeighborsClassifier',
     name: 'K-최근접 이웃 (KNN)',
     description: '데이터 포인트의 가장 가까운 k개 이웃을 기반으로 분류하는 비모수적 방법입니다.',
     parameters: [
@@ -137,7 +137,7 @@ export const CLASSIFICATION_MODELS = [
     ],
   },
   {
-    id: 'randomForestClassifier',
+    id: 'RandomForestClassifier',
     name: '랜덤 포레스트 (Random Forest)',
     description: '여러 개의 결정 트리를 앙상블하여 더 높은 정확도와 일반화 성능을 제공하는 모델입니다.',
     parameters: [
@@ -172,7 +172,7 @@ export const CLASSIFICATION_MODELS = [
     ],
   },
   {
-    id: 'gradientBoostingClassifier',
+    id: 'GradientBoostingClassifier',
     name: '그래디언트 부스팅 (Gradient Boosting)',
     description: '이전 모델의 오차를 보완하는 방식으로 트리를 순차적으로 학습하여 강력한 예측 성능을 제공합니다.',
     parameters: [
@@ -212,7 +212,7 @@ export const CLASSIFICATION_MODELS = [
 
 export const REGRESSION_MODELS = [
   {
-    id: 'elasticNet',
+    id: 'ElasticNet',
     name: '엘라스틱넷 (ElasticNet)',
     description: 'L1과 L2 정규화를 결합한 선형 회귀 모델로, 변수 선택과 다중공선성에 강점이 있습니다.',
     parameters: [
@@ -239,7 +239,7 @@ export const REGRESSION_MODELS = [
     ],
   },
   {
-    id: 'supportVectorRegressor',
+    id: 'SVR',
     name: '서포트 벡터 회귀 (SVR)',
     description: '서포트 벡터 머신의 회귀 버전으로, 비선형 데이터에서도 좋은 성능을 보입니다.',
     parameters: [
@@ -274,7 +274,7 @@ export const REGRESSION_MODELS = [
     ],
   },
   {
-    id: 'randomForestRegressor',
+    id: 'RandomForestRegressor',
     name: '랜덤 포레스트 회귀 (Random Forest)',
     description: '여러 결정 트리의 앙상블을 통해 회귀 문제를 해결하는 방법으로, 높은 예측 정확도를 제공합니다.',
     parameters: [
@@ -309,7 +309,7 @@ export const REGRESSION_MODELS = [
     ],
   },
   {
-    id: 'gradientBoostingRegressor',
+    id: 'GradientBoostingRegressor',
     name: '그래디언트 부스팅 회귀 (Gradient Boosting)',
     description: '이전 모델의 오차를 순차적으로 보완하며 학습하는 앙상블 방법으로, 복잡한 패턴도 잘 찾아냅니다.',
     parameters: [

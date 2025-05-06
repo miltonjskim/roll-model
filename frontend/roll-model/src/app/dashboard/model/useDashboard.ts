@@ -1,94 +1,69 @@
-import { useEffect, useState } from "react";
-import {
-  DashboardData,
-  Project,
-  ProjectType,
-} from "@/entities/dashboard/model/types";
-import {
-  fetchDashboardData,
-  fetchFilteredProjects,
-} from "@/shared/api/dashboardApi";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { DashboardData, Project, ProjectType } from '@/entities/dashboard/model/types';
+import { fetchDashboardData } from '@/shared/api/dashboardApi';
 
 export function useDashboard() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // 필터링 및 검색 상태
-  const [selectedCategory, setSelectedCategory] = useState<"all" | ProjectType>(
-    "all"
-  );
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | ProjectType>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // 프로젝트 필터링 로딩 상태
-  const [isFilterLoading, setIsFilterLoading] = useState<boolean>(false);
+  // 초기 데이터 로드 useCallback 쓰는게 트렌디하다는데... 우선 ㅇㅋ
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetchDashboardData();
+      setDashboardData(response.data);
+      setError(null);
+    } catch (err) {
+      setError('데이터를 불러오는데 실패했습니다.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // 초기 데이터 로드
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetchDashboardData();
-        setDashboardData(response.data);
-        setFilteredProjects(response.data?.projects || []);
-        setError(null);
-      } catch (err) {
-        setError("데이터를 불러오는데 실패했습니다.");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadDashboardData();
+  }, [loadDashboardData]);
+
+  const handleCategoryChange = useCallback((category: 'all' | ProjectType) => {
+    setSelectedCategory(category);
   }, []);
 
-  // 카테고리나 검색어 변경 시 프로젝트 필터링
-  useEffect(() => {
-    if (!dashboardData) return;
-
-    const applyFilters = async () => {
-      try {
-        setIsFilterLoading(true);
-        const response = await fetchFilteredProjects(
-          selectedCategory,
-          searchQuery
-        );
-        setFilteredProjects(response.data?.projects || []);
-      } catch (err) {
-        console.error("필터링 오류:", err);
-      } finally {
-        setIsFilterLoading(false);
-      }
-    };
-
-    // 디바운스 처리
-    const timer = setTimeout(() => {
-      applyFilters();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [dashboardData, selectedCategory, searchQuery]);
-
-  const handleCategoryChange = (category: "all" | ProjectType) => {
-    setSelectedCategory(category);
-  };
-
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
+
+  const filteredProjects = useMemo(() => {
+    if (!dashboardData?.projects) return [];
+
+    return (
+      dashboardData.projects
+        // 카테고리 필터링
+        .filter((project) => selectedCategory === 'all' || project.category === selectedCategory)
+        // 검색어 필터링
+        .filter((project) => {
+          if (!searchQuery.trim()) return true;
+
+          const query = searchQuery.toLowerCase().trim();
+          return project.title.toLowerCase().includes(query) || (project.target?.toLowerCase() || '').includes(query);
+        })
+    );
+  }, [dashboardData?.projects, selectedCategory, searchQuery]);
 
   return {
     dashboardData,
     isLoading,
     error,
     filteredProjects,
-    isFilterLoading,
     selectedCategory,
     handleCategoryChange,
     handleSearch,
+    refreshData: loadDashboardData,
   };
 }

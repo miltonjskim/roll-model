@@ -8,7 +8,7 @@ import { NewProjectButton } from '@/features/dashboard/NewProjectButton';
 import { useDashboard } from '@/app/dashboard/model/useDashboard';
 
 export default function Page() {
-  const { dashboardData, isLoading, error, filteredProjects, isFilterLoading, selectedCategory, handleCategoryChange, handleSearch } = useDashboard();
+  const { dashboardData, isLoading, error, filteredProjects, selectedCategory, handleCategoryChange, handleSearch } = useDashboard();
 
   if (isLoading) {
     return <div className="flex min-h-screen items-center justify-center">로딩중 ...</div>;
@@ -36,7 +36,7 @@ export default function Page() {
       <StatsGrid summary={dashboardData.summary} />
 
       {/* 프로젝트 검색 및 필터 */}
-      <div className="mb-6 flex flex-col items-start justify-between md:flex-row md:items-center">
+      <div className="bg-[theme(primary-white)] mb-6 flex flex-col items-start justify-between rounded-md px-2 py-2 md:flex-row md:items-center">
         <div className="mb-4 md:mb-0">
           <CategoryTabs selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
         </div>
@@ -44,7 +44,7 @@ export default function Page() {
       </div>
 
       {/* 프로젝트 그리드 */}
-      {isFilterLoading ? <div className="py-10">그리드 로딩중...</div> : <ProjectGrid projects={filteredProjects} />}
+      <ProjectGrid projects={filteredProjects} />
     </div>
   );
 }

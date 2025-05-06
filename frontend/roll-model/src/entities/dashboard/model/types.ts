@@ -1,21 +1,21 @@
 import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping';
 
 export type ProjectType = 'CLASSIFICATION' | 'REGRESSION';
-export type ProjectStatus = 'COMPLETED' | 'PREPROCESSED';
+export type ProjectStatus = 'COMPLETED' | 'PREPROCESSED' | 'LEARNING' | 'FAILED';
 
 export interface Project {
   id: string;
   title: string; // 제목
-  version: number;
+  version: number | null; // 버전 (전처리만완료시 null)
   category: ProjectType; // 분류 or 회귀
   status: ProjectStatus; // 성공 or 진행중==전처리만완료?
   domain: ApiProjectDomain; // 의료 금융 등
   displayDomain?: string; // 화면 표시용 한글 도메인
-  accuracy: number | null; // 정확도
-  rmse: number | null; // 회귀일때의 정확도
-  target: string; // 목표변수
+  accuracy: number | null; // 정확도 (전처리만완료시 accuracy and rmse null)
+  rmse: number | null; // 회귀일때의 정확도 (전처리만완료시 accuracy and rmse null)
+  target: string | null; // 목표변수 (전처리만완료시 null)
   dataCount: number; // 데이터수
-  runnungDuration: number; // 학습시간
+  runnungDuration: number | null; // 학습시간 (전처리만완료시 null)
   likeCount: number; // 좋아요
   downloadCount: number; // 다운로드
   visibility: boolean; // 공개여부
@@ -31,10 +31,6 @@ export interface DashboardSummary {
 }
 
 export interface DashboardData {
-  currentPage: number; // 현재 페이지 ?
-  totalPages: number; // 총 페이지
-  totalElements: number; // 총 프로젝트
-  last: boolean; // 이게 마지막 페이지인지
   summary: DashboardSummary;
   projects: Project[];
 }
