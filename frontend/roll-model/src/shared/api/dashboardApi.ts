@@ -27,13 +27,11 @@ export const fetchDashboardData = async (page = 1, size = 10) => {
   try {
     // 실제 API 연동 시에는 아래 코드 활성화
     // const response = await axiosInstance.get<DashboardResponse>(
-    //   `/api/projects/me?page=${page}&size=${size}`
+    //   `/api/v1/projects/me?page=${page}&size=${size}`
     // );
     // return transformDashboardResponse(response.data);
 
     // Mock 데이터 사용 (실제 API 연동 전까지)
-    // API 지연 시뮬레이션 (500ms)
-    await new Promise((resolve) => setTimeout(resolve, 500));
     return transformDashboardResponse(dashboardMock as DashboardResponse);
   } catch (error) {
     console.error("대시보드 데이터 로딩 실패:", error);
@@ -51,7 +49,7 @@ export const fetchFilteredProjects = async (
   try {
     // 실제 API 연동 시에는 아래 코드 활성화
     // const response = await axiosInstance.get<DashboardResponse>(
-    //   `/api/projects/me?category=${category}&search=${searchQuery}&page=${page}&size=${size}`
+    //   `/api/v1/projects/me?category=${category}&search=${searchQuery}&page=${page}&size=${size}`
     // );
     // return response.data;
 

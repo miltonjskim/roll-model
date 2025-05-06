@@ -9,7 +9,7 @@ import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 export const fetchProjectDetailData = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/pipelines/${pipelineId}/dataset/info`)
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/dataset/info`)
     // return response.data
 
     // mock data
@@ -24,7 +24,7 @@ export const fetchProjectDetailData = async (pipelineId: string) => {
 export const fetchProjectDetailVersion = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/pipelines/${pipelineId}/versions`)
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/versions`)
     // return response.data
 
     // mock data

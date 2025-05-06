@@ -1,0 +1,107 @@
+'use client';
+
+import { useState } from 'react';
+import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
+import { PIPELINE_ID, CLASSIFICATION_MODELS, REGRESSION_MODELS, INITIAL_CATEGORY } from '@/shared/api/mocks/modeling/modelingData';
+import { startModelTraining } from '@/shared/api/modelingApi';
+
+export const useModeling = () => {
+  // 모델 카테고리 (분류 또는 회귀)
+  const initialCategory = INITIAL_CATEGORY;
+  const [modelCategory] = useState<ModelCategory>(initialCategory);
+  const models = modelCategory === 'CLASSIFICATION' ? CLASSIFICATION_MODELS : REGRESSION_MODELS;
+
+  // 상태 관리
+  const [selectedModelId, setSelectedModelId] = useState('');
+  const [targetVariable, setTargetVariable] = useState('');
+  const [parameterValues, setParameterValues] = useState<ParameterValues>({});
+  const [dataSplit, setDataSplit] = useState(70); // 기본값 70%
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 선택된 모델 찾기
+  const selectedModel = models.find((model) => model.id === selectedModelId);
+
+  // 파라미터 값 변경 핸들러
+  const handleParameterChange = (paramId: string, value: ParameterValue) => {
+    setParameterValues((prev) => ({
+      ...prev,
+      [paramId]: value,
+    }));
+  };
+
+  // 모델 선택 핸들러
+  const handleModelSelect = (modelId: string) => {
+    setSelectedModelId(modelId);
+    // 모델 변경 시 파라미터 값 초기화
+    const newModel = models.find((m) => m.id === modelId);
+    if (newModel) {
+      const initialValues: ParameterValues = {};
+      newModel.parameters.forEach((param) => {
+        initialValues[param.id] = param.defaultValue;
+      });
+      setParameterValues(initialValues);
+    }
+  };
+
+  // 학습 시작 핸들러
+  const handleStartTraining = async () => {
+    if (!selectedModelId || !targetVariable) {
+      alert('모델과 목표 변수를 선택해주세요.');
+      return;
+    }
+
+    // 필수 파라미터 확인
+    const missingRequiredParams = selectedModel?.parameters.filter((param) => param.required && !parameterValues[param.id]).map((param) => param.name);
+
+    if (missingRequiredParams && missingRequiredParams.length > 0) {
+      alert(`필수 파라미터를 입력해주세요: ${missingRequiredParams.join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // API 요청 데이터 구성
+      const requestData = {
+        pipelineId: PIPELINE_ID,
+        modelType: selectedModelId,
+        parameters: parameterValues,
+        targetColumn: targetVariable,
+        dataSplit: dataSplit,
+      };
+
+      console.log('학습 시작 요청 데이터:', requestData);
+
+      // API 호출
+      // const response = await startModelTraining(requestData);
+      // console.log('학습 시작 응답:', response);
+
+      // 성공 알림
+      alert('모델 학습이 시작되었습니다!');
+
+      // 여기에 성공 후 리디렉션 또는 다음 단계로 이동하는 로직을 추가할 수 있습니다.
+    } catch (error) {
+      console.error('학습 시작 오류:', error);
+      alert('모델 학습 시작 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    modelCategory,
+    models,
+    selectedModelId,
+    targetVariable,
+    parameterValues,
+    dataSplit,
+    isLoading,
+    selectedModel,
+
+    setTargetVariable,
+    setDataSplit,
+    handleParameterChange,
+    handleModelSelect,
+    handleStartTraining,
+  };
+};
