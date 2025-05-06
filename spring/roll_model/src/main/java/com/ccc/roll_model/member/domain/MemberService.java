@@ -28,7 +28,10 @@ public class MemberService {
 		return jwtUtils.createJwt(member, 1000*60*60*72L);
 	}
 
-	public Member getMemberInfo(int memberId) {
+	public Member getMemberInfo(Integer memberId) {
+		if (memberId == null) {
+			throw new ApiException(ErrorCode.USER_NOT_FOUND);
+		}
 		return memberRepository.findById(memberId)
 			.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 	}
