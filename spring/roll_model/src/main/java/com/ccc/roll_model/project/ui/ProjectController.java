@@ -7,12 +7,16 @@ import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.ui.request.CreateProjectRequest;
 import com.ccc.roll_model.project.ui.response.CreateProjectResponse;
 import com.ccc.roll_model.project.ui.response.GetMyProjectResponse;
+import com.ccc.roll_model.project.ui.response.GetOpensourceResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/v1/projects")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 
@@ -59,10 +63,33 @@ public class ProjectController {
     }
 
     @GetMapping("/opensource")
-    public ApiUtils.ApiResponse<GetMyProjectResponse> getOpensourceProjects() {
+    public ApiUtils.ApiResponse<GetOpensourceResponse> getOpensourceProjects(
+            @AuthenticationPrincipal Integer memberId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false, defaultValue = "recent") String sort,
+            @RequestParam(required = false) String domain,
+            @RequestParam(required = false, defaultValue = "12") int size,
+            @RequestParam(required = false, defaultValue = "1") int page,
+            HttpServletRequest request) {
 
+        // keyword: 프로젝트 이름 검색어
+        // type: regression, classification, image 중 하나
+        // sort: recent(최신순, 기본값), name(이름순), popular(인기순)
+        // domain: 프로젝트 도메인 
+        // size: 페이지당 아이템 수
+        // page: 페이지 번호 (1부터 시작)
 
+        log.info("Controller receiving parameters: keyword={}, type={}, sort={}, domain={}, size={}, page={}",
+                keyword, type, sort, domain, size, page);
 
-        return null;
+        // 요청 객체에서 직접 파라미터 확인
+        log.info("Request query string: {}", request.getQueryString());
+        log.info("Direct from request: keyword={}", request.getParameter("keyword"));
+
+        GetOpensourceResponse response =
+                projectService.getOpensourceProjects(memberId, keyword, type, sort, domain, size, page);
+
+        return ApiUtils.success(response);
     }
 }

@@ -11,10 +11,11 @@ import java.util.Optional;
 public class CookieUtils {
 	public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
 		ResponseCookie cookie = ResponseCookie.from(name, value)
-			.httpOnly(true)
+			.httpOnly(false)
 			.secure(false)
 			.path("/")
 			.maxAge(maxAge)
+			.sameSite("Lax")
 			.build();
 
 		response.addHeader("Set-Cookie", cookie.toString());

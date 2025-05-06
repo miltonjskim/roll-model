@@ -1,5 +1,6 @@
 package com.ccc.roll_model.project.application;
 
+import com.ccc.roll_model.like.infrastructure.repository.LikeRepository;
 import com.ccc.roll_model.member.domain.Member;
 import com.ccc.roll_model.member.domain.MemberRepository;
 import com.ccc.roll_model.member.infrastructure.MemberEntity;
@@ -13,9 +14,14 @@ import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepositor
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 import com.ccc.roll_model.project.ui.response.GetMyProjectResponse;
+import com.ccc.roll_model.project.ui.response.GetOpensourceResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +42,7 @@ public class ProjectService {
     private final DatasetRepository datasetRepository;
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
+    private final LikeRepository likeRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ProjectEntity createProject(CreateProjectCommand command) {
@@ -165,6 +172,147 @@ public class ProjectService {
                 .build();
         logger.info("Final GetMyProjectResponse for memberId {}: {}", memberId, response);
 
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
+                                                       String sort, String domain, int size, int page) {
+        logger.info("Fetching opensource projects with parameters: memberId={}, keyword={}, type={}, sort={}, domain={}, size={}, page={}", 
+                memberId, keyword, type, sort, domain, size, page);
+
+        // 페이지 번호는 0부터 시작하므로 1을 빼줌
+        Pageable pageable;
+        if ("name".equalsIgnoreCase(sort)) {
+            pageable = PageRequest.of(page - 1, size, Sort.by("title").ascending());
+        } else if ("popular".equalsIgnoreCase(sort)) {
+            // 인기순은 파이프라인의 좋아요 수로 정렬하기 어려우므로 프로젝트 ID로 정렬
+            pageable = PageRequest.of(page - 1, size, Sort.by("projectId").descending());
+        } else {
+            // 기본값은 최신순
+            pageable = PageRequest.of(page - 1, size, Sort.by("registeredAt").descending());
+        }
+
+        // 카테고리와 도메인 변환
+        Category category = null;
+        if (type != null && !type.isEmpty()) {
+            try {
+                category = Category.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid category: {}", type);
+            }
+        }
+
+        Domain domainEnum = null;
+        if (domain != null && !domain.isEmpty()) {
+            try {
+                domainEnum = Domain.valueOf(domain.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid domain: {}", domain);
+            }
+        }
+
+        // 조건에 따라 적절한 레포지토리 메소드 호출
+        Page<ProjectEntity> projectsPage;
+        if (keyword != null && !keyword.isEmpty()) {
+            if (category != null && domainEnum != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategoryAndDomain(keyword, category, domainEnum, pageable);
+            } else if (category != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategory(keyword, category, pageable);
+            } else if (domainEnum != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndDomain(keyword, domainEnum, pageable);
+            } else {
+                projectsPage = projectRepository.findAllPublicProjectsByKeyword(keyword, pageable);
+            }
+        } else {
+            if (category != null && domainEnum != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByCategoryAndDomain(category, domainEnum, pageable);
+            } else if (category != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByCategory(category, pageable);
+            } else if (domainEnum != null) {
+                projectsPage = projectRepository.findAllPublicProjectsByDomain(domainEnum, pageable);
+            } else {
+                projectsPage = projectRepository.findAllPublicProjects(pageable);
+            }
+        }
+
+        logger.info("Fetched {} projects", projectsPage.getContent().size());
+
+        // 프로젝트 상세 정보 생성
+        List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
+                .map(project -> {
+                    // 가장 최신의 공개 파이프라인 가져오기
+                    PipelineEntity pipeline = pipelineRepository.findFirstPublicByProjectIdOrderByRegisteredAtDesc(project.getProjectId())
+                            .orElse(null);
+
+                    // 파이프라인이 없으면 건너뜀
+                    if (pipeline == null) {
+                        logger.info("No public pipeline found for project {}", project.getProjectId());
+                        return null;
+                    }
+
+                    // MongoDB: 모델 데이터
+                    ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
+                    if (model == null) {
+                        logger.info("No model found for project {}", project.getProjectId());
+                        return null;
+                    }
+
+                    // MongoDB: 데이터셋 데이터
+                    DatasetDocument dataset = datasetRepository.findByProjectId(project.getProjectId());
+                    if (dataset == null) {
+                        logger.info("No dataset found for project {}", project.getProjectId());
+                        return null;
+                    }
+
+                    // 좋아요 여부 확인
+                    boolean likeYn = false;
+                    if (memberId != null) {
+                        likeYn = likeRepository.existsByMemberEntityMemberIdAndPipelineEntityPipelineId(memberId, pipeline.getPipelineId());
+                    }
+
+                    // 작성자 정보
+                    MemberEntity writer = project.getMemberEntity();
+
+                    // 프로젝트 상세 정보 생성
+                    return GetOpensourceResponse.Project.builder()
+                            .id(pipeline.getPipelineId())
+                            .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
+                            .title(project.getTitle())
+                            .writerId(writer.getMemberId())
+                            .writerNickname(writer.getNickname())
+                            .category(project.getCategory() != null ? project.getCategory().name() : null)
+                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
+                            .domain(project.getDomain() != null ? project.getDomain().name() : null)
+                            .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
+                                    ? model.getPerformance().getClassification().getAccuracy()
+                                    : null)
+                            .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                    ? model.getPerformance().getRegression().getRmse()
+                                    : null)
+                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
+                            .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
+                            .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
+                            .likeCount(pipeline.getLikeCount())
+                            .downloadCount(pipeline.getDownloadCount())
+                            .likeYn(likeYn)
+                            .createdAt(project.getRegisteredAt())
+                            .updatedAt(project.getModifiedAt())
+                            .build();
+                })
+                .filter(project -> project != null)
+                .collect(Collectors.toList());
+
+        // 최종 응답 생성
+        GetOpensourceResponse response = GetOpensourceResponse.builder()
+                .currentPage(page)
+                .totalPages(projectsPage.getTotalPages())
+                .totalElements((int) projectsPage.getTotalElements())
+                .last(projectsPage.isLast())
+                .projects(projectDetails)
+                .build();
+
+        logger.info("Returning response with {} projects", projectDetails.size());
         return response;
     }
 }

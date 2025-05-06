@@ -7,8 +7,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ccc.roll_model.global.utils.ApiUtils;
 import com.ccc.roll_model.member.domain.Member;
 import com.ccc.roll_model.member.domain.MemberService;
+import com.ccc.roll_model.member.ui.dto.response.GetMemberInfoResponse;
+import com.ccc.roll_model.project.ui.response.GetMyProjectResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,5 +24,11 @@ public class MemberController {
 	@GetMapping("/token/{memberId}")
 	public String getAccessToken(@PathVariable Integer memberId) {
 		return memberService.getAccessToken(memberId);
+	}
+
+	@GetMapping("/members/my")
+	public ApiUtils.ApiResponse<GetMemberInfoResponse> getMyInfo(@AuthenticationPrincipal Integer memberId) {
+		Member member = memberService.getMemberInfo(memberId);
+		return ApiUtils.success(GetMemberInfoResponse.from(member));
 	}
 }
