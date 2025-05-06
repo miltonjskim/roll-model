@@ -1,12 +1,13 @@
-import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
+import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping';
 
-export type ProjectType = "CLASSIFICATION" | "REGRESSION";
+export type ProjectType = 'CLASSIFICATION' | 'REGRESSION';
 
 export interface OpenSourceProject {
   id: string;
   title: string; // 제목
-  version: number; // 버전
+  version: string; // 버전
   writerId: number; // 작성자 ID
+  status: string;
   writerNickname: string; // 작성자 닉네임
   category: ProjectType; // 분류 or 회귀
   domain: ApiProjectDomain; // 의료 금융 등
@@ -18,7 +19,7 @@ export interface OpenSourceProject {
   runnungDuration: number; // 학습시간
   likeCount: number; // 좋아요
   downloadCount: number; // 다운로드
-  visibility: boolean; // 공개여부
+  likeYn: boolean; // 내가 좋아함?
   createdAt: string; // 생성
   updatedAt: string; // 수정
 }
