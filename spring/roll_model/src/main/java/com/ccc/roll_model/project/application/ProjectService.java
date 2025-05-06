@@ -198,6 +198,7 @@ public class ProjectService {
 
         return response;
     }
+
     @Transactional(readOnly = true)
     public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
                                                        String sort, String domain, int size, int page) {
