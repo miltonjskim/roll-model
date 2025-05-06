@@ -5,21 +5,19 @@ export interface ProjectInfo {
   title: string;
   category: 'CLASSIFICATION' | 'REGRESSION';
   domain: ApiProjectDomain;
-  version: number;
+  version: string;
+  projectPublicYn: boolean;
+  pipelinePublicYn: boolean;
   ownerYn: boolean;
 }
-// 버전 리스트
-export interface VersionHistory {
-  version: number;
-  updatedAt: string;
+
+// 파이프라인 정보 (기존 VersionHistory + Pipelines 합침)
+export interface Pipeline {
+  pipelineId: string;
+  version: string;
   publicYn: boolean;
   deletedYn: boolean;
-  parent: number;
-}
-//버전 상세 리스트
-export interface Pipelines {
-  pipelineId: string;
-  version: number;
+  parent: string;
   accuracy: number;
   dataCount: number;
   target: string;
@@ -27,6 +25,7 @@ export interface Pipelines {
   likeCount: number;
   downloadCount: number;
   updatedAt: string;
+  ownerYn: boolean;
 }
 
 // 에러 응답 타입 정의
@@ -41,8 +40,7 @@ export interface ProjectDetailVersionResponse {
   message: string;
   data: {
     projectInfo: ProjectInfo;
-    versionHistory: VersionHistory[];
-    pipelines: Pipelines[];
+    pipelines: Pipeline[];
   };
   error: null | ApiError;
 }
