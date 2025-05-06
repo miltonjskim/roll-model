@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KNeighborsClassifierParams implements ModelParameter {
-	private Integer nNeighbors;
+	private Integer n_neighbors;
 	private String weights;
 	private String metric;
 
 	@Override
 	public boolean validateParameters() {
-		return nNeighbors != null && nNeighbors > 0;
+		return n_neighbors != null && n_neighbors > 0;
 	}
 }

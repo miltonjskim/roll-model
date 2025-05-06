@@ -15,7 +15,7 @@ public class LogisticRegressionParams implements ModelParameter {
 	private String penalty;
 	private Double c;
 	private String solver;
-	private Integer maxIter;
+	private Integer max_iter;
 
 	@Override
 	public boolean validateParameters() {
