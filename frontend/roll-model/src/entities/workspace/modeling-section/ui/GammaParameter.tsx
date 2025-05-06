@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { Parameter } from '@/entities/workspace/modeling-section/model/types';
+import { Parameter, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 
 interface GammaParameterProps {
   parameter: Parameter;
-  value: any;
-  onChange: (paramId: string, value: any) => void;
+  value: ParameterValue;
+  onChange: (paramId: string, value: ParameterValue) => void;
 }
 
 const GammaParameter = ({ parameter, value, onChange }: GammaParameterProps) => {

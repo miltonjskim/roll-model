@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Model, ModelCategory, ParameterValues } from '@/entities/workspace/modeling-section/model/types';
+import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 import { PIPELINE_ID, CLASSIFICATION_MODELS, REGRESSION_MODELS, INITIAL_CATEGORY } from '@/shared/api/mocks/modeling/modelingData';
 import { startModelTraining } from '@/shared/api/modelingApi';
 
@@ -22,7 +22,7 @@ export const useModeling = () => {
   const selectedModel = models.find((model) => model.id === selectedModelId);
 
   // 파라미터 값 변경 핸들러
-  const handleParameterChange = (paramId: string, value: any) => {
+  const handleParameterChange = (paramId: string, value: ParameterValue) => {
     setParameterValues((prev) => ({
       ...prev,
       [paramId]: value,

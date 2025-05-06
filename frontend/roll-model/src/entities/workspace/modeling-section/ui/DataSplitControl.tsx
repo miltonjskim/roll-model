@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface DataSplitControlProps {
   dataSplit: number;
@@ -13,26 +13,31 @@ const DataSplitControl = ({ dataSplit, onDataSplitChange }: DataSplitControlProp
   const [isDragging, setIsDragging] = useState(false);
 
   // 드래그 시작 핸들러
-  const handleDragStart = (e: React.MouseEvent) => {
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  };
+  }, []);
 
-  // 드래그 중 핸들러
-  const handleDrag = (e: MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+  // 드래그 중 핸들러 - useCallback으로 메모이제이션
+  const handleDrag = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const newPercent = Math.min(Math.max(Math.round(((e.clientX - rect.left) / rect.width) * 100), 50), 90);
-    onDataSplitChange(newPercent);
-  };
+      const rect = containerRef.current.getBoundingClientRect();
+      const newPercent = Math.min(Math.max(Math.round(((e.clientX - rect.left) / rect.width) * 100), 50), 90);
+      onDataSplitChange(newPercent);
+    },
+    [isDragging, onDataSplitChange],
+  );
 
   // 드래그 종료 핸들러
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   // 마우스 이벤트 리스너 설정 및 정리
+  //React Hook useEffect has a missing dependency 해결
+  // 의존성 배열에 handleDrag, handleDragEnd 추가 하기 위해 useCallback 적용
   useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleDrag);
@@ -43,7 +48,7 @@ const DataSplitControl = ({ dataSplit, onDataSplitChange }: DataSplitControlProp
       document.removeEventListener('mousemove', handleDrag);
       document.removeEventListener('mouseup', handleDragEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, handleDrag, handleDragEnd]);
 
   return (
     <div>

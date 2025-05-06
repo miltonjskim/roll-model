@@ -26,7 +26,7 @@ export const fetchOpenSourceData = async (page = 1, size = 10) => {
   try {
     // 실제 API 연동 시에는 아래 코드 활성화
     // const response = await axiosInstance.get(
-    //   `/api/projects?page=${page}&size=${size}`
+    //   `/api/v1/projects?page=${page}&size=${size}`
     // );
     // return transformOpenSourceResponse(response.data);
 
@@ -57,7 +57,7 @@ export const fetchFilteredOpenSourceProjects = async (
     // }
     
     // const response = await axiosInstance.get(
-    //   `/api/projects?sort=${sortOption}${typeParam}&keyword=${searchQuery}&page=${page}&size=${size}`
+    //   `/api/v1/projects?sort=${sortOption}${typeParam}&keyword=${searchQuery}&page=${page}&size=${size}`
     // );
     // return transformOpenSourceResponse(response.data);
 

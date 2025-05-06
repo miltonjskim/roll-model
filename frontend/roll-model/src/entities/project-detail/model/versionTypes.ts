@@ -1,9 +1,9 @@
-import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
+import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping';
 
 // 프로젝트 기본정보
 export interface ProjectInfo {
   title: string;
-  category: "CLASSIFICATION" | "REGRESSION";
+  category: 'CLASSIFICATION' | 'REGRESSION';
   domain: ApiProjectDomain;
   version: number;
   ownerYn: boolean;
@@ -28,6 +28,13 @@ export interface Pipelines {
   downloadCount: number;
   updatedAt: string;
 }
+
+// 에러 응답 타입 정의
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
 // 전체
 export interface ProjectDetailVersionResponse {
   status: number;
@@ -37,5 +44,5 @@ export interface ProjectDetailVersionResponse {
     versionHistory: VersionHistory[];
     pipelines: Pipelines[];
   };
-  error: null | any;
+  error: null | ApiError;
 }

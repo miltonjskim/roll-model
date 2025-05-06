@@ -1,10 +1,10 @@
 'use client';
-import { Parameter } from '@/entities/workspace/modeling-section/model/types';
+import { Parameter, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 
 interface RadioParameterProps {
   parameter: Parameter;
-  value: string;
-  onChange: (paramId: string, value: any) => void;
+  value: ParameterValue;
+  onChange: (paramId: string, value: ParameterValue) => void;
 }
 
 const RadioParameter = ({ parameter, value, onChange }: RadioParameterProps) => {

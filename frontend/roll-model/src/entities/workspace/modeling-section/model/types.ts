@@ -1,10 +1,13 @@
+// ParameterValue 타입 추가
+export type ParameterValue = string | number;
+
 // 파라미터 타입 정의
 export interface Parameter {
   id: string;
   name: string;
   type: string;
   required: boolean;
-  defaultValue: any;
+  defaultValue: ParameterValue;
   options?: string[];
   min?: number;
   max?: number;
@@ -36,9 +39,9 @@ export type ModelCategory = 'CLASSIFICATION' | 'REGRESSION';
 export interface ModelingApiRequest {
   pipelineId: string;
   modelType: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, ParameterValue>;
   targetColumn: string;
 }
 
 // 파라미터 값을 저장할 상태 타입
-export type ParameterValues = Record<string, any>;
+export type ParameterValues = Record<string, ParameterValue>;

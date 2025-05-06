@@ -1,6 +1,6 @@
 'use client';
 
-import { Model, Parameter, ParameterValues } from '@/entities/workspace/modeling-section/model/types';
+import { Model, Parameter, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 import TargetVariableSelector from '@/entities/workspace/modeling-section/ui/TargetVariableSelector';
 import SliderParameter from '@/entities/workspace/modeling-section/ui/SliderParameter';
 import RadioParameter from '@/entities/workspace/modeling-section/ui/RadioParameter';
@@ -13,7 +13,7 @@ interface ParameterSectionWidgetProps {
   onTargetVariableChange: (variable: string) => void;
   selectedModel: Model | undefined;
   parameterValues: ParameterValues;
-  onParameterChange: (paramId: string, value: any) => void;
+  onParameterChange: (paramId: string, value: ParameterValue) => void;
   dataSplit: number;
   onDataSplitChange: (value: number) => void;
 }

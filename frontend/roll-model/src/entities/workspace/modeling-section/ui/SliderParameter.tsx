@@ -1,10 +1,10 @@
 'use client';
-import { Parameter } from '@/entities/workspace/modeling-section/model/types';
+import { Parameter, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 
 interface SliderParameterProps {
   parameter: Parameter;
-  value: number;
-  onChange: (paramId: string, value: any) => void;
+  value: ParameterValue;
+  onChange: (paramId: string, value: ParameterValue ) => void;
 }
 
 const SliderParameter = ({ parameter, value, onChange }: SliderParameterProps) => {
