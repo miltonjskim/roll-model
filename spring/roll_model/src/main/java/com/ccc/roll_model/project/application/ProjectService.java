@@ -198,6 +198,7 @@ public class ProjectService {
 
         return response;
     }
+
     @Transactional(readOnly = true)
     public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
                                                        String sort, String domain, int size, int page) {
@@ -313,7 +314,7 @@ public class ProjectService {
                             .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
                                     ? model.getPerformance().getRegression().getRmse()
                                     : null)
-                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
+                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : null)
                             .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
                             .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                             .likeCount(pipeline.getLikeCount())
