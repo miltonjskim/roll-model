@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ccc.roll_model.global.exception.ApiException;
 import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.global.security.utils.JWTUtils;
+import com.ccc.roll_model.member.ui.dto.response.GetMemberInfoResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,5 +26,10 @@ public class MemberService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 		return jwtUtils.createJwt(member, 1000*60*60*72L);
+	}
+
+	public Member getMemberInfo(int memberId) {
+		return memberRepository.findById(memberId)
+			.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 	}
 }
