@@ -20,23 +20,6 @@ public class ModelParameterFactory {
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
 	/**
-	 * 알고리즘 이름과 파라미터 맵을 기반으로 적절한 모델 파라미터 객체를 생성합니다.
-	 *
-	 * @param algorithm 알고리즘 이름
-	 * @param parameterMap 파라미터 맵
-	 * @return 모델 파라미터 객체
-	 * @throws IllegalArgumentException 알 수 없는 알고리즘 또는 파라미터 변환 오류 발생 시
-	 */
-	public static ModelParameter createModelParameters(String algorithm, Map<String, Object> parameterMap) {
-		try {
-			ModelType modelType = ModelType.fromString(algorithm);
-			return createModelParameters(modelType, parameterMap);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("지원하지 않는 알고리즘입니다: " + algorithm, e);
-		}
-	}
-
-	/**
 	 * 모델 유형과 파라미터 맵을 기반으로 적절한 모델 파라미터 객체를 생성합니다.
 	 *
 	 * @param modelType 모델 유형
@@ -46,33 +29,56 @@ public class ModelParameterFactory {
 	 */
 	public static ModelParameter createModelParameters(ModelType modelType, Map<String, Object> parameterMap) {
 		try {
-			switch (modelType) {
-				// 분류 모델들
-				case LOGISTIC_REGRESSION:
-					return objectMapper.convertValue(parameterMap, LogisticRegressionParams.class);
-				case SVC:
-					return objectMapper.convertValue(parameterMap, SVCParams.class);
-				case K_NEIGHBORS_CLASSIFIER:
-					return objectMapper.convertValue(parameterMap, KNeighborsClassifierParams.class);
-				case RANDOM_FOREST_CLASSIFIER:
-					return objectMapper.convertValue(parameterMap, RandomForestClassifierParams.class);
-				case GRADIENT_BOOSTING_CLASSIFIER:
-					return objectMapper.convertValue(parameterMap, GradientBoostingClassifierParams.class);
-
-				// 회귀 모델들
-				case ELASTIC_NET:
-					return objectMapper.convertValue(parameterMap, ElasticNetParams.class);
-				case SVR:
-					return objectMapper.convertValue(parameterMap, SVRParams.class);
-				case RANDOM_FOREST_REGRESSOR:
-					return objectMapper.convertValue(parameterMap, RandomForestRegressorParams.class);
-				case GRADIENT_BOOSTING_REGRESSOR:
-					return objectMapper.convertValue(parameterMap, GradientBoostingRegressorParams.class);
-
-				default:
-					throw new IllegalArgumentException("지원하지 않는 모델 유형입니다: " + modelType);
-			}
-		} catch (IllegalArgumentException e) {
+			return switch (modelType) {
+				case LOGISTIC_REGRESSION -> LogisticRegressionParams.builder()
+					.penalty(getStringValue(parameterMap, "penalty"))
+					.c(getDoubleValue(parameterMap, "C"))
+					.solver(getStringValue(parameterMap, "solver"))
+					.max_iter(getIntegerValue(parameterMap, "maxIter"))
+					.build();
+				case SVC -> SVCParams.builder()
+					.c(getDoubleValue(parameterMap, "C"))
+					.kernel(getStringValue(parameterMap, "kernel"))
+					.gamma(getStringValue(parameterMap, "gamma"))
+					.degree(getIntegerValue(parameterMap, "degree"))
+					.build();
+				case K_NEIGHBORS_CLASSIFIER -> KNeighborsClassifierParams.builder()
+					.n_neighbors(getIntegerValue(parameterMap, "nNeighbors"))
+					.weights(getStringValue(parameterMap, "weights"))
+					.metric(getStringValue(parameterMap, "metric"))
+					.build();
+				case RANDOM_FOREST_CLASSIFIER -> RandomForestClassifierParams.builder()
+					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
+					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
+					.max_features(getStringValue(parameterMap, "maxFeatures"))
+					.build();
+				case GRADIENT_BOOSTING_CLASSIFIER -> GradientBoostingClassifierParams.builder()
+					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
+					.learning_rate(getDoubleValue(parameterMap, "learningRate"))
+					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
+					.build();
+				case ELASTIC_NET -> ElasticNetParams.builder()
+					.alpha(getDoubleValue(parameterMap, "alpha"))
+					.l1_ratio(getDoubleValue(parameterMap, "l1Ratio"))
+					.build();
+				case SVR -> SVRParams.builder()
+					.c(getDoubleValue(parameterMap, "C"))
+					.epsilon(getDoubleValue(parameterMap, "epsilon"))
+					.kernel(getStringValue(parameterMap, "kernel"))
+					.build();
+				case RANDOM_FOREST_REGRESSOR -> RandomForestRegressorParams.builder()
+					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
+					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
+					.max_features(getStringValue(parameterMap, "maxFeatures"))
+					.build();
+				case GRADIENT_BOOSTING_REGRESSOR -> GradientBoostingRegressorParams.builder()
+					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
+					.learning_rate(getDoubleValue(parameterMap, "learningRate"))
+					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
+					.build();
+				default -> throw new IllegalArgumentException("지원하지 않는 모델 유형입니다: " + modelType);
+			};
+		} catch (Exception e) {
 			throw new IllegalArgumentException("파라미터 변환 중 오류가 발생했습니다: " + e.getMessage(), e);
 		}
 	}
@@ -89,5 +95,55 @@ public class ModelParameterFactory {
 		}
 
 		return modelParameter.validateParameters();
+	}
+
+	private static Integer getIntegerValue(Map<String, Object> map, String key) {
+		Object value = map.get(key);
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof Integer) {
+			return (Integer) value;
+		}
+		if (value instanceof Number) {
+			return ((Number) value).intValue();
+		}
+		if (value instanceof String) {
+			try {
+				return Integer.parseInt((String) value);
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Cannot convert String value '" + value + "' to Integer for key '" + key + "'");
+			}
+		}
+		throw new IllegalArgumentException("Cannot convert value of type " + value.getClass().getName() + " to Integer for key '" + key + "'");
+	}
+
+	private static Double getDoubleValue(Map<String, Object> map, String key) {
+		Object value = map.get(key);
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof Double) {
+			return (Double) value;
+		}
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue();
+		}
+		if (value instanceof String) {
+			try {
+				return Double.parseDouble((String) value);
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Cannot convert String value '" + value + "' to Double for key '" + key + "'");
+			}
+		}
+		throw new IllegalArgumentException("Cannot convert value of type " + value.getClass().getName() + " to Double for key '" + key + "'");
+	}
+
+	private static String getStringValue(Map<String, Object> map, String key) {
+		Object value = map.get(key);
+		if (value == null) {
+			return null;
+		}
+		return value.toString();
 	}
 }

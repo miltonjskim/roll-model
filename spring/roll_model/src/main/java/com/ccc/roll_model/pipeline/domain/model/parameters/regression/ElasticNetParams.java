@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ElasticNetParams implements ModelParameter {
 	private Double alpha;
-	private Double l1Ratio;
+	private Double l1_ratio;
 
 	@Override
 	public boolean validateParameters() {
 		// alpha와 l1Ratio가 필수 파라미터
-		return alpha != null && l1Ratio != null;
+		return alpha != null && l1_ratio != null;
 	}
 }
