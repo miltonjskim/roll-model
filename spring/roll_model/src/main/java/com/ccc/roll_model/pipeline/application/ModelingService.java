@@ -1,6 +1,7 @@
 package com.ccc.roll_model.pipeline.application;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.ccc.roll_model.pipeline.domain.model.client.MessagePublisher;
 import com.ccc.roll_model.pipeline.domain.model.vo.ModelingData;
@@ -82,11 +83,11 @@ public class ModelingService {
 	 */
 	public String getDatasetFilePath(PipelineDocument pipelineDocument) {
 		// 사용할 etag 결정
-		String etag;
+		String datasetId;
 
 		if (pipelineDocument.getHistory() == null || pipelineDocument.getHistory().isEmpty()) {
-			// 히스토리가 없는 경우 원본 데이터셋 etag 사용
-			etag = pipelineDocument.getOriginalDatasetEtag();
+			// 히스토리가 없는 경우 원본 데이터셋 id 사용
+			datasetId = pipelineDocument.getOriginalDatasetId();
 		} else {
 			// 히스토리가 있는 경우 가장 최근 전처리 단계의 etag 사용
 			PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory()
@@ -94,27 +95,24 @@ public class ModelingService {
 
 			List<PipelineDocument.PreprocessingStep> steps = latestHistoryItem.getPreprocessingSteps();
 
-			// 전처리 단계가 없는 경우 원본 데이터셋 etag 사용
+			// 전처리 단계가 없는 경우 원본 데이터셋 id 사용
 			if (steps == null || steps.isEmpty()) {
-				etag = pipelineDocument.getOriginalDatasetEtag();
+				datasetId = pipelineDocument.getOriginalDatasetId();
 			} else {
-				// 전처리 단계가 있는 경우 가장 최근 전처리 단계의 etag 사용
+				// 전처리 단계가 있는 경우 가장 최근 전처리 단계의 dataset_id 사용
 				PipelineDocument.PreprocessingStep latestStep = steps.get(steps.size() - 1);
-				etag = latestStep.getPreprocessedDatasetEtag();
+				datasetId = latestStep.getPreprocessedDatasetId();
 
-				// etag가 없거나 비어있는 경우 원본 etag로 폴백
-				if (etag == null || etag.isEmpty()) {
-					etag = pipelineDocument.getOriginalDatasetEtag();
+				// dataset_id가 없거나 비어있는 경우 원본 dataset_id로 폴백
+				if (datasetId == null || datasetId.isEmpty()) {
+					datasetId = pipelineDocument.getOriginalDatasetId();
 				}
 			}
 		}
 
-		// etag로 데이터셋 문서 조회
-		DatasetDocument datasetDocument = datasetRepository.findByEtag(etag);
-
-		if (datasetDocument == null) {
-			throw new EntityNotFoundException("데이터셋을 찾을 수 없습니다. etag: " + etag);
-		}
+		// object_id로 데이터셋 문서 조회
+		DatasetDocument datasetDocument = datasetRepository.findById(new ObjectId(datasetId))
+			.orElseThrow(()->new EntityNotFoundException("데이터셋을 찾을 수 없습니다."));
 
 		// 데이터셋 파일 경로 반환
 		return datasetDocument.getDatasetFilePath();
