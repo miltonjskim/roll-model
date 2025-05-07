@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { AppProvider } from "@/app/providers/AppProvider";
-import { Toaster } from "sonner";
-import Navbar from "@/widgets/Navbar";
+import type { Metadata } from 'next';
+import './globals.css';
+import { AppProvider } from '@/app/providers/AppProvider';
+import { Toaster } from 'sonner';
+import Navbar from '@/widgets/navbar/Navbar';
 
 export const metadata: Metadata = {
-  title: "Roll model",
-  description: "GUI 기반 간편 AI 모델 학습 호스팅 서비스",
+  title: 'Roll model',
+  description: 'GUI 기반 간편 AI 모델 학습 호스팅 서비스',
 };
 
 export default function RootLayout({
@@ -17,18 +17,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-      <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-        <link
-          href="https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css"
-          rel="stylesheet"
-          type="text/css"
-        />
+        <link href="https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css" rel="stylesheet" type="text/css" />
       </head>
       <body className="bg-[theme(color-background)]">
         <AppProvider>
           <Navbar />
-          <div className="w-[90vw] mx-auto rounded-md p-4">{children}</div>
+          <div className="mx-auto w-[90vw] rounded-md p-4">{children}</div>
           <Toaster richColors position="top-center" />
         </AppProvider>
       </body>
