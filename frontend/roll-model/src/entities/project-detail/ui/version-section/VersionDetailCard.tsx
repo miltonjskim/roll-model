@@ -13,8 +13,8 @@ interface VersionDetailCardProps {
 }
 
 export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCardProps) => {
-  if (!pipeline) return null;
   const projectDetail = useAtomValue(projectDetailAtom);
+  if (!pipeline) return null;
 
   // 날짜 포맷팅 함수 (실제 구현은 utils 폴더에 있어야 함)
   const formatUpdatedDate = (dateString: string) => {
