@@ -1,13 +1,13 @@
 package com.ccc.roll_model.pipeline.application;
 
 import java.util.List;
-import java.util.Optional;
 
+import com.ccc.roll_model.pipeline.domain.model.client.MessagePublisher;
+import com.ccc.roll_model.pipeline.domain.model.vo.ModelingData;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ccc.roll_model.global.exception.ApiException;
 import com.ccc.roll_model.pipeline.application.command.ExecuteModelingCommand;
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
 import com.ccc.roll_model.pipeline.domain.model.common.ModelingInfo;
@@ -31,7 +31,7 @@ public class ModelingService {
 	private final PipelineRepository pipelineRepository;
 	private final PipelineMongoRepository pipelineMongoRepository;
 	private final DatasetRepository datasetRepository;
-
+	private final MessagePublisher messagePublisher;
 	public void executeModeling(ExecuteModelingCommand command) {
 		// 커맨드 유효성 검사
 		if (!command.validate()) {
@@ -62,8 +62,17 @@ public class ModelingService {
 		log.info("params: {}", modelParameter.toString());
 
 		// 카프카 메시징
-
+		ModelingData modelingData = ModelingData.builder()
+				.projectId(pipelineDocument.getProjectId())
+				.modelType(modelingInfo.getModelType())
+				.memberId(command.getMemberId())
+				.pipelineId(command.getPipelineId())
+				.parameters(modelParameter)
+				.trainDataPath(filePath)
+				.targetColumn(modelingInfo.getTargetFeature())
+				.build();
 		// 저장
+		messagePublisher.publishProcessingRequest(modelingData);
 	}
 
 	/**
