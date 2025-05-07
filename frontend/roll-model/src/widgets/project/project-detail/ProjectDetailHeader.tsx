@@ -4,30 +4,56 @@ import { useAtom } from 'jotai';
 import { FaTrashAlt } from 'react-icons/fa';
 import { TiLockClosed } from 'react-icons/ti';
 import { TiLockOpen } from 'react-icons/ti';
+import { deletePipeline, toggePublicPipeline } from '@/shared/api/projectDetailApi';
+import { useRouter } from 'next/navigation';
 
 export default function ProjectDetailHeader() {
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
+  const router = useRouter();
 
   // 재학습
-  const handleStartRetraining = () => {
-    // 재학습 api
-  };
+  const handleStartRetraining = () => {};
 
   // 파이프라인 삭제
-  const handleDeletePipeline = () => {};
+  const handleDeletePipeline = async () => {
+    try {
+      await deletePipeline(projectDetail.id);
+      router.push('/dashboard');
+      alert('삭제 성공');
+    } catch (e) {
+      console.error('삭제실패', e);
+      alert('삭제 실패');
+      router.push('/dashboard');
+    }
+  };
 
   // 공개여부 버튼 클릭 핸들러
-  const handleTogglePublic = () => {
-    // 프로젝트 비공개
+  const handleTogglePublic = async () => {
+    // 프로젝트 비공개 상태면 전환 불가
     if (!projectDetail.projectPublicYn) {
-      return; // 비활성화 상태 (전환불가능)
+      return;
     }
-    const newPipelinePublicYn = !projectDetail.pipelinePublicYn;
+    // 현재 상태 저장한 뒤 우선 화면에 적용 바로 딱
+    const previousPublicState = projectDetail.pipelinePublicYn;
+    const newPipelinePublicYn = !previousPublicState;
     setProjectDetail({
       ...projectDetail,
       pipelinePublicYn: newPipelinePublicYn,
     });
-    // API 요청 (아직없)
+    try {
+      // API 호출
+      await toggePublicPipeline(projectDetail.id);
+      // 성공 시 알림 (선택사항)
+      alert('공개 여부가 변경되었습니다.');
+    } catch (e) {
+      // 실패 시 이전 상태로 롤백
+      setProjectDetail({
+        ...projectDetail,
+        pipelinePublicYn: previousPublicState,
+      });
+      console.error('공개 상태 변경 실패', e);
+      alert('공개 여부 변경에 실패했습니다.');
+    }
   };
 
   // 버튼 색상 및 스타일 결정

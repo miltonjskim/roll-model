@@ -65,7 +65,7 @@
       },
       {
         "id": "pipe4",
-        "version": 5.3,
+        "version": "5.3",
         "title": "주식 가격 예측 모델",
         "category": "REGRESSION",
         "status": "COMPLETED",
@@ -83,7 +83,7 @@
       },
       {
         "id": "pipe5",
-        "version": 6.4,
+        "version": "6.4",
         "title": "고객 이탈 예측",
         "category": "CLASSIFICATION",
         "status": "COMPLETED",
@@ -101,7 +101,7 @@
       },
       {
         "id": "pipe6",
-        "version": 19.91,
+        "version": "19.91",
         "title": "학생 성적 예측",
         "category": "REGRESSION",
         "status": "COMPLETED",

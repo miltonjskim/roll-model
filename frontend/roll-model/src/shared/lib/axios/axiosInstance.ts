@@ -14,11 +14,11 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // 세션 스토리지에서 토큰 가져옴
-    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    // const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
 
-    console.log('axiosInstance token:', token);
+    // console.log('axiosInstance token:', token);
 
-    // const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN; // 테스트토큰 추가 (없어도됨)
+    const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN; // 테스트토큰 추가 (없어도됨)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

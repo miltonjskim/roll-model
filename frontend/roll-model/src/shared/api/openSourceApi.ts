@@ -87,3 +87,14 @@ export const fetchOpenSourceData = async (
     throw error;
   }
 };
+
+// 좋아써
+export const likeThisPipeline = async (pipelineId: string) => {
+  try {
+    const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/likes`);
+    return response.data;
+  } catch (error) {
+    console.error('좋아요 변경 실패', error);
+    throw error;
+  }
+};
