@@ -4,8 +4,11 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 //version
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
+import projectDetailModelClassification from '@/shared/api/mocks/project-detail/projectDetailModelClassification.json';
+import projectDetailModelRegression from '@/shared/api/mocks/project-detail/projectDetailModelRegression.json';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
+import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
@@ -32,6 +35,23 @@ export const fetchProjectDetailVersion = async (pipelineId: string) => {
     // mock data
     // 시간차 어택 제거
     return projectDetailVersionMock as ProjectDetailVersionResponse;
+  } catch (error) {
+    console.error('상세 데이터섹션 호출 실패', error);
+    throw error;
+  }
+};
+
+// 모델섹션
+export const fetchProjectDetailModel = async (pipelineId: string) => {
+  try {
+    // 나중에 api 완성 후에 활성화
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/modelInfo`);
+    // return response.data;
+
+    // mock data 분류일때
+    // return projectDetailModelClassification as ProjectDetailModelResponse;
+    // mock data 회귀일때
+    return projectDetailModelRegression as ProjectDetailModelResponse;
   } catch (error) {
     console.error('상세 데이터섹션 호출 실패', error);
     throw error;

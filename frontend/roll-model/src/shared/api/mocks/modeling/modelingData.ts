@@ -5,6 +5,22 @@ export const TARGET_VARIABLES = ['age', 'entropy', 'name', 'adress', 'type', 'us
 // 카테고리 하드코딩 => 수정해야됨
 export const INITIAL_CATEGORY = 'CLASSIFICATION'; // REGRESSION
 
+// 프로젝트상세 모델평가섹션에서 사용함 (응답받은 영문명 > 한글명 변환)
+export const MODEL_NAME_MAPPING = {
+  // 분류 모델
+  LogisticRegression: '로지스틱 회귀 (Logistic Regression)',
+  SVC: '서포트 벡터 머신 (SVC)',
+  KNeighborsClassifier: 'K-최근접 이웃 (KNN)',
+  RandomForestClassifier: '랜덤 포레스트 (Random Forest)',
+  GradientBoostingClassifier: '그래디언트 부스팅 (Gradient Boosting)',
+
+  // 회귀 모델
+  ElasticNet: '엘라스틱넷 (ElasticNet)',
+  SVR: '서포트 벡터 회귀 (SVR)',
+  RandomForestRegressor: '랜덤 포레스트 회귀 (Random Forest)',
+  GradientBoostingRegressor: '그래디언트 부스팅 회귀 (Gradient Boosting)',
+};
+
 export const CLASSIFICATION_MODELS = [
   {
     id: 'LogisticRegression',
