@@ -302,7 +302,6 @@ def update_model_by_pipeline_id(pipeline_id, update_data):
                 "feature_importance": update_data.get("feature_importance"),
                 "learning_duration": float(update_data.get("learning_duration", 0)),  # 실수로 변환
                 "model_file_path": update_data.get("model_file_path"),
-                "api_endpoint": update_data.get("api_endpoint"),
                 "registered_at": update_data.get("registered_at")
             }
 

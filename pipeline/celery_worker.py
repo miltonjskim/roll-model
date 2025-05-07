@@ -18,6 +18,9 @@ from config import (
 )
 from minio_utils import upload_model, download_dataset, ensure_bucket_exists, get_file_url, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
+from mlflow_utils import log_model_to_mlflow
+from kserve_utils import generate_inference_service_yaml, deploy_inference_service, get_inference_service_url, sanitize_k8s_name
+
 
 # Celery 앱 설정 (RabbitMQ 브로커 사용)
 app = Celery('ml_worker',
@@ -192,11 +195,11 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 모델 유형 설정
             model_category = "CLASSIFICATION"
             algorithm_map = {
-                'LogisticRegression': 'LOGISTIC_REGRESSION',
-                'SVC': 'SVM',
-                'KNeighborsClassifier': 'KNN',
-                'RandomForestClassifier': 'RANDOM_FOREST',
-                'GradientBoostingClassifier': 'GRADIENT_BOOSTING'
+                'LogisticRegression': 'LogisticRegression',
+                'SVC': 'SVC',
+                'KNeighborsClassifier': 'KNeighborsClassifier',
+                'RandomForestClassifier': 'RandomForestClassifier',
+                'GradientBoostingClassifier': 'GradientBoostingClassifier'
             }
             algorithm = algorithm_map.get(model_type, model_type.upper())
 
@@ -275,10 +278,10 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 모델 유형 설정
             model_category = "REGRESSION"
             algorithm_map = {
-                'ElasticNet': 'ELASTIC_NET',
-                'SVR': 'SVM',
-                'RandomForestRegressor': 'RANDOM_FOREST',
-                'GradientBoostingRegressor': 'GRADIENT_BOOSTING'
+                'ElasticNet': 'ElasticNet',
+                'SVR': 'SVR',
+                'RandomForestRegressor': 'RandomForestRegressor',
+                'GradientBoostingRegressor': 'GradientBoostingRegressor'
             }
             algorithm = algorithm_map.get(model_type, model_type.upper())
 
@@ -380,10 +383,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             MINIO_MODELS_BUCKET
         )
 
-        # TODO: 모델 서빙 API 엔드포인트 생성
-        # 실제로는 모델 배포 단계에서 생성됨
-        api_endpoint = "uri/example"
-
         # 업데이트할 모델 메타데이터 구성 - 지정된 필드만 포함
         model_metadata = {
             "pipeline_id": pipeline_id,
@@ -403,7 +402,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             "feature_importance": feature_importance,
             "learning_duration": float(train_end_time - train_start_time),  # 정수 대신 실수로 저장
             "model_file_path": s3_model_path,
-            "api_endpoint": api_endpoint,
             "registered_at": end_time_iso
         }
 
@@ -424,16 +422,90 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             from mongo_utils import save_to_mongodb
             save_to_mongodb(model_metadata)
 
-        # 결과 반환
+        # MLflow에 모델 로깅
+        mlflow_info = log_model_to_mlflow(
+            model=model,
+            model_type=model_type,
+            model_params=model_params,
+            metrics=performance,
+            feature_importance=feature_importance,
+            pipeline_id=pipeline_id,
+            project_id=project_id,
+            features_info=features_info,
+            target_column=target_column
+        )
+
+        # KServe InferenceService 배포
+        if mlflow_info:
+            # 모델 이름 생성 (MLflow 등록 이름 사용)
+            model_name = mlflow_info["registered_model"]
+            model_version = mlflow_info["registered_model_version"]
+
+            full_model_name = f"{model_name}-{model_version}"
+
+            # sanitize_k8s_name 함수 호출 결과 미리 확인 (선택 사항)
+            k8s_model_name = sanitize_k8s_name(full_model_name)
+            print(f"원본 모델 이름: {full_model_name}")
+            print(f"쿠버네티스 리소스 이름: {k8s_model_name}")
+
+            # 모델 경로 설정 (MinIO 버킷 내부)
+            model_path = f"{project_id}/{model_type}/{model_version}" if project_id else f"{model_type}/{model_version}"
+
+            # InferenceService YAML 생성
+            # (generate_inference_service_yaml 내부에서 sanitize_k8s_name 호출함)
+            yaml_path = generate_inference_service_yaml(
+                model_name=full_model_name,
+                model_path=model_path
+            )
+
+            # InferenceService 배포
+            deployment_success, deployment_message = deploy_inference_service(yaml_path)
+
+            if deployment_success:
+                # 쿠버네티스 명명 규칙에 맞게 서비스 이름 변환
+                service_name = sanitize_k8s_name(f"{model_name}-{model_version}")
+                service_url = get_inference_service_url(service_name)
+
+                # 배포 정보 기록
+                deployment_info = {
+                    "status": "deployed",
+                    "service_name": service_name,
+                    "url": service_url,
+                    "deployment_time": pd.Timestamp.now().isoformat()
+                }
+            else:
+                deployment_info = {
+                    "status": "failed",
+                    "error": deployment_message,
+                    "deployment_time": pd.Timestamp.now().isoformat()
+                }
+        else:
+            deployment_info = {
+                "status": "skipped",
+                "reason": "MLflow 모델 등록 실패"
+            }
+
+        # 결과 반환에 MLflow 및 배포 정보 추가
         result = {
             "status": "success",
             "model_type": model_type,
             "s3_model_path": s3_model_path,
-            "model_metadata": model_metadata
+            "model_metadata": model_metadata,
+            "mlflow_info": mlflow_info,
+            "deployment_info": deployment_info
         }
 
         if pipeline_id:
             result["pipeline_id"] = pipeline_id
+
+            # MongoDB에 배포 상태 업데이트
+            if deployment_info["status"] == "deployed":
+                update_data = {
+                    "deployment_status": "deployed",
+                    "api_endpoint": deployment_info["url"],
+                    "deployment_timestamp": deployment_info["deployment_time"]
+                }
+                update_model_by_pipeline_id(pipeline_id, update_data)
 
         return result
 

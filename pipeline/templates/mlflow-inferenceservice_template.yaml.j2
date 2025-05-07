@@ -1,0 +1,52 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ model_name }}
+  namespace: default
+  annotations:
+    serving.kserve.io/timeout: "300"
+    serving.kserve.io/enable-prometheus-metrics: "true"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 3
+    # 자동 스케일링을 위한 지표 설정
+    scaleMetric: concurrency
+    scaleTarget: 10
+    containerConcurrency: 5
+    model:
+      modelFormat:
+        name: mlflow
+      storageUri: s3://ml-models/{{ model_path }}
+      resources:
+        requests:
+          cpu: {{ cpu_request }}
+          memory: {{ memory_request }}
+          {% if gpu_fraction > 0 %}
+          nvidia.com/gpu: {{ gpu_fraction }}
+          {% endif %}
+        limits:
+          cpu: {{ cpu_limit }}
+          memory: {{ memory_limit }}
+          {% if gpu_fraction > 0 %}
+          nvidia.com/gpu: {{ gpu_fraction }}
+          {% endif %}
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "{{ access_key }}"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "{{ secret_key }}"
+        - name: AWS_ENDPOINT_URL
+          value: "{{ endpoint_url }}"
+        - name: S3_USE_HTTPS
+          value: "0"
+        - name: S3_VERIFY_SSL
+          value: "0"
+        {% if gpu_fraction > 0 %}
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+        {% endif %}

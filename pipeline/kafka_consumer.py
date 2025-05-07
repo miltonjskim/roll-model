@@ -30,7 +30,7 @@ def consume_and_submit_tasks():
                 print(f"[Consumer] Received message: {payload}")
 
                 # 필수 필드 확인
-                required_fields = ['model_type', 'train_data_path']
+                required_fields = ['model_type', 'train_data_path', 'project_id', 'member_id', 'pipeline_id']
                 missing_fields = [field for field in required_fields if field not in payload]
 
                 if missing_fields:
@@ -44,19 +44,21 @@ def consume_and_submit_tasks():
                 model_type = payload['model_type']
                 model_params = payload.get('parameters', {})
 
+                # 프로젝트 및 멤버 정보
+                project_id = payload.get('project_id')
+                member_id = payload.get('member_id')
+                pipeline_id = payload.get('pipeline_id')
+
                 # 저장 경로 (선택적)
                 save_path = payload.get('save_path')
 
                 # 타겟 컬럼 설정
                 target_column = payload.get('target_column', DEFAULT_TARGET_COLUMN)
 
-                # 파이프라인 ID (선택적)
-                pipeline_id = payload.get('pipeline_id')
-                if pipeline_id:
-                    print(f"[Consumer] Pipeline ID: {pipeline_id}")
-
                 print(f"[Consumer] Processing - Model: {model_type}, Data: {data_path}")
                 print(f"[Consumer] Parameters: {model_params}")
+                print(f"[Consumer] Project ID: {project_id}, Member ID: {member_id}")
+                print(f"[Consumer] Pipeline ID: {pipeline_id}")
                 print(f"[Consumer] Target column: {target_column}")
 
                 # Celery 태스크 제출
@@ -66,7 +68,9 @@ def consume_and_submit_tasks():
                     model_params,
                     save_path,
                     target_column,
-                    pipeline_id
+                    pipeline_id,
+                    project_id,
+                    member_id
                 )
                 print(f"[Consumer] Submitted Celery task with ID: {task.id}")
 
