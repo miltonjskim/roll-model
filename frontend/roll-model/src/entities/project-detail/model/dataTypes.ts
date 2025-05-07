@@ -1,11 +1,13 @@
-import { ApiProjectDomain } from "@/shared/lib/utils/domainMapping";
+import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping';
 
 // 프로젝트 정보
 export interface ProjectInfo {
   title: string;
-  category: "CLASSIFICATION" | "REGRESSION";
+  category: 'CLASSIFICATION' | 'REGRESSION';
   domain: ApiProjectDomain;
-  version: number;
+  version: string;
+  projectPublicYn: boolean;
+  pipelinePublicYn: boolean;
   ownerYn: boolean;
 }
 
@@ -17,11 +19,12 @@ export interface Dataset {
   targetVariable: string;
   missingRate: string;
 }
-
+// 전처리 파라미터 타입 정의
+export type PreprocessingParameter = string | number | boolean | undefined; // undefined 전처리 파라미터 어떻게 날라올지 모름
 // 전처리 빠이쁘라인
 export interface PreprocessingStep {
   type: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, PreprocessingParameter>;
   order: number;
   active: boolean;
 }
@@ -54,6 +57,12 @@ export interface CorrelationMatrix {
   matrix: number[][];
 }
 
+// 에러 응답 타입 정의
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
 // 전체응답
 export interface ProjectDetailDataResponse {
   status: number;
@@ -66,5 +75,5 @@ export interface ProjectDetailDataResponse {
     distributions: Distribution[];
     correlationMatrix: CorrelationMatrix;
   };
-  error: null | any;
+  error: null | ApiError;
 }
