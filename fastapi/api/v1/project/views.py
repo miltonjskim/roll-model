@@ -388,146 +388,146 @@ async def get_pipeline_versions(
             data=None
         )
 
-@router.post("/pipelines/{pipeline_id}/replication/preprocess", response_class=ApiResponse)
-async def fork_pipeline_preprocess(
-        project_id: int = Path(..., description="프로젝트 ID"),
-        pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
-        member_id: int = Depends(verify_token),
-        pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
-        db: Session = Depends(get_mysql_db)
-):
-    """
-    기존 파이프라인의 전처리 단계만 복제하여 새로운 파이프라인을 생성합니다.
-    복제 로직:
-    1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
-    2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
-    3. 내 원본 프로젝트에서 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
-    """
-    try:
-        # 1. 원본 파이프라인 조회
-        source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_cache_service
-        )
-        if error_response:
-            return error_response
+# @router.post("/pipelines/{pipeline_id}/replication/preprocess", response_class=ApiResponse)
+# async def fork_pipeline_preprocess(
+#         project_id: int = Path(..., description="프로젝트 ID"),
+#         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
+#         member_id: int = Depends(verify_token),
+#         pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+#         db: Session = Depends(get_mysql_db)
+# ):
+#     """
+#     기존 파이프라인의 전처리 단계만 복제하여 새로운 파이프라인을 생성합니다.
+#     복제 로직:
+#     1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
+#     2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
+#     3. 내 원본 프로젝트에서 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
+#     """
+#     try:
+#         # 1. 원본 파이프라인 조회
+#         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
+#             db, pipeline_id, project_id, pipeline_cache_service
+#         )
+#         if error_response:
+#             return error_response
 
-        # 2. 최초 파이프라인 정보 조회
-        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+#         # 2. 최초 파이프라인 정보 조회
+#         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
 
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
-        )
+#         # 3. 타겟 프로젝트 결정
+#         target_project_id = await determine_target_project(
+#             db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+#         )
 
-        # 4. 새로운 파이프라인 모델 생성
-        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+#         # 4. 새로운 파이프라인 모델 생성
+#         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
-        # 5. 전처리 단계만 복제
-        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
-            latest_history = source_pipeline_details.history[-1]
+#         # 5. 전처리 단계만 복제
+#         if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
+#             latest_history = source_pipeline_details.history[-1]
 
-            # 전처리 단계만 포함한 새 히스토리 항목 생성
-            new_history_item = PipelineHistoryItem(
-                preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
-                status=PipelineStatus.PREPROCESSED
-            )
+#             # 전처리 단계만 포함한 새 히스토리 항목 생성
+#             new_history_item = PipelineHistoryItem(
+#                 preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
+#                 status=PipelineStatus.PREPROCESSED
+#             )
 
-            new_pipeline.history.append(new_history_item)
+#             new_pipeline.history.append(new_history_item)
 
-        # 6. 버전 정보 계산
-        new_version = await calculate_new_version(db, target_project_id)
+#         # 6. 버전 정보 계산
+#         new_version = await calculate_new_version(db, target_project_id)
 
-        # 7. 새 파이프라인 저장
-        new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, PipelineStatus.PREPROCESSED, new_version, pipeline_cache_service
-        )
+#         # 7. 새 파이프라인 저장
+#         new_pipeline_id = await save_new_pipeline(
+#             db, new_pipeline, pipeline_id, target_project_id, member_id,
+#             source_pipeline, PipelineStatus.PREPROCESSED, new_version, pipeline_cache_service
+#         )
 
-        # 8. 응답 데이터 준비
-        response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            new_version, new_pipeline, include_all_history=False
-        )
+#         # 8. 응답 데이터 준비
+#         response_data = await prepare_response_data(
+#             new_pipeline_id, target_project_id, pipeline_id, original_project_id,
+#             new_version, new_pipeline, include_all_history=False
+#         )
 
-        return ApiResponse(
-            status=200,
-            message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=response_data
-        )
+#         return ApiResponse(
+#             status=200,
+#             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
+#             data=response_data
+#         )
 
-    except Exception as e:
-        logger.error(f"파이프라인 전처리 단계 복제 중 오류 발생: {str(e)}")
-        return ApiResponse(
-            status=500,
-            message=f"파이프라인 전처리 단계 복제 중 오류가 발생했습니다: {str(e)}",
-            data=None
-        )
+#     except Exception as e:
+#         logger.error(f"파이프라인 전처리 단계 복제 중 오류 발생: {str(e)}")
+#         return ApiResponse(
+#             status=500,
+#             message=f"파이프라인 전처리 단계 복제 중 오류가 발생했습니다: {str(e)}",
+#             data=None
+#         )
 
 
-@router.post("/pipelines/{pipeline_id}/replication/total", response_class=ApiResponse)
-async def fork_pipeline_total(
-        project_id: int = Path(..., description="프로젝트 ID"),
-        pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
-        member_id: int = Depends(verify_token),
-        pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
-        db: Session = Depends(get_mysql_db)
-):
-    """
-    기존 파이프라인을 전체 복제하여 새로운 파이프라인을 생성합니다.
-    복제 로직:
-    1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
-    2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
-    3. 내 원본 프로젝트에서 직간접적으로 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
-    """
-    try:
-        # 1. 원본 파이프라인 조회
-        source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_cache_service
-        )
-        if error_response:
-            return error_response
+# @router.post("/pipelines/{pipeline_id}/replication/total", response_class=ApiResponse)
+# async def fork_pipeline_total(
+#         project_id: int = Path(..., description="프로젝트 ID"),
+#         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
+#         member_id: int = Depends(verify_token),
+#         pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+#         db: Session = Depends(get_mysql_db)
+# ):
+#     """
+#     기존 파이프라인을 전체 복제하여 새로운 파이프라인을 생성합니다.
+#     복제 로직:
+#     1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
+#     2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
+#     3. 내 원본 프로젝트에서 직간접적으로 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
+#     """
+#     try:
+#         # 1. 원본 파이프라인 조회
+#         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
+#             db, pipeline_id, project_id, pipeline_cache_service
+#         )
+#         if error_response:
+#             return error_response
 
-        # 2. 최초 파이프라인 정보 조회
-        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+#         # 2. 최초 파이프라인 정보 조회
+#         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
 
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
-        )
+#         # 3. 타겟 프로젝트 결정
+#         target_project_id = await determine_target_project(
+#             db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+#         )
 
-        # 4. 새로운 파이프라인 모델 생성
-        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+#         # 4. 새로운 파이프라인 모델 생성
+#         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
-        # 5. 모든 히스토리 복제
-        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
-            for history_item in source_pipeline_details.history:
-                new_pipeline.history.append(history_item.model_copy())
+#         # 5. 모든 히스토리 복제
+#         if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
+#             for history_item in source_pipeline_details.history:
+#                 new_pipeline.history.append(history_item.model_copy())
 
-        # 6. 버전 정보 계산
-        new_version = await calculate_new_version(db, target_project_id)
+#         # 6. 버전 정보 계산
+#         new_version = await calculate_new_version(db, target_project_id)
 
-        # 7. 새 파이프라인 저장
-        new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, source_pipeline.status, new_version, pipeline_cache_service
-        )
+#         # 7. 새 파이프라인 저장
+#         new_pipeline_id = await save_new_pipeline(
+#             db, new_pipeline, pipeline_id, target_project_id, member_id,
+#             source_pipeline, source_pipeline.status, new_version, pipeline_cache_service
+#         )
 
-        # 8. 응답 데이터 준비
-        response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            new_version, new_pipeline, include_all_history=True
-        )
+#         # 8. 응답 데이터 준비
+#         response_data = await prepare_response_data(
+#             new_pipeline_id, target_project_id, pipeline_id, original_project_id,
+#             new_version, new_pipeline, include_all_history=True
+#         )
 
-        return ApiResponse(
-            status=200,
-            message="파이프라인이 성공적으로 복제되었습니다.",
-            data=response_data
-        )
+#         return ApiResponse(
+#             status=200,
+#             message="파이프라인이 성공적으로 복제되었습니다.",
+#             data=response_data
+#         )
 
-    except Exception as e:
-        logger.error(f"파이프라인 복제 중 오류 발생: {str(e)}")
-        return ApiResponse(
-            status=500,
-            message=f"파이프라인 복제 중 오류가 발생했습니다: {str(e)}",
-            data=None
-        )
+#     except Exception as e:
+#         logger.error(f"파이프라인 복제 중 오류 발생: {str(e)}")
+#         return ApiResponse(
+#             status=500,
+#             message=f"파이프라인 복제 중 오류가 발생했습니다: {str(e)}",
+#             data=None
+#         )
