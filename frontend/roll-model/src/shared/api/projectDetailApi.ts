@@ -5,6 +5,7 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
 import projectDetailModelClassification from '@/shared/api/mocks/project-detail/projectDetailModelClassification.json';
+import projectDetailModelClassificationTest from '@/shared/api/mocks/project-detail/projectDetailModelClassificationTest.json';
 import projectDetailModelRegression from '@/shared/api/mocks/project-detail/projectDetailModelRegression.json';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
@@ -49,9 +50,11 @@ export const fetchProjectDetailModel = async (pipelineId: string) => {
     // return response.data;
 
     // mock data 분류일때
-    // return projectDetailModelClassification as ProjectDetailModelResponse;
+    return projectDetailModelClassification as ProjectDetailModelResponse;
+    // mock data 분류일때 테스트전용
+    // return projectDetailModelClassificationTest as ProjectDetailModelResponse; // (혼동행렬 class 12개)화면박살남
     // mock data 회귀일때
-    return projectDetailModelRegression as ProjectDetailModelResponse;
+    // return projectDetailModelRegression as ProjectDetailModelResponse;
   } catch (error) {
     console.error('상세 데이터섹션 호출 실패', error);
     throw error;

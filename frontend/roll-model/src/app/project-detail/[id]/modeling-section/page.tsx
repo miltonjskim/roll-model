@@ -4,6 +4,10 @@ import { useProjectDetailModel } from '@/app/project-detail/[id]/modeling-sectio
 import { ClassificationModelData, RegressionModelData } from '@/entities/project-detail/model/ModelTypes';
 import { MODEL_NAME_MAPPING } from '@/shared/api/mocks/modeling/modelingData';
 import { useParams } from 'next/navigation';
+import ModelOverview from '@/entities/project-detail/ui/model-section/ModelOverview';
+import ClassificationEvaluation from '@/entities/project-detail/ui/model-section/ClassificationEvaluation';
+import RegressionEvaluation from '@/entities/project-detail/ui/model-section/RegressionEvaluation';
+import FeatureImportanceChart from '@/entities/project-detail/ui/model-section/FeatureImportanceChart';
 
 export default function ModelSectionPage() {
   const { id } = useParams();
@@ -28,39 +32,23 @@ export default function ModelSectionPage() {
   const koreanModelName = MODEL_NAME_MAPPING[algorithmName as keyof typeof MODEL_NAME_MAPPING] || algorithmName;
 
   return (
-    <div className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">모델 상세 정보</h1>
+    <div className="space-y-8 p-4">
+      <ModelOverview
+        category={projectDetailModel.projectInfo.category}
+        algorithmName={algorithmName}
+        koreanModelName={koreanModelName}
+        modelParameters={projectDetailModel.modelParameters}
+        targetInfo={projectDetailModel.targetInfo}
+        performanceMetrics={projectDetailModel.performanceMetrics}
+      />
 
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold">기본 정보</h2>
-        <p>모델 유형: {isClassification ? '분류 모델' : isRegression ? '회귀 모델' : '알 수 없음'}</p>
-        <p>모델 제목: {projectDetailModel.projectInfo.title}</p>
-        <p>알고리즘: {projectDetailModel.algorithm}</p>
-        <p>알고리즘: {koreanModelName}</p>
-      </div>
-
-      {/* 모델 타입에 따른 조건부 렌더링 */}
-      {isClassification && (
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">분류 모델 정보</h2>
-          <p>
-            혼동 행렬 크기: {(projectDetailModel as ClassificationModelData).confusionMatrix.matrixData.length}x{(projectDetailModel as ClassificationModelData).confusionMatrix.matrixData[0].length}
-          </p>
-        </div>
-      )}
+      {isClassification && <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />}
 
       {isRegression && (
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">회귀 모델 정보</h2>
-          <p>데이터 포인트 수: {(projectDetailModel as RegressionModelData).actualVsPredicted.data.length}</p>
-        </div>
+        <RegressionEvaluation actualVsPredicted={(projectDetailModel as RegressionModelData).actualVsPredicted} residualPlot={(projectDetailModel as RegressionModelData).residualPlot} />
       )}
 
-      {/* 전체 응답 데이터 출력 (디버깅용) */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold">전체 응답 데이터 (디버깅용)</h2>
-        <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-gray-100 p-4">{JSON.stringify(projectDetailModel, null, 2)}</pre>
-      </div>
+      <FeatureImportanceChart featureImportance={projectDetailModel.featureImportance} />
     </div>
   );
 }
