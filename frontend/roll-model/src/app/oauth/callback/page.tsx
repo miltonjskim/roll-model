@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
 import { userAtom, isLoggedInAtom } from '@/features/auth/model/authAtoms';
-import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
+import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
 const CallbackPage = () => {
   const router = useRouter();
@@ -25,7 +25,7 @@ const CallbackPage = () => {
 
         sessionStorage.setItem('token', accessToken);
 
-        const response = await axiosInstance.get('/api/v1/auth/members/my');
+        const response = await baseAxiosInstance.get('/api/v1/auth/members/my');
         setUser(response.data);
         setIsLoggedIn(true);
         router.push('/');

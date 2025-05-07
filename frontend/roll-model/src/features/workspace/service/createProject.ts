@@ -1,5 +1,5 @@
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
-import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 import { ApiResponse } from '@/shared/model/types/apiResponse';
 
 export interface CreateProjectRequest {
@@ -26,7 +26,7 @@ export interface CreateProjectResponse {
 }
 
 export const createProject = async (payload: CreateProjectRequest): Promise<Project> => {
-  const response = await axiosInstance.post<ApiResponse<Project>>('/api/v1/projects', {
+  const response = await baseAxiosInstance.post<ApiResponse<Project>>('/api/v1/projects', {
     ...payload,
     isPublic: payload.isPublic ?? true,
   });

@@ -1,6 +1,5 @@
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { ApiResponse } from '@/shared/model/types/apiResponse';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 
 export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -14,9 +13,9 @@ export const axiosInstance = axios.create({
 // 요청 인터셉터
 axiosInstance.interceptors.request.use(
   (config) => {
-    // TODO: 토큰 설정하기
-    // 아래 설정은 예시일 뿐, 이후 백엔드와 말해서 수정할 것
-    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    // 세션 스토리지에서 토큰 가져옴
+    // const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN; // 테스트토큰 추가 (없어도됨)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,21 +26,16 @@ axiosInstance.interceptors.request.use(
 
 // 응답 인터셉터
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
-    const apiResponse = response.data;
-
-    if (apiResponse.status !== 200 || apiResponse.error) {
-      const message = apiResponse.error?.message || '알 수 없는 에러가 발생했습니다.';
-      showErrorToast(message);
-      return Promise.reject(new Error(message));
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return apiResponse.data as any;
-  },
+  (response) => response,
   (error) => {
-    const message = error.response?.data?.error?.message || '네트워크 에러가 발생했습니다.';
-    console.error('API Error:', message);
+    let message;
+    if (error.response) {
+      message = error.response.data?.error.message;
+      console.error('API Error:', error.response.data?.message || error.message);
+    } else {
+      message = '네트워크 에러가 발생했습니다.';
+      console.error('Network Error:', error.message);
+    }
     showErrorToast(message);
     return Promise.reject(error);
   },
