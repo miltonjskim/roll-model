@@ -24,13 +24,12 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from core.storage import get_minio_client
-from schemas.mysql.schemas import ProjectDataset, Pipeline, PipelineStatus
-from db.mongo_config import get_pipeline_collection
+from schemas.mysql.schemas import ProjectDataset
 import math
 import numpy as np
-from schemas.mysql.schemas import Member
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import DatasetDomain, DatasetCategory, ColumnType
+from service.db.pipeline_mysql_service import create_mysql_pipeline
 
 logger = logging.getLogger()
 
@@ -69,7 +68,7 @@ async def upload_dataset_and_save_metadata(
         file_io = io.BytesIO(file_content)
         minio_client = get_minio_client()
         bucket_name = "datasets"
-        object_name = f"project_{project_id}/{file.filename}"
+        object_name = f"project_{project_id}_{datetime.now()}/{file.filename}"
 
         # MinIO에 파일 업로드
         upload_success = minio_client.upload_file(
@@ -103,32 +102,37 @@ async def upload_dataset_and_save_metadata(
         # 데이터셋 분석
         file_io.seek(0)
         dataset_analysis = await analyze_dataset(file_io, config)
-
-        # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
-        mongo_pipeline_id = await create_pipeline_document(project_id, member_id, etag)
-
-        # MySQL에 파이프라인 데이터 저장 (MongoDB 파이프라인 ID 사용)
-        mysql_pipeline_id = await create_mysql_pipeline(
-            db=db,
-            project_id=project_id,
-            member_id=member_id,
-            etag=etag,
-            dataset_analysis=dataset_analysis,
-            mongo_pipeline_id=str(mongo_pipeline_id)  # ObjectID를 문자열로 변환
-        )
-        logger.info(f"MySQL 파이프라인 생성 완료: {mysql_pipeline_id}")
+        file_io.close()
 
         # MongoDB에 데이터셋 정보 저장
         dataset_id = await store_dataset_to_mongodb(
             project_id=project_id,
             member_id=member_id,
-            file_name=file.filename,
             etag=etag,
             dataset_analysis=dataset_analysis,
             config=config,
             file_size=file_size,
-            object_name=object_name
+            object_name=object_name,
         )
+
+        # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
+        mongo_pipeline_id = await create_pipeline_document(
+            project_id=project_id,
+            member_id=member_id,
+            etag=etag,
+            dataset_id=dataset_id,
+            object_name=object_name,
+        )
+
+        # MySQL에 파이프라인 데이터 저장 (MongoDB 파이프라인 ID 사용)
+        mysql_pipeline_id = await create_mysql_pipeline(
+            db=db,
+            project_id=project_id,
+            dataset_analysis=dataset_analysis,
+            mongo_pipeline_id=str(mongo_pipeline_id)  # ObjectID를 문자열로 변환
+        )
+        logger.info(f"MySQL 파이프라인 생성 완료: {mysql_pipeline_id}")
+
         # 응답 결과 생성
         result = {
             "pipelineId": mysql_pipeline_id,  # MySQL 파이프라인 ID (MongoDB ObjectID 문자열)
@@ -143,7 +147,7 @@ async def upload_dataset_and_save_metadata(
             "missingValues": dataset_analysis["missing_values"],
             "originalDatasets": dataset_analysis["data_sample"]
         }
-        # 몽고DB에 데이터가 생긴 이후에 백그라운트 작업 진행
+        # 몽고DB에 데이터가 생긴 이후에 백그라운드 작업 진행
         background_tasks.add_task(
             calculate_and_update_statistics,
             result.get("datasetId"),
@@ -165,66 +169,6 @@ async def upload_dataset_and_save_metadata(
         db.rollback()
         logger.error(f"데이터셋 업로드 및 메타데이터 저장 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"처리 중 오류 발생: {str(e)}")
-
-# 수정된 함수: MySQL에 파이프라인 데이터 저장 (MongoDB ObjectID 사용)
-async def create_mysql_pipeline(
-        db: Session,
-        project_id: int,
-        member_id: int,
-        etag: str,
-        dataset_analysis: Dict[str, Any],
-        mongo_pipeline_id: str
-) -> str:
-    """
-    MySQL에 파이프라인 데이터 저장
-    MongoDB 파이프라인 ID를 MySQL 파이프라인 ID로 사용
-
-    Args:
-        db: 데이터베이스 세션
-        project_id: 프로젝트 ID
-        member_id: 회원 ID
-        etag: 원본 데이터셋 ETag
-        dataset_analysis: 데이터셋 분석 결과
-        mongo_pipeline_id: MongoDB 파이프라인 문서의 ObjectID 문자열
-
-    Returns:
-        str: 생성된 파이프라인 ID (MongoDB ObjectID 문자열)
-    """
-    try:
-        # 데이터 행 수 가져오기
-        data_count = dataset_analysis.get("total_rows", 0)
-
-        # Pipeline 모델 인스턴스 생성
-        # MongoDB ObjectID를 pipeline_id와 parent_pipeline_id로 사용
-        pipeline = Pipeline(
-            pipeline_id=mongo_pipeline_id,           # MongoDB ObjectID 사용
-            parent_pipeline_id=mongo_pipeline_id,    # 자기 자신을 부모로 설정
-            project_id=project_id,
-            public_yn=False,  # 기본값
-            like_count=0,     # 기본값
-            fork_count=0,     # 기본값
-            download_count=0, # 기본값
-            result=None,      # 아직 결과 없음
-            data_count=data_count, # 데이터셋 행 수
-            target_feature=None,   # 아직 타겟 지정 없음
-            status=PipelineStatus.CREATED,  # 기본 상태
-            version=1.0,      # 기본 버전
-            deleted_yn=False,  # 기본값
-            registered_at=datetime.now(),
-            modified_at=datetime.now()
-        )
-
-        # DB에 추가하고 즉시 flush하여 저장 확인
-        db.add(pipeline)
-        db.flush()
-
-        logger.info(f"MySQL 파이프라인 생성: 프로젝트 {project_id}, 파이프라인 ID {mongo_pipeline_id}")
-
-        return mongo_pipeline_id
-
-    except Exception as e:
-        logger.error(f"MySQL 파이프라인 생성 중 오류: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"MySQL 파이프라인 생성 중 오류: {str(e)}")
 
 """
 2️⃣ 데이터셋 파일을 분석하여 요약 정보 생성
@@ -250,7 +194,7 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         delimiter = delimiter_map.get(config.get("delimiter", "comma"), ",")
         encoding = config.get("encoding", "UTF-8")
         has_header = config.get("hasHeader", False)
-
+        file_io.seek(0)
         df = pd.read_csv(
             file_io,
             delimiter=delimiter,
@@ -317,13 +261,13 @@ Args:
 Returns:
     ObjectId: 생성된 파이프라인 문서의 ID
 """
-async def create_pipeline_document(project_id: int, member_id: int, etag: str) -> Any:
+async def create_pipeline_document(project_id: int, member_id: int, dataset_id:str, object_name: str, etag: str) -> Any:
 
     try:
         pipeline_collection = get_pipeline_collection()
 
         # 현재 시간
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now().isoformat() + "Z"
 
         # 파이프라인 문서 생성
         pipeline_doc = {
@@ -331,6 +275,8 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
             "member_id": member_id,
             "registered_at": now,
             "modified_at": now,
+            "original_dataset_id": dataset_id,
+            "original_dataset_object_name": object_name,
             "original_dataset_etag": etag,
             "history": []
         }
@@ -367,7 +313,6 @@ Raises:
 async def store_dataset_to_mongodb(
     project_id: int,
     member_id: int,
-    file_name: str,
     etag: str,
     dataset_analysis: Dict[str, Any],
     config: Dict[str, Any],
@@ -416,6 +361,7 @@ async def store_dataset_to_mongodb(
             "registered_at": now,
             "modified_at": now,
             "dataset_file_path": f"storage/datasets/{object_name}",  # file_path → dataset_file_path로 변경
+            "object_name": object_name,
             "file_size": file_size,
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,

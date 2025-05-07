@@ -7,7 +7,7 @@ from fastapi import Depends
 
 from db.mongo_config import get_pipeline_collection
 from db.redis_config import get_redis
-from schemas.mongo.pipeline import PipelineModel, RedisJSONEncoder, PipelineHistoryItem
+from schemas.mongo.pipeline import PipelineModel, RedisJSONEncoder, PipelineHistoryItem, PipelineStatus
 
 
 async def _update_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
@@ -303,6 +303,68 @@ class PipelineCacheService:
         """파이프라인 캐시를 무효화합니다."""
         cache_key = _generate_pipeline_key(pipeline_id)
         await self.redis.delete(cache_key)
+
+    async def update_pipeline_status(self,
+                                     pipeline_id: str,
+                                     new_status: PipelineStatus,
+                                     project_id: int = None,
+                                     member_id: int = None
+                                     ) -> Optional[PipelineModel]:
+        """
+        파이프라인의 상태를 업데이트하고 Redis 캐시를 갱신합니다.
+
+        Args:
+            pipeline_id: 파이프라인 ID
+            new_status: 새로운 파이프라인 상태 (PipelineStatus enum)
+            project_id: 프로젝트 ID (선택적)
+            member_id: 멤버 ID (선택적)
+
+        Returns:
+            업데이트된 파이프라인 모델 또는 None
+        """
+        try:
+            # 현재 파이프라인 데이터 가져오기
+            pipeline = await self.get_pipeline(pipeline_id, project_id, member_id)
+
+            if not pipeline:
+                return None
+
+            # 파이프라인에 히스토리가 있는지 확인
+            if not pipeline.history:
+                # 히스토리가 없으면 새로운 히스토리 항목 생성
+                new_history_item = PipelineHistoryItem(
+                    status=new_status,
+                    preprocessing_steps=[]
+                )
+                pipeline.history.append(new_history_item)
+            else:
+                # 히스토리의 마지막 항목 상태 업데이트
+                current_history = pipeline.history[-1]
+
+                # 상태가 이미 같으면 업데이트 불필요
+                if current_history.status == new_status:
+                    return pipeline
+
+                # 상태 업데이트
+                current_history.status = new_status
+
+            # 수정 시간 업데이트
+            pipeline.modified_at = datetime.now()
+
+            # DB 업데이트
+            updated_pipeline = await _update_pipeline_in_db(pipeline)
+
+            if updated_pipeline:
+                # 캐시 업데이트
+                await self.update_pipeline_cache(updated_pipeline)
+                print(f"Pipeline {pipeline_id} status updated to {new_status}")
+
+            return updated_pipeline
+
+        except Exception as e:
+            # 예외 처리 및 로깅
+            print(f"Error updating pipeline status: {e}")
+            return None
 
 async def get_pipeline_cache_service(redis_client = Depends(get_redis)) -> PipelineCacheService:
     """PipelineCacheService 인스턴스를 제공합니다."""

@@ -51,7 +51,7 @@ class PipelineStatus(str, enum.Enum):
     CREATED = "CREATED"
     RUNNING = "RUNNING"
     LEARNING = "LEARNING"
-    PREPROCESSING = "PREPROCESSING"
+    PREPROCESSED = "PREPROCESSED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
@@ -72,7 +72,9 @@ class PreprocessingStep(BaseModel):
     parameters: Dict[str, Any]
     order: int
     active: bool = True
+    preprocessed_dataset_id: Optional[str] = ""
     preprocessed_dataset_etag: Optional[str] = ""
+    preprocessed_dataset_object_name: Optional[str] = ""
 
 class DataSplit(BaseModel):
     train_ratio: float
@@ -98,7 +100,9 @@ class PipelineModel(BaseModel):
     member_id: int
     registered_at: datetime = Field(default_factory=datetime.now)
     modified_at: datetime = Field(default_factory=datetime.now)
+    original_dataset_id: str = None
     original_dataset_etag: str = None
+    original_dataset_object_name: str = None
     history: List[PipelineHistoryItem] = []
 
     class Config:

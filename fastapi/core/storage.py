@@ -14,13 +14,15 @@ MinIO 객체 스토리지 서비스 클라이언트 모듈
 """
 
 from minio import Minio
+from minio.select import SelectRequest, CSVInputSerialization, CSVOutputSerialization
 from minio.error import S3Error
-import io
-import os
 from fastapi import HTTPException
-from typing import Optional, BinaryIO, Any, Dict
-import logging
+from typing import Optional, BinaryIO, Any, Dict, List
 from datetime import timedelta
+import io
+import logging
+import os
+import pandas as pd
 
 from core.config import get_settings
 
@@ -157,41 +159,39 @@ class MinioClient:
             return False
 
     async def get_object_by_etag(self, bucket_name: str, etag: str) -> Optional[Dict[str, Any]]:
-        """etag로 MinIO 객체를 조회합니다."""
+        """etag를 기반으로 객체를 가져옵니다."""
         try:
-            # 버킷 내 객체 리스트 조회
+            # 버킷 내 모든 객체 조회
             objects = self.client.list_objects(bucket_name, recursive=True)
-
-            # etag와 일치하는 객체 찾기
+            
+            # etag 일치하는 객체 찾기
             for obj in objects:
-                # MinIO는 etag 값을 ""로 감싸서 저장합니다
-                # 예: "a1b2c3d4e5f6g7h8i9j0" -> a1b2c3d4e5f6g7h8i9j0
-                obj_etag = obj.etag.strip('"')
-
-                if obj_etag == etag:
-                    # 객체 정보 조회
-                    obj_data = self.client.get_object(bucket_name, obj.object_name)
-                    obj_stats = self.client.stat_object(bucket_name, obj.object_name)
-
+                if obj.etag.strip('"') == etag:
+                    # 객체 데이터 가져오기
+                    response = self.client.get_object(
+                        bucket_name=bucket_name,
+                        object_name=obj.object_name
+                    )
+                    
+                    # 중요: HTTPResponse를 바이트로 변환
+                    data = response.read()
+                    
+                    # 객체 정보 반환
                     return {
-                        "bucket_name": bucket_name,
+                        "data": data,
                         "object_name": obj.object_name,
-                        "etag": obj_etag,
                         "size": obj.size,
-                        "last_modified": obj.last_modified,
-                        "content_type": obj_stats.content_type,
-                        "metadata": obj_stats.metadata,
-                        "data": obj_data
+                        "etag": etag
                     }
-
+                    
             # 일치하는 객체가 없는 경우
             return None
-
+            
         except S3Error as err:
-            print(f"S3 Error: {err}")
+            logger.error(f"S3 Error: {err}")
             return None
         except Exception as err:
-            print(f"Error: {err}")
+            logger.error(f"Error: {err}")
             return None
 
     async def get_object_data_by_etag(self, bucket_name: str, etag: str) -> Optional[BinaryIO]:
@@ -206,22 +206,31 @@ class MinioClient:
             return None
 
     async def save_object_with_etag(self, bucket_name: str, object_name: str, data: BinaryIO, content_type: str) -> \
-    Optional[str]:
+        Optional[str]:
         """객체를 저장하고 생성된 etag를 반환합니다."""
         try:
+
+            # 버퍼 크기 계산
+            current_position = data.tell()
+            data.seek(0, 2)  # 끝으로 이동
+            size = data.tell()  # 크기 확인
+            data.seek(0)  # 처음으로 돌아감
+            
+            logger.info(f"데이터 버퍼 크기: {size} 바이트")
+            
             # 버킷이 없으면 생성
             if not self.client.bucket_exists(bucket_name):
                 self.client.make_bucket(bucket_name)
 
-            # 객체 업로드
+            # 객체 업로드 (명시적 크기 지정)
             result = self.client.put_object(
                 bucket_name=bucket_name,
                 object_name=object_name,
                 data=data,
-                length=-1,  # 자동으로 데이터 길이 계산
+                length=size,  # 명시적 크기 지정
                 content_type=content_type
             )
-
+            logger.info(f"minio 저장 결과값 : {result}")
             # etag 반환 (따옴표 제거)
             return result.etag.strip('"')
 
@@ -232,6 +241,191 @@ class MinioClient:
             print(f"Error: {err}")
             return None
 
+    async def query_csv_with_paging(
+        self, 
+        bucket_name: str, 
+        object_name: str, 
+        page: int = 1, 
+        page_size: int = 10,
+        filter_condition: str = None,
+        sort_by: str = None,
+        sort_order: str = "ASC"
+    ) -> Dict[str, Any]:
+        """
+        CSV 파일에 페이징 쿼리 실행
+        
+        Args:
+            bucket_name: 버킷 이름
+            object_name: 객체 이름 (CSV 파일 경로)
+            page: 페이지 번호 (1부터 시작)
+            page_size: 페이지 크기
+            filter_condition: SQL WHERE 절 조건 (예: "age > 30")
+            sort_by: 정렬할 컬럼 이름
+            sort_order: 정렬 순서 ('ASC' 또는 'DESC')
+            
+        Returns:
+            Dictionary containing:
+            - data: 페이지 데이터 (리스트)
+            - total: 전체 레코드 수
+            - page: 현재 페이지
+            - page_size: 페이지 크기
+            - total_pages: 전체 페이지 수
+        """
+        # 오프셋 계산
+        offset = (page - 1) * page_size
+        
+        # SQL 쿼리 구성
+        sql_query = "SELECT * FROM S3Object"
+        
+        if filter_condition:
+            sql_query += f" WHERE {filter_condition}"
+            
+        if sort_by:
+            sql_query += f" ORDER BY {sort_by} {sort_order}"
+            
+        sql_query += f" LIMIT {page_size} OFFSET {offset}"
+        
+        # CSV 입력 직렬화 설정
+        csv_input = CSVInputSerialization(
+            compression_type="NONE",
+            file_header_info="USE",
+            record_delimiter="\n",
+            field_delimiter=",",
+            quote_character='"',
+            quote_escape_character='"',
+            comments="#",
+            allow_quoted_record_delimiter=False
+        )
+        
+        # CSV 출력 직렬화 설정
+        csv_output = CSVOutputSerialization(
+            record_delimiter="\n",
+            field_delimiter=",",
+            quote_character='"',
+            quote_escape_character='"'
+        )
+        
+        # Select 요청 생성
+        select_request = SelectRequest(
+            sql_query,
+            input_serialization=csv_input,
+            output_serialization=csv_output
+        )
+        
+        # Select 쿼리 실행
+        data = b""
+        try:
+            response = self.client.select_object_content(
+                bucket_name,
+                object_name,
+                select_request
+            )
+            
+            # Select 응답 스트림에서 데이터 읽기
+            for event in response:
+                if event.event_type == "Records":
+                    data += event.event_payload
+                    
+            # 총 레코드 수 계산을 위한 쿼리
+            count_query = "SELECT COUNT(*) FROM S3Object"
+            if filter_condition:
+                count_query += f" WHERE {filter_condition}"
+                
+            count_request = SelectRequest(
+                count_query,
+                input_serialization=csv_input,
+                output_serialization=csv_output
+            )
+            
+            count_response = self.client.select_object_content(
+                bucket_name,
+                object_name,
+                count_request
+            )
+            
+            # 총 레코드 수 읽기
+            count_data = b""
+            for event in count_response:
+                if event.event_type == "Records":
+                    count_data += event.event_payload
+            
+            total_records = int(count_data.decode('utf-8').strip())
+            total_pages = (total_records + page_size - 1) // page_size  # 올림 나눗셈
+            
+            # 데이터 처리
+            if data:
+                # 이진 데이터를 스트림으로 변환
+                data_stream = io.BytesIO(data)
+                
+                # 데이터프레임으로 변환
+                df = pd.read_csv(data_stream)
+                data_stream.close()
+                # 데이터프레임을 리스트로 변환
+                records = df.to_dict('records')
+            else:
+                records = []
+            
+            return {
+                "data": records,
+                "total": total_records,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages
+            }
+            
+        except Exception as e:
+            raise Exception(f"CSV 파일 쿼리 중 오류 발생: {str(e)}")
+    
+    async def get_csv_columns(self, bucket_name: str, object_name: str) -> List[str]:
+        """CSV 파일의 컬럼 목록 가져오기"""
+        try:
+            # 컬럼만 가져오기 위한 쿼리
+            sql_query = "SELECT * FROM S3Object LIMIT 1"
+            
+            csv_input = CSVInputSerialization(
+                compression_type="NONE",
+                file_header_info="USE",
+                record_delimiter="\n",
+                field_delimiter=",",
+                quote_character='"',
+                quote_escape_character='"'
+            )
+            
+            csv_output = CSVOutputSerialization(
+                record_delimiter="\n",
+                field_delimiter=",",
+                quote_character='"',
+                quote_escape_character='"'
+            )
+            
+            select_request = SelectRequest(
+                sql_query,
+                input_serialization=csv_input,
+                output_serialization=csv_output
+            )
+            
+            response = self.client.select_object_content(
+                bucket_name,
+                object_name,
+                select_request
+            )
+            
+            data = b""
+            for event in response:
+                if event.event_type == "Records":
+                    data += event.event_payload
+            
+            # 데이터프레임으로 변환하여 컬럼 추출
+            if data:
+                data_stream = io.BytesIO(data)
+                df = pd.read_csv(data_stream)
+                data_stream.close()
+                return df.columns.tolist()
+            else:
+                return []
+                
+        except Exception as e:
+            raise Exception(f"CSV 컬럼 가져오기 중 오류 발생: {str(e)}")
 
 def test_file_persistence():
     """파일이 실제로 MinIO에 유지되는지 테스트"""
@@ -252,6 +446,8 @@ def test_file_persistence():
             file_data=data_stream,
             content_type="text/csv"
         )
+
+        data_stream.close()
 
         assert upload_success, "파일 업로드 실패"
         print(f"✅ 테스트 파일 '{object_name}' 업로드 성공")
