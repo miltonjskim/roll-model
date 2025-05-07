@@ -27,4 +27,8 @@ public interface PipelineRepository extends JpaRepository<PipelineEntity, String
     @Modifying
     @Query("UPDATE PipelineEntity p SET p.deletedYn = true WHERE p.pipelineId = :pipelineId")
     void markAsDeleted(@Param("pipelineId") String pipelineId);
+
+    // 파이프라인 ID와 프로젝트 소유자 ID로 파이프라인 조회
+    @Query("SELECT p FROM PipelineEntity p WHERE p.pipelineId = :pipelineId AND p.projectEntity.memberEntity.memberId = :memberId")
+    Optional<PipelineEntity> findByPipelineIdAndProjectMemberId(@Param("pipelineId") String pipelineId, @Param("memberId") Integer memberId);
 }

@@ -21,9 +21,9 @@ public class PipelineService {
 	}
 
 	public void deletePipeline(String pipelineId, Integer memberId) {
-		// 파이프라인이 존재하는지 확인부터
-		PipelineEntity pipeline = pipelineRepository.findById(pipelineId)
-				.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+		// 파이프라인이 존재하는지 & 요청한 사용자가 소유자인지 함께 확인
+		PipelineEntity pipeline = pipelineRepository.findByPipelineIdAndProjectMemberId(pipelineId, memberId)
+				.orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
 
 		pipelineRepository.markAsDeleted(pipelineId);
 	}
