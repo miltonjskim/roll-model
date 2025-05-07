@@ -16,7 +16,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // TODO: 토큰 설정하기
     // 아래 설정은 예시일 뿐, 이후 백엔드와 말해서 수정할 것
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
