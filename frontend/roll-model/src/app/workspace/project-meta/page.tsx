@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
 import { CATEGORY_OPTIONS, DOMAIN_OPTIONS } from '@/features/workspace/constants/selectOptions';
 import { createProject } from '@/features/workspace/service/createProject';
@@ -21,11 +21,16 @@ const InputProjectMetaDataPage = () => {
   const [domain, setDomain] = useAtom(projectDomainAtom);
   const [type, setType] = useAtom(projectCategoryAtom);
   const [isPublic, setIsPublic] = useAtom(projectPublicAtom);
+  const [projectid, setProjectId] = useAtom(projectIdAtom);
 
   const handleSubmit = async () => {
     try {
-      const res = await createProject({ title, description, domain, type, isPublic });
-      console.log('프로젝트 생성 성공:', res);
+      // const res = await createProject({ title, description, domain, type, isPublic });
+      // console.log('프로젝트 생성 성공:', res);
+
+      // const projectId = res.id;
+      // setProjectId(projectId.toString());
+
       router.push('/workspace/data-selection');
     } catch (err) {
       console.error('프로젝트 생성 실패:', err);

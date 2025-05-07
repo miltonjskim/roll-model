@@ -13,17 +13,24 @@ const CallbackPage = () => {
   const setIsLoggedIn = useSetAtom(isLoggedInAtom);
 
   useEffect(() => {
+    const getCookieValue = (key: string): string | null => {
+      const cookie = document.cookie.split('; ').find((row) => row.startsWith(`${key}=`));
+      return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+    };
+
     const fetchUser = async () => {
       try {
-        const response = await axiosInstance.get('/api/v1/auth/members/my', {
-          withCredentials: true,
-        });
-        console.log(response);
+        const accessToken = getCookieValue('access_token');
+        if (!accessToken) throw new Error('access_token 없음');
 
+        sessionStorage.setItem('token', accessToken);
+
+        const response = await axiosInstance.get('/api/v1/auth/members/my');
         setUser(response.data);
         setIsLoggedIn(true);
         router.push('/');
       } catch (error) {
+        console.error(error);
         setIsLoggedIn(false);
         showErrorToast('로그인 정보 확인에 실패했습니다.');
         router.push('/');

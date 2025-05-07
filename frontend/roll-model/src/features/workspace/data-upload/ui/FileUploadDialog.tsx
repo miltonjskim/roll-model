@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { showErrorToast } from '@/shared/lib/toast/toast';
+import { useSetAtom } from 'jotai';
+import { uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 
 export const FileUploadDialog = () => {
   const router = useRouter();
@@ -12,6 +14,7 @@ export const FileUploadDialog = () => {
   const [fileEnter, setFileEnter] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isError, setIsError] = useState(false);
+  const setUploadedFile = useSetAtom(uploadedFileAtom);
 
   const isAllowedFile = (file: File) => {
     const allowedExtensions = ['csv', 'parquet'];
@@ -55,6 +58,7 @@ export const FileUploadDialog = () => {
                 const droppedFile = e.dataTransfer.files?.[0];
                 if (droppedFile && isAllowedFile(droppedFile)) {
                   setFile(droppedFile);
+                  setUploadedFile(droppedFile);
                   setIsError(false);
                 } else {
                   showErrorToast('csv 또는 parquet 파일만 업로드 가능합니다.');
@@ -95,6 +99,7 @@ export const FileUploadDialog = () => {
                   const uploaded = e.target.files?.[0];
                   if (uploaded && isAllowedFile(uploaded)) {
                     setFile(uploaded);
+                    setUploadedFile(uploaded);
                     setIsError(false);
                   } else {
                     showErrorToast('csv 또는 parquet 파일만 업로드 가능합니다.');
