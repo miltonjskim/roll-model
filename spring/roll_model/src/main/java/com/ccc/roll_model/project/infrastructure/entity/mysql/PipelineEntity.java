@@ -60,4 +60,7 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
         return projectEntity != null ? projectEntity.getProjectId() : null;
     }
 
+    public void updateStatus(Status status) {
+        this.status = status;
+    }
 }

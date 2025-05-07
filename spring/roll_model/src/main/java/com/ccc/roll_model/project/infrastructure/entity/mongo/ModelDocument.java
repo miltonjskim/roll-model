@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -32,7 +34,7 @@ public class ModelDocument {
     private String modelType; // CLASSIFICATION, REGRESSION 등 (모델 유형)
     private String algorithm; // 알고리즘 (예: RANDOM_FOREST 등)
 
-    private Parameters parameters; // 모델의 매개변수
+    private ModelParameter parameters; // 모델의 매개변수
     @Field("train_info")
     private TrainInfo trainInfo; // 학습 정보
     private Performance performance; // 성능 정보
@@ -49,19 +51,6 @@ public class ModelDocument {
     private LocalDateTime registeredAt; // 생성(등록) 시간
 
     // ------ 중첩 클래스 정의 ------
-
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Parameters {
-        @Field("n_estimators")
-        private Integer nEstimators; // 트리 개수
-        @Field("max_depth")
-        private Integer maxDepth; // 최대 깊이
-    }
-
     @Getter
     @Setter
     @AllArgsConstructor
