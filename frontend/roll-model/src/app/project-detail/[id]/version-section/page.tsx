@@ -16,7 +16,7 @@ export default function VersionSectionPage() {
   const { projectDetailVersion, isLoading, isError } = useProjectDetailVersion(pipelineId);
 
   // 버전 선택 관리 훅
-  const { selectedVersion, selectedPipeline, versionHistory, handleSelectVersion } = useProjectDetailVersionSelection(projectDetailVersion);
+  const { selectedVersion, selectedPipeline, pipelines, handleSelectVersion } = useProjectDetailVersionSelection(projectDetailVersion);
 
   if (isLoading) {
     return (
@@ -38,9 +38,9 @@ export default function VersionSectionPage() {
         <div className="flex min-h-[600px] flex-col gap-8 lg:flex-row">
           {/* 왼쪽: 버전 그래프 */}
           <div className="w-full lg:w-full">
-            {versionHistory.length > 0 && (
+            {pipelines.length > 0 && (
               <ReactFlowProvider>
-                <VersionGraphDagre versionHistory={versionHistory} selectedVersion={selectedVersion} onSelectVersion={handleSelectVersion} selectedPipeline={selectedPipeline} />
+                <VersionGraphDagre pipelines={pipelines}  selectedVersion={selectedVersion} onSelectVersion={handleSelectVersion} selectedPipeline={selectedPipeline} />
               </ReactFlowProvider>
             )}
           </div>
