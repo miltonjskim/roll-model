@@ -15,6 +15,14 @@ public interface PipelineRepository extends JpaRepository<PipelineEntity, String
     @Query("SELECT p FROM PipelineEntity p WHERE p.projectEntity.projectId = :projectId ORDER BY p.registeredAt DESC")
     Optional<PipelineEntity> findFirstByProjectIdOrderByRegisteredAtDesc(@Param("projectId") Integer projectId);
 
+    // 특정 프로젝트의 삭제되지 않은 파이프라인 중 가장 최신 파이프라인 가져오기
+    @Query("SELECT p FROM PipelineEntity p WHERE p.projectEntity.projectId = :projectId AND p.deletedYn = false ORDER BY p.registeredAt DESC")
+    Optional<PipelineEntity> findFirstByProjectIdOrderByRegisteredAtDescAndNotDeletedYn(@Param("projectId") Integer projectId);
+
+    // 특정 프로젝트의 삭제되지 않은 상태가 COMPLETED면서 publicYn이 true인 파이프라인 중 가장 최신 파이프라인 가져오기
+    @Query("SELECT p FROM PipelineEntity p WHERE p.projectEntity.projectId = :projectId AND p.deletedYn = false AND p.status = 'COMPLETED' AND p.publicYn = true ORDER BY p.registeredAt DESC")
+    Optional<PipelineEntity> findFirstByProjectIdOrderByRegisteredAtDescAndNotDeletedYnAndStatusIsCompletedAndPublicYn(@Param("projectId") Integer projectId);
+
     // 특정 프로젝트의 파이프라인 개수 가져오기
     @Query("SELECT COUNT(p) FROM PipelineEntity p WHERE p.projectEntity.projectId = :projectId")
     Integer countByProjectId(@Param("projectId") Integer projectId);

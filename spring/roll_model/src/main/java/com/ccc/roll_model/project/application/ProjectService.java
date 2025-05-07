@@ -26,9 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -92,7 +92,19 @@ public class ProjectService {
 
         if (projects == null || projects.isEmpty()) {
             logger.info("No projects found for memberId {}.", memberId);
-            throw new IllegalArgumentException("해당 memberId로 등록된 프로젝트가 없습니다.");
+
+            GetMyProjectResponse response = GetMyProjectResponse.builder()
+                    .summary(GetMyProjectResponse.Summary.builder()
+                            .totalProjects(0)
+                            .completedProjectCount(0)
+                            .inProgressProjectCount(0)
+                            .publicProjectCount(0)
+                            .build())
+                    .projects(null)
+                    .build();
+            logger.info("Final GetMyProjectResponse for memberId {}: {}", memberId, response);
+
+            return response;
         }
 
         // 초기 통계 값
@@ -106,7 +118,7 @@ public class ProjectService {
                         logger.info("Processing project with ID: {}", project.getProjectId());
 
                         // Pipeline 처리
-                        PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDesc(project.getProjectId())
+                        PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDescAndNotDeletedYn(project.getProjectId())
                                 .orElse(null);
                         if (pipeline == null) {
                             logger.info("No pipeline found for project ID: {}", project.getProjectId());
@@ -262,11 +274,13 @@ public class ProjectService {
 
         logger.info("Fetched {} projects", projectsPage.getContent().size());
 
+        AtomicInteger elementsCount = new AtomicInteger();
+
         // 프로젝트 상세 정보 생성
         List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
                 .map(project -> {
                     // 가장 최신의 공개 파이프라인 가져오기
-                    PipelineEntity pipeline = pipelineRepository.findFirstPublicByProjectIdOrderByRegisteredAtDesc(project.getProjectId())
+                    PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDescAndNotDeletedYnAndStatusIsCompletedAndPublicYn(project.getProjectId())
                             .orElse(null);
 
                     // 파이프라인이 없으면 건너뜀
@@ -288,6 +302,8 @@ public class ProjectService {
                         logger.info("No dataset found for project {}", project.getProjectId());
                         return null;
                     }
+
+                    elementsCount.getAndIncrement();
 
                     // 좋아요 여부 확인
                     boolean likeYn = false;
@@ -335,7 +351,7 @@ public class ProjectService {
         GetOpensourceResponse response = GetOpensourceResponse.builder()
                 .currentPage(page)
                 .totalPages(projectsPage.getTotalPages())
-                .totalElements((int) projectsPage.getTotalElements())
+                .totalElements(elementsCount.get())
                 .last(projectsPage.isLast())
                 .projects(projectDetails)
                 .build();

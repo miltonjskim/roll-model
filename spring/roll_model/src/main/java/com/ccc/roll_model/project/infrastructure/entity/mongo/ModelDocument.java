@@ -1,5 +1,6 @@
 package com.ccc.roll_model.project.infrastructure.entity.mongo;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
@@ -42,6 +43,7 @@ public class ModelDocument {
     private String modelType; // CLASSIFICATION, REGRESSION 등 (모델 유형)
     private String algorithm; // 알고리즘 (예: RANDOM_FOREST 등)
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
     private ModelParameter parameters; // 모델의 매개변수
     @Field("train_info")
     private TrainInfo trainInfo; // 학습 정보
