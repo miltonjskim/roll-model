@@ -25,7 +25,11 @@ const CallbackPage = () => {
 
         sessionStorage.setItem('token', accessToken);
 
-        const response = await baseAxiosInstance.get('/api/v1/auth/members/my');
+        const response = await baseAxiosInstance.get('/api/v1/auth/members/my', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         setUser(response.data);
         setIsLoggedIn(true);
         router.push('/');

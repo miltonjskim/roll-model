@@ -1,9 +1,13 @@
-import { atom } from "jotai";
+import { atom } from 'jotai';
 
 export interface UserInfo {
-  id: number;
+  memberId: number;
   nickname: string;
   email: string;
+  provider: string;
+  registeredAt: string;
+  modifiedAt: string;
+  isActive: boolean;
 }
 
 export const userAtom = atom<UserInfo | null>(null);
