@@ -2,6 +2,7 @@ package com.ccc.roll_model.project.infrastructure.entity.mongo;
 
 import lombok.*;
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -16,26 +17,35 @@ import java.util.Map;
 @Builder
 @Document(collection = "models")
 public class ModelDocument {
+
+    @Id
     private ObjectId id; // 모델 고유 식별자
+
     @Field("pipeline_id")
     private String pipelineId; // 학습에 사용된 파이프라인 ID
+
     @Field("project_id")
     private Integer projectId; // 소속 프로젝트 ID (정수)
+
     @Field("member_id")
     private Integer memberId; // 모델 등록한 회원 ID
 
     @Field("model_title")
     private String modelTitle; // 모델 이름
+
     @Field("model_description")
     private String modelDescription; // 모델 설명
+
     @Field("model_type")
     private String modelType; // CLASSIFICATION, REGRESSION 등 (모델 유형)
     private String algorithm; // 알고리즘 (예: RANDOM_FOREST 등)
 
     private Parameters parameters; // 모델의 매개변수
+
     @Field("train_info")
     private TrainInfo trainInfo; // 학습 정보
     private Performance performance; // 성능 정보
+
     @Field("feature_importance")
     private Map<String, Double> featureImportance; // 각 특성 중요도
 
@@ -70,11 +80,13 @@ public class ModelDocument {
     public static class TrainInfo {
         @Field("start_time")
         private LocalDateTime startTime; // 학습 시작 시간
+
         @Field("end_time")
         private LocalDateTime endTime; // 학습 종료 시간
         private Integer epochs; // 에포크 수
 
         private List<Feature> features; // 특성 정보
+
         @Field("target_feature")
         private String targetFeature; // 타겟 변수명
 
