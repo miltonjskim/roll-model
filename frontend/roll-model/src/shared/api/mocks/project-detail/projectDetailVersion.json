@@ -8,7 +8,7 @@
       "domain": "HEALTHCARE",
       "version": "4.1",
       "projectPublicYn": true,
-      "pipelinePublicYn": false,
+      "pipelinePublicYn": true,
       "ownerYn": true
     },
     "pipelines": [

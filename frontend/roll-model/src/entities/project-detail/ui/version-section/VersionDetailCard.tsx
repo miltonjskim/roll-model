@@ -3,6 +3,9 @@
 
 import { Pipeline } from '@/entities/project-detail/model/versionTypes';
 import { formatDate } from '@/shared/lib/utils/dateUtils';
+import { getDomainDisplayName } from '@/shared/lib/utils/domainMapping';
+import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
+import { useAtomValue } from 'jotai';
 
 interface VersionDetailCardProps {
   pipeline: Pipeline;
@@ -11,6 +14,7 @@ interface VersionDetailCardProps {
 
 export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCardProps) => {
   if (!pipeline) return null;
+  const projectDetail = useAtomValue(projectDetailAtom);
 
   // 날짜 포맷팅 함수 (실제 구현은 utils 폴더에 있어야 함)
   const formatUpdatedDate = (dateString: string) => {
@@ -27,10 +31,10 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
   };
 
   return (
-    <div className={`rounded-lg bg-white p-6 shadow-sm ${className} border-1`}>
+    <div className={`rounded-lg bg-white p-6 shadow-sm ${className} mt-12 w-90 border-1`}>
       <div className="mb-4 flex items-start justify-between">
-        <h2 className="text-xl font-bold text-gray-900">당뇨병 예측 모델</h2>
-        <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">의학</div>
+        <h2 className="text-xl font-bold text-gray-900">{projectDetail.title} (삭제/비공개 상태)</h2>
+        <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">{getDomainDisplayName(projectDetail.domain)}</div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6">
@@ -39,6 +43,7 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
             <span className="text-xl font-semibold">v{pipeline.version}</span>
           </div>
           <div className="ml-4">
+            {/* {!pipeline.deletedYn && pipeline.publicYn ? projectDetail.title : ''} */}
             <h3 className="text-sm text-gray-500">업데이트 일자</h3>
             <p className="font-medium">{formatUpdatedDate(pipeline.updatedAt)}</p>
             <div className="mt-1 flex items-center text-sm">
@@ -47,31 +52,37 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
             </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-gray-50 p-3">
-            <h3 className="mb-1 text-sm text-gray-500">정확도(R² 계수)</h3>
-            <p className="text-2xl font-bold">{pipeline.accuracy}%</p>
+        {!pipeline.deletedYn && pipeline.publicYn ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h3 className="mb-1 text-sm text-gray-500">정확도(R² 계수)</h3>
+              <p className="text-2xl font-bold">{pipeline.accuracy}%</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h3 className="mb-1 text-sm text-gray-500">데이터수</h3>
+              <p className="text-2xl font-bold">{formatNumber(pipeline.dataCount)}개</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h3 className="mb-1 text-sm text-gray-500">목표변수</h3>
+              <p className="font-medium">{pipeline.target}</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h3 className="mb-1 text-sm text-gray-500">학습시간</h3>
+              <p className="font-medium">{pipeline.runnungDuration}초</p>
+            </div>
           </div>
-          <div className="rounded-lg bg-gray-50 p-3">
-            <h3 className="mb-1 text-sm text-gray-500">데이터수</h3>
-            <p className="text-2xl font-bold">{formatNumber(pipeline.dataCount)}개</p>
-          </div>
-          <div className="rounded-lg bg-gray-50 p-3">
-            <h3 className="mb-1 text-sm text-gray-500">목표변수</h3>
-            <p className="font-medium">{pipeline.target}</p>
-          </div>
-          <div className="rounded-lg bg-gray-50 p-3">
-            <h3 className="mb-1 text-sm text-gray-500">학습시간</h3>
-            <p className="font-medium">{pipeline.runnungDuration}초</p>
-          </div>
+        ) : (
+          <></>
+        )}
+      </div>
+      {!pipeline.deletedYn && pipeline.publicYn ? (
+        <div className="flex justify-end space-x-3">
+          <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">상세</button>
+          <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">모델 학습</button>
         </div>
-      </div>
-
-      <div className="flex justify-end space-x-3">
-        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">상세</button>
-        <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">모델 학습</button>
-      </div>
+      ) : (
+        <></>
+      )}
     </div>
   );
 };
