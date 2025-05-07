@@ -10,7 +10,9 @@ import com.ccc.roll_model.pipeline.domain.model.client.MessagePublisher;
 import com.ccc.roll_model.pipeline.domain.model.vo.ModelingData;
 import com.ccc.roll_model.pipeline.ui.dto.response.*;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.DatasetDocument.Metadata.Statistics.NumericFeature;
+import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 
 import org.bson.types.ObjectId;
@@ -41,6 +43,7 @@ public class ModelingService {
 	private final PipelineMongoRepository pipelineMongoRepository;
 	private final DatasetRepository datasetRepository;
 	private final ProjectRepository projectRepository;
+	private final ModelRepository modelRepository;
 	private final MessagePublisher messagePublisher;
 	public void executeModeling(ExecuteModelingCommand command) {
 		// 커맨드 유효성 검사
@@ -289,7 +292,7 @@ public class ModelingService {
 		log.info("buildResponse - 실제 소유자 여부: {}, 응답에 설정된 소유자 여부: {}", isActualOwner, projectInfo.getOwnerYn());
 
 		// 데이터셋 정보 구성
-		DatasetResponse dataset = buildDatasetDTO(datasetDocument);
+		DatasetResponse dataset = buildDatasetDTO(datasetDocument, pipelineEntity.getPipelineId());
 
 		// 전처리 단계 정보 구성
 		List<PreprocessingStepResponse> preprocessingSteps = buildPreprocessingStepsDTO(pipelineDocument);
@@ -317,17 +320,34 @@ public class ModelingService {
 	/**
 	 * 데이터셋 DTO를 구성하는 메서드
 	 * @param datasetDocument 데이터셋 문서
+	 * @param pipelineId 파이프라인 ID
 	 * @return 데이터셋 DTO
 	 */
-	private DatasetResponse buildDatasetDTO(DatasetDocument datasetDocument) {
+	private DatasetResponse buildDatasetDTO(DatasetDocument datasetDocument, String pipelineId) {
 		// 결측치 비율 계산
 		String missingRate = calculateMissingRate(datasetDocument);
+
+		// 모델 문서에서 타겟 변수 가져오기
+		String targetVariable = null;
+		try {
+			ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
+			if (modelDocument != null && modelDocument.getTrainInfo() != null) {
+				String targetFeature = modelDocument.getTrainInfo().getTargetFeature();
+				// 타겟 변수가 있고 비어있지 않은 경우에만 설정
+				if (targetFeature != null && !targetFeature.isEmpty()) {
+					targetVariable = targetFeature;
+				}
+			}
+			log.info("buildDatasetDTO - 파이프라인 ID: {}, 타겟 변수: {}", pipelineId, targetVariable);
+		} catch (Exception e) {
+			log.error("buildDatasetDTO - 타겟 변수 조회 중 오류 발생: {}", e.getMessage());
+		}
 
 		return DatasetResponse.builder()
 			.id(datasetDocument.getId().toString())
 			.recordCount(datasetDocument.getMetadata().getRowCount())
 			.featureCount(datasetDocument.getMetadata().getColumnCount())
-			.targetVariable("") // 타겟 변수는 파이프라인의 모델링 정보에서 가져와야 하지만, 현재 구현에서는 생략
+			.targetVariable(targetVariable) // 모델 문서에서 가져온 타겟 변수 (없으면 null)
 			.missingRate(missingRate)
 			.build();
 	}

@@ -8,4 +8,7 @@ public interface ModelRepository extends MongoRepository<ModelDocument, ObjectId
 
     // 특정 프로젝트 ID에 해당하는 모델 데이터 검색
     ModelDocument findByProjectId(Integer projectId);
+
+    // 특정 파이프라인 ID에 해당하는 모델 데이터 검색
+    ModelDocument findByPipelineId(String pipelineId);
 }
