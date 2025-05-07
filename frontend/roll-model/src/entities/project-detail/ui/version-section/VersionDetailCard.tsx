@@ -1,11 +1,11 @@
 // app/entities/project-detail/ui/version-section/VersionDetailCard.tsx
 'use client';
 
+import { Pipeline } from '@/entities/project-detail/model/versionTypes';
 import { formatDate } from '@/shared/lib/utils/dateUtils';
-import { Pipelines } from '../../model/versionTypes';
 
 interface VersionDetailCardProps {
-  pipeline: Pipelines;
+  pipeline: Pipeline;
   className?: string;
 }
 
@@ -27,7 +27,7 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
   };
 
   return (
-    <div className={`rounded-lg bg-white p-6 shadow-sm ${className} border border-1`}>
+    <div className={`rounded-lg bg-white p-6 shadow-sm ${className} border-1`}>
       <div className="mb-4 flex items-start justify-between">
         <h2 className="text-xl font-bold text-gray-900">당뇨병 예측 모델</h2>
         <div className="rounded bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">의학</div>
