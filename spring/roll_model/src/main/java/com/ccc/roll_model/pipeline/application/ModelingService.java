@@ -282,7 +282,7 @@ public class ModelingService {
 			.version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : "1.0")
 			.projectPublicYn(projectEntity.getPublicYn())
 			.pipelinePublicYn(pipelineEntity.getPublicYn())
-			.ownerYn(true) // 항상 true로 설정하여 소유자 여부와 상관없이 접근 가능하도록 함
+			.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
 			.build();
 
 		// 로그 추가: 소유자 여부 확인
