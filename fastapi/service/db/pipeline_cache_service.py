@@ -308,7 +308,8 @@ class PipelineCacheService:
                                      pipeline_id: str,
                                      new_status: PipelineStatus,
                                      project_id: int = None,
-                                     member_id: int = None
+                                     member_id: int = None,
+                                     preprocessed_dataset_id: str = None,
                                      ) -> Optional[PipelineModel]:
         """
         파이프라인의 상태를 업데이트하고 Redis 캐시를 갱신합니다.
@@ -340,7 +341,8 @@ class PipelineCacheService:
             else:
                 # 히스토리의 마지막 항목 상태 업데이트
                 current_history = pipeline.history[-1]
-
+                if preprocessed_dataset_id is not None:
+                    current_history.preprocessing_steps[-1].preprocessed_dataset_id = preprocessed_dataset_id
                 # 상태가 이미 같으면 업데이트 불필요
                 if current_history.status == new_status:
                     return pipeline

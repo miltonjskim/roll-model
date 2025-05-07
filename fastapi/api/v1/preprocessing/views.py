@@ -365,7 +365,6 @@ async def complete_preprocessing(
         
         # 2. 최종 전처리된 데이터셋 ETag 확인
         final_dataset_etag = None
-        
         if pipeline.history and len(pipeline.history) > 0:
             latest_history = pipeline.history[-1]
             if latest_history.preprocessing_steps and len(latest_history.preprocessing_steps) > 0:
@@ -387,16 +386,6 @@ async def complete_preprocessing(
         # 데이터프레임으로 변환
         file_content = minio_output.get("data")
         buffer = io.BytesIO(file_content)
-        
-        updated_pipeline = await pipeline_cache_service.update_pipeline_status(
-            pipeline_id=pipeline_id,
-            new_status=PipelineStatus.PREPROCESSED,
-            project_id=pipeline.project_id,
-            member_id=member_id
-        )
-        
-        if not updated_pipeline:
-            raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
 
         # 타입 추론
         buffer.seek(0)
@@ -459,17 +448,26 @@ async def complete_preprocessing(
         dataset_analysis = await analyze_dataset(buffer, config)
         # MongoDB에 전처리된 데이터셋 저장
         buffer.close()
-        await store_dataset_to_mongodb(
+        dataset_id: str = await store_dataset_to_mongodb(
             project_id=pipeline.project_id,
             member_id=member_id,
-            file_name=minio_output.get("object_name"),
             etag=final_dataset_etag,
             dataset_analysis=dataset_analysis,
             config=config,
             file_size=minio_output.get("size"),
             object_name=minio_output.get("object_name"),
         )
-
+        # 파이프라인 업데이트
+        updated_pipeline = await pipeline_cache_service.update_pipeline_status(
+            pipeline_id=pipeline_id,
+            new_status=PipelineStatus.PREPROCESSED,
+            project_id=pipeline.project_id,
+            member_id=member_id,
+            preprocessed_dataset_id=dataset_id
+        )
+        
+        if not updated_pipeline:
+            raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
         # MYSQL 완료된 파이프라인 생성
         pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
         if not pipeline:
