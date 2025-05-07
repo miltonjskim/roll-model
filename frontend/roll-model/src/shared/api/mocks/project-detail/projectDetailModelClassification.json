@@ -11,23 +11,24 @@
       "pipelinePublicYn": false,
       "ownerYn": true
     },
+    "algorithm": "RandomForestClassifier",
     "modelParameters": [
       {
         "parameterName": "트리 개수",
         "parameterValue": "100 개",
-        "parameterKey": "nEstimators"
+        "parameterKey": "n_estimators"
       },
       {
         "parameterName": "최대 깊이",
         "parameterValue": "10 레벨",
-        "parameterKey": "maxDepth"
+        "parameterKey": "max_depth"
       }
     ],
     "targetInfo": [
       {
         "targetName": "특성 수",
         "targetValue": "자동",
-        "targetKey": "feature_count" 
+        "targetKey": "feature_count"
       },
       {
         "durationName": "학습 시간",
@@ -62,11 +63,12 @@
       }
     ],
     "confusionMatrix": {
-      "matrixData": [120, 1, 15, 2]
-    },
-    "rocCurveInfo": {
-      "aucValue": "0.92",
-      "curveData": []
+      "labels": ["Class A", "Class B", "Class C"],
+      "matrixData": [
+        [85, 10, 5],
+        [12, 90, 8],
+        [7, 9, 94]
+      ]
     },
     "featureImportance": [
       {
