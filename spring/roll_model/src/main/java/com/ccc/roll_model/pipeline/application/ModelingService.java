@@ -1,5 +1,7 @@
 package com.ccc.roll_model.pipeline.application;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,12 +10,12 @@ import java.util.stream.Collectors;
 import com.ccc.roll_model.pipeline.application.command.GetPipelineDatasetInfoCommand;
 import com.ccc.roll_model.pipeline.domain.model.client.MessagePublisher;
 import com.ccc.roll_model.pipeline.domain.model.vo.ModelingData;
+
 import com.ccc.roll_model.pipeline.ui.dto.response.*;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.DatasetDocument.Metadata.Statistics.NumericFeature;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
-import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
@@ -22,10 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ccc.roll_model.pipeline.application.command.ExecuteModelingCommand;
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
 import com.ccc.roll_model.pipeline.domain.model.common.ModelingInfo;
+import com.ccc.roll_model.pipeline.infrastructure.ModelingInfoMapper;
 import com.ccc.roll_model.pipeline.infrastructure.entity.mongo.PipelineDocument;
 import com.ccc.roll_model.pipeline.infrastructure.repository.mongo.PipelineMongoRepository;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.DatasetDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.Status;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.DatasetRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 
@@ -42,9 +46,10 @@ public class ModelingService {
 	private final PipelineRepository pipelineRepository;
 	private final PipelineMongoRepository pipelineMongoRepository;
 	private final DatasetRepository datasetRepository;
-	private final ProjectRepository projectRepository;
 	private final ModelRepository modelRepository;
 	private final MessagePublisher messagePublisher;
+	private final ModelingInfoMapper modelingInfoMapper;
+
 	public void executeModeling(ExecuteModelingCommand command) {
 		// 커맨드 유효성 검사
 		if (!command.validate()) {
@@ -56,13 +61,9 @@ public class ModelingService {
 			.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
 
 		// 파이프라인 존재 여부 확인 : mongo
-		PipelineDocument pipelineDocument;
-		try {
-			pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
-				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("유효하지 않은 파이프라인 ID 형식입니다: " + e.getMessage());
-		}
+		System.out.println(command.getModelingInfo());
+		PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
+			.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
 
 		String filePath = getDatasetFilePath(pipelineDocument);
 
@@ -75,9 +76,19 @@ public class ModelingService {
 			modelingInfo.getModelType(),
 			modelingInfo.getParameters()
 		);
+
 		log.info("params validate: {}", modelParameter.validateParameters());
 
 		log.info("params: {}", modelParameter.toString());
+
+		// 상태 저장
+		saveModelingStatus(
+			command,
+			pipeline,
+			pipelineDocument,
+			modelingInfo,
+			modelParameter
+		);
 
 		// 카프카 메시징
 		ModelingData modelingData = ModelingData.builder()
@@ -105,7 +116,25 @@ public class ModelingService {
 			throw new IllegalArgumentException("원본 데이터셋 ID가 없습니다.");
 		}
 
-		// 사용할 etag 결정
+		String datasetId = getString(pipelineDocument, originalDatasetId);
+
+		// 데이터셋 ID 로깅 및 유효성 검사
+		log.info("getDatasetFilePath - 데이터셋 ID: {}", datasetId);
+
+		// object_id로 데이터셋 문서 조회
+		DatasetDocument datasetDocument;
+		try {
+			datasetDocument = datasetRepository.findById(new ObjectId(datasetId))
+				.orElseThrow(()->new EntityNotFoundException("데이터셋을 찾을 수 없습니다."));
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("유효하지 않은 데이터셋 ID 형식입니다: " + e.getMessage());
+		}
+
+		// 데이터셋 파일 경로 반환
+		return datasetDocument.getDatasetFilePath();
+	}
+
+	private static String getString(PipelineDocument pipelineDocument, String originalDatasetId) {
 		String datasetId;
 
 		if (pipelineDocument.getHistory() == null || pipelineDocument.getHistory().isEmpty()) {
@@ -132,26 +161,107 @@ public class ModelingService {
 				}
 			}
 		}
-
-		// 데이터셋 ID 로깅 및 유효성 검사
-		log.info("getDatasetFilePath - 데이터셋 ID: {}", datasetId);
-
-		if (datasetId == null || datasetId.isEmpty()) {
-			throw new IllegalArgumentException("데이터셋 ID가 없습니다.");
-		}
-
-		// object_id로 데이터셋 문서 조회
-		DatasetDocument datasetDocument;
-		try {
-			datasetDocument = datasetRepository.findById(new ObjectId(datasetId))
-				.orElseThrow(()->new EntityNotFoundException("데이터셋을 찾을 수 없습니다."));
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("유효하지 않은 데이터셋 ID 형식입니다: " + e.getMessage());
-		}
-
-		// 데이터셋 파일 경로 반환
-		return datasetDocument.getDatasetFilePath();
+		return datasetId;
 	}
+
+	private ModelDocument initializeModelDocument(ExecuteModelingCommand command, PipelineDocument pipelineDocument, ModelParameter modelParameter) {
+		ModelingInfo modelingInfo = command.getModelingInfo();
+
+		// 모델 문서 기본 정보 설정 (모델링 시작 전에 알 수 있는 정보들)
+		ModelDocument modelDocument = ModelDocument.builder()
+			.pipelineId(command.getPipelineId())
+			.projectId(pipelineDocument.getProjectId())
+			.memberId(command.getMemberId())
+			.modelTitle(generateDefaultModelTitle(modelingInfo.getAlgorithm(), modelingInfo.getModelType().toString()))
+			.modelDescription("설명이 없습니다.") // 기본 설명
+			.modelType(modelingInfo.getModelType().toString())
+			.algorithm(modelingInfo.getAlgorithm())
+			.registeredAt(LocalDateTime.now())
+			.build();
+
+		// 파라미터 삽입
+		modelDocument.setParameters(modelParameter);
+
+		// TrainInfo 설정 (시작 시간 및 타겟 정보)
+		ModelDocument.TrainInfo trainInfo = ModelDocument.TrainInfo.builder()
+			.startTime(LocalDateTime.now())
+			.targetFeature(modelingInfo.getTargetFeature())
+			.build();
+
+		modelDocument.setTrainInfo(trainInfo);
+
+		// Features 정보는 모델링 중에 설정됨
+		// Performance, FeatureImportance 등은 모델링 완료 후 설정
+
+		return modelDocument;
+	}
+
+	/**
+	 * 기본 모델 제목 생성
+	 */
+	private String generateDefaultModelTitle(String algorithm, String modelType) {
+		LocalDateTime now = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+		String timestamp = now.format(formatter);
+
+		return algorithm + "_" + modelType + "_" + timestamp;
+	}
+
+	/**
+	 * 모델링 실행 전에 상태 저장 및 초기 모델 문서 생성
+	 */
+	private void saveModelingStatus(
+		ExecuteModelingCommand command,
+		PipelineEntity pipeline,
+		PipelineDocument pipelineDocument,
+		ModelingInfo modelingInfo,
+		ModelParameter modelParameter
+		) {
+		// 1. MongoDB에 초기 Model 문서 생성
+		ModelDocument initialModelDocument = initializeModelDocument(command, pipelineDocument, modelParameter);
+		ObjectId modelId = modelRepository.save(initialModelDocument).getId();
+
+		// 2. MongoDB 파이프라인 문서 업데이트
+		PipelineDocument.PipelineHistoryItem latestHistoryItem;
+
+		if (pipelineDocument.getHistory() == null) {
+			// 히스토리가 없는 경우 새로 생성
+			pipelineDocument.setHistory(new ArrayList<>());
+			latestHistoryItem = PipelineDocument.PipelineHistoryItem.builder()
+				.status(String.valueOf(Status.LEARNING))
+				.modelId(modelId) // 초기 모델 ID 설정
+				.build();
+			pipelineDocument.getHistory().add(latestHistoryItem);
+		} else if (pipelineDocument.getHistory().isEmpty()) {
+			// 히스토리 리스트는 있지만 비어있는 경우
+			latestHistoryItem = PipelineDocument.PipelineHistoryItem.builder()
+				.status(String.valueOf(Status.LEARNING))
+				.modelId(modelId) // 초기 모델 ID 설정
+				.build();
+			pipelineDocument.getHistory().add(latestHistoryItem);
+		} else {
+			// 히스토리가 있는 경우 가장 최근 아이템 업데이트
+			latestHistoryItem = pipelineDocument.getHistory().get(pipelineDocument.getHistory().size() - 1);
+			latestHistoryItem.setStatus(String.valueOf(Status.LEARNING));
+			latestHistoryItem.setModelId(modelId); // 초기 모델 ID 설정
+		}
+
+		PipelineDocument.ModelingInfo pipelineModelingInfo = modelingInfoMapper.toDocumentModelingInfo(modelingInfo);
+		// modelingInfo 업데이트
+
+		latestHistoryItem.setModelingInfo(pipelineModelingInfo);
+
+		// MongoDB 파이프라인 문서 저장
+		pipelineMongoRepository.save(pipelineDocument);
+
+		// 3. MySQL 파이프라인 상태 변경
+		pipeline.updateStatus(Status.LEARNING);
+		pipelineRepository.save(pipeline);
+
+		log.info("파이프라인 상태를 LEARNING으로 업데이트했습니다. 파이프라인 ID: {}, 초기 모델 ID: {}",
+			pipeline.getPipelineId(), modelId);
+	}
+
 
 	/**
 	 * 파이프라인 ID를 받아 해당 파이프라인과 관련된 데이터셋 정보를 조회하는 메서드
@@ -183,7 +293,7 @@ public class ModelingService {
 		// 파이프라인 문서 정보 로깅
 		log.info("getPipelineDatasetInfo - 파이프라인 ID: {}", command.getPipelineId());
 		log.info("getPipelineDatasetInfo - 원본 데이터셋 ID: {}", pipelineDocument.getOriginalDatasetId());
-		log.info("getPipelineDatasetInfo - 히스토리 존재 여부: {}", 
+		log.info("getPipelineDatasetInfo - 히스토리 존재 여부: {}",
 			pipelineDocument.getHistory() != null && !pipelineDocument.getHistory().isEmpty() ? "있음" : "없음");
 
 		// 프로젝트 정보 조회
@@ -204,7 +314,7 @@ public class ModelingService {
 			log.info("전처리된 데이터셋이 없어 파이프라인 히스토리에서 데이터셋 ID를 조회합니다.");
 			String datasetId = getLatestDatasetId(pipelineDocument);
 
-			if (datasetId == null || datasetId.isEmpty()) {
+			if (datasetId.isEmpty()) {
 				throw new IllegalArgumentException("데이터셋 ID가 없습니다.");
 			}
 
@@ -454,8 +564,8 @@ public class ModelingService {
 	 * @return 분포 DTO 목록
 	 */
 	private List<DistributionResponse> buildDistributionsDTO(DatasetDocument datasetDocument) {
-		if (datasetDocument.getMetadata() == null || 
-			datasetDocument.getMetadata().getStatistics() == null || 
+		if (datasetDocument.getMetadata() == null ||
+			datasetDocument.getMetadata().getStatistics() == null ||
 			datasetDocument.getMetadata().getStatistics().getNumericFeatures() == null) {
 			return new ArrayList<>();
 		}
@@ -506,8 +616,8 @@ public class ModelingService {
 	 * @return 상관 관계 매트릭스 DTO
 	 */
 	private CorrelationMatrixResponse buildCorrelationMatrixDTO(DatasetDocument datasetDocument) {
-		if (datasetDocument.getMetadata() == null || 
-			datasetDocument.getMetadata().getStatistics() == null || 
+		if (datasetDocument.getMetadata() == null ||
+			datasetDocument.getMetadata().getStatistics() == null ||
 			datasetDocument.getMetadata().getStatistics().getCorrelationMatrix() == null) {
 			return CorrelationMatrixResponse.builder()
 				.featureNames(new ArrayList<>())

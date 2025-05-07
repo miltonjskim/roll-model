@@ -9,10 +9,13 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.ccc.roll_model.global.exception.ApiException;
+import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.member.domain.Member;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 
 @Component
@@ -33,11 +36,19 @@ public class JWTUtils {
 
 	// Claims를 가져오는 공통 메서드
 	private Claims getClaims(String token) {
-		return Jwts.parser()
-			.verifyWith(secretKey)
-			.build()
-			.parseSignedClaims(token)
-			.getPayload();
+		try {
+			return Jwts.parser()
+				.verifyWith(secretKey)
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
+		} catch (ExpiredJwtException e) {
+			// 만료된 토큰의 경우 별도 처리
+			throw new ApiException(ErrorCode.EXPIRED_TOKEN);
+		} catch (JwtException e) {
+			// 기타 JWT 관련 예외 처리
+			throw new ApiException(ErrorCode.AUTHENTICATION_FAILED);
+		}
 	}
 
 	// 각 claim을 가져오는 메서드들
