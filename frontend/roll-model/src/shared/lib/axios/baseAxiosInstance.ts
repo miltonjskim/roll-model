@@ -14,6 +14,8 @@ export const baseAxiosInstance = axios.create({
 baseAxiosInstance.interceptors.request.use(
   (config) => {
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    console.log('baseAxiosInstance token:', token);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
