@@ -26,8 +26,8 @@ from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineS
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_cache_service import PipelineCacheService, get_pipeline_cache_service
-from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
-    create_new_pipeline_model
+# from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
+#     create_new_pipeline_model
 router = APIRouter()
 logger = logging.getLogger()
 
@@ -327,7 +327,7 @@ async def reload_workspace_by_pipeline_version(
     
 @router.post("/versions", response_class=ApiResponse)
 async def get_pipeline_versions(
-    project_id: int = Query(..., description="프로젝트 ID"),
+    project_id: int = Path(..., description="프로젝트 ID"),
     member_id: int = Depends(verify_token),
     db: Session = Depends(get_mysql_db)
 ):
