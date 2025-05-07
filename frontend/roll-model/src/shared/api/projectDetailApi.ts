@@ -5,6 +5,7 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
@@ -33,6 +34,17 @@ export const fetchProjectDetailVersion = async (pipelineId: string) => {
     return projectDetailVersionMock as ProjectDetailVersionResponse;
   } catch (error) {
     console.error('상세 데이터섹션 호출 실패', error);
+    throw error;
+  }
+};
+
+// 파이프라인 삭제
+export const deletePipeline = async (pipelineId: string) => {
+  try {
+    const response = await axiosInstance.delete(`/api/v1/pipelines/${pipelineId}`);
+    return response.data;
+  } catch (error) {
+    console.error('파이프라인 삭제 실패', error);
     throw error;
   }
 };

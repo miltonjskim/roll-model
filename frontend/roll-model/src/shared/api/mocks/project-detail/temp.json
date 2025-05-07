@@ -1,0 +1,95 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "Diabetes Prediction Dataset",
+      "category": "CLASSIFICATION",
+      "domain": "HEALTHCARE",
+      "version": "1.0",
+      "projectPublicYn": true,
+      "pipelinePublicYn": false,
+      "ownerYn": true
+    },
+    "modelParameters": [
+      {
+        "parameterName": "트리 개수",
+        "parameterValue": "100 개",
+        "parameterKey": "nEstimators"
+      },
+      {
+        "parameterName": "최대 깊이",
+        "parameterValue": "10 레벨",
+        "parameterKey": "maxDepth"
+      }
+    ],
+    "targetInfo": [
+      {
+        "targetName": "특성 수",
+        "targetValue": "자동",
+        "targetKey": "feature_count" 
+      },
+      {
+        "durationName": "학습 시간",
+        "durationValue": "5.2 초",
+        "durationKey": "learning_duration"
+      }
+    ],
+    "performanceMetrics": [
+      {
+        "metricName": "정확도 (Accuracy)",
+        "metricValue": "90%",
+        "metricDesc": "올바르게 분류한 비율",
+        "metricKey": "accuracy"
+      },
+      {
+        "metricName": "정밀도 (Precision)",
+        "metricValue": "85%",
+        "metricDesc": "양성 예측의 정확성",
+        "metricKey": "precision"
+      },
+      {
+        "metricName": "재현율 (Recall)",
+        "metricValue": "80%",
+        "metricDesc": "실제 양성 감지율",
+        "metricKey": "recall"
+      },
+      {
+        "metricName": "F1 점수",
+        "metricValue": "82%",
+        "metricDesc": "정밀도와 재현율의 조화",
+        "metricKey": "f1_score"
+      }
+    ],
+    "confusionMatrix": {
+      "matrixData": [120, 1, 15, 2]
+    },
+    "rocCurveInfo": {
+      "aucValue": "0.92",
+      "curveData": []
+    },
+    "featureImportance": [
+      {
+        "featureName": "혈당",
+        "importanceValue": "35%",
+        "importanceKey": "blood_sugar"
+      },
+      {
+        "featureName": "BMI",
+        "importanceValue": "28%",
+        "importanceKey": "bmi"
+      },
+      {
+        "featureName": "나이",
+        "importanceValue": "21%",
+        "importanceKey": "age"
+      },
+      {
+        "featureName": "혈압",
+        "importanceValue": "16%",
+        "importanceKey": "blood_pressure"
+      }
+    ]
+  },
+  "error": null
+}

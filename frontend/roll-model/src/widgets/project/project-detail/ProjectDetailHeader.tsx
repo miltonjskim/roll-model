@@ -4,9 +4,12 @@ import { useAtom } from 'jotai';
 import { FaTrashAlt } from 'react-icons/fa';
 import { TiLockClosed } from 'react-icons/ti';
 import { TiLockOpen } from 'react-icons/ti';
+import { deletePipeline } from '@/shared/api/projectDetailApi';
+import { useRouter } from 'next/navigation';
 
 export default function ProjectDetailHeader() {
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
+  const router = useRouter();
 
   // 재학습
   const handleStartRetraining = () => {
@@ -14,7 +17,17 @@ export default function ProjectDetailHeader() {
   };
 
   // 파이프라인 삭제
-  const handleDeletePipeline = () => {};
+  const handleDeletePipeline = async () => {
+    try {
+      await deletePipeline(projectDetail.id);
+      router.push('/dashboard');
+      alert('삭제 성공');
+    } catch (e) {
+      console.error('삭제실패', e);
+      alert('삭제 실패');
+      router.push('/dashboard');
+    }
+  };
 
   // 공개여부 버튼 클릭 핸들러
   const handleTogglePublic = () => {
