@@ -6,7 +6,7 @@ export type ProjectStatus = 'COMPLETED' | 'PREPROCESSED' | 'LEARNING' | 'FAILED'
 export interface Project {
   id: string;
   title: string; // 제목
-  version: number | null; // 버전 (전처리만완료시 null)
+  version: string | null; // 버전 (전처리만완료시 null)
   category: ProjectType; // 분류 or 회귀
   status: ProjectStatus; // 성공 or 진행중==전처리만완료?
   domain: ApiProjectDomain; // 의료 금융 등
