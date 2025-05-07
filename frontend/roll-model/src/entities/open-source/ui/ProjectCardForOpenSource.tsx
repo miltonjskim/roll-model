@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { OpenSourceProject } from '@/entities/open-source/model/types';
 import { getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useState } from 'react';
+import { likeThisPipeline } from '@/shared/api/openSourceApi';
 
 interface ProjectCardProps {
   project: OpenSourceProject;
@@ -27,9 +28,18 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     router.push(`/project-detail/${project.id}`);
   };
 
-  const handleLikeClick = () => {
-    setIsLiked(!isLiked);
-    // 좋아요 api 추가해야댐
+  const handleLikeClick = async () => {
+    const preLiked = isLiked;
+    const newLiked = !preLiked;
+    setIsLiked(newLiked);
+    try {
+      await likeThisPipeline(project.id);
+      alert('좋아요 성공.');
+    } catch (e) {
+      setIsLiked(preLiked);
+      console.error('아..사실 싫어요', e);
+      alert('좋아요 실패.');
+    }
   };
 
   return (
