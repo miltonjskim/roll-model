@@ -68,7 +68,7 @@ async def upload_dataset_and_save_metadata(
         file_io = io.BytesIO(file_content)
         minio_client = get_minio_client()
         bucket_name = "datasets"
-        object_name = f"project_{project_id}/{file.filename}"
+        object_name = f"project_{project_id}_{datetime.now()}/{file.filename}"
 
         # MinIO에 파일 업로드
         upload_success = minio_client.upload_file(
@@ -103,8 +103,26 @@ async def upload_dataset_and_save_metadata(
         file_io.seek(0)
         dataset_analysis = await analyze_dataset(file_io, config)
         file_io.close()
+
+        # MongoDB에 데이터셋 정보 저장
+        dataset_id = await store_dataset_to_mongodb(
+            project_id=project_id,
+            member_id=member_id,
+            etag=etag,
+            dataset_analysis=dataset_analysis,
+            config=config,
+            file_size=file_size,
+            object_name=object_name,
+        )
+
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
-        mongo_pipeline_id = await create_pipeline_document(project_id, member_id, etag)
+        mongo_pipeline_id = await create_pipeline_document(
+            project_id=project_id,
+            member_id=member_id,
+            etag=etag,
+            dataset_id=dataset_id,
+            object_name=object_name,
+        )
 
         # MySQL에 파이프라인 데이터 저장 (MongoDB 파이프라인 ID 사용)
         mysql_pipeline_id = await create_mysql_pipeline(
@@ -115,17 +133,6 @@ async def upload_dataset_and_save_metadata(
         )
         logger.info(f"MySQL 파이프라인 생성 완료: {mysql_pipeline_id}")
 
-        # MongoDB에 데이터셋 정보 저장
-        dataset_id = await store_dataset_to_mongodb(
-            project_id=project_id,
-            member_id=member_id,
-            file_name=file.filename,
-            etag=etag,
-            dataset_analysis=dataset_analysis,
-            config=config,
-            file_size=file_size,
-            object_name=object_name
-        )
         # 응답 결과 생성
         result = {
             "pipelineId": mysql_pipeline_id,  # MySQL 파이프라인 ID (MongoDB ObjectID 문자열)
@@ -140,7 +147,7 @@ async def upload_dataset_and_save_metadata(
             "missingValues": dataset_analysis["missing_values"],
             "originalDatasets": dataset_analysis["data_sample"]
         }
-        # 몽고DB에 데이터가 생긴 이후에 백그라운트 작업 진행
+        # 몽고DB에 데이터가 생긴 이후에 백그라운드 작업 진행
         background_tasks.add_task(
             calculate_and_update_statistics,
             result.get("datasetId"),
@@ -254,13 +261,13 @@ Args:
 Returns:
     ObjectId: 생성된 파이프라인 문서의 ID
 """
-async def create_pipeline_document(project_id: int, member_id: int, etag: str) -> Any:
+async def create_pipeline_document(project_id: int, member_id: int, dataset_id:str, object_name: str, etag: str) -> Any:
 
     try:
         pipeline_collection = get_pipeline_collection()
 
         # 현재 시간
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now().isoformat() + "Z"
 
         # 파이프라인 문서 생성
         pipeline_doc = {
@@ -268,6 +275,8 @@ async def create_pipeline_document(project_id: int, member_id: int, etag: str) -
             "member_id": member_id,
             "registered_at": now,
             "modified_at": now,
+            "original_dataset_id": dataset_id,
+            "original_dataset_object_name": object_name,
             "original_dataset_etag": etag,
             "history": []
         }
@@ -304,7 +313,6 @@ Raises:
 async def store_dataset_to_mongodb(
     project_id: int,
     member_id: int,
-    file_name: str,
     etag: str,
     dataset_analysis: Dict[str, Any],
     config: Dict[str, Any],
@@ -353,6 +361,7 @@ async def store_dataset_to_mongodb(
             "registered_at": now,
             "modified_at": now,
             "dataset_file_path": f"storage/datasets/{object_name}",  # file_path → dataset_file_path로 변경
+            "object_name": object_name,
             "file_size": file_size,
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
