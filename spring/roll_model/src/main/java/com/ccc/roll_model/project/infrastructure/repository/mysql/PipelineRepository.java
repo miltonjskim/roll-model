@@ -2,6 +2,7 @@ package com.ccc.roll_model.project.infrastructure.repository.mysql;
 
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,4 +22,9 @@ public interface PipelineRepository extends JpaRepository<PipelineEntity, String
     // 특정 프로젝트의 공개된 파이프라인 중 가장 최신 파이프라인 가져오기
     @Query("SELECT p FROM PipelineEntity p WHERE p.projectEntity.projectId = :projectId AND p.publicYn = true ORDER BY p.registeredAt DESC")
     Optional<PipelineEntity> findFirstPublicByProjectIdOrderByRegisteredAtDesc(@Param("projectId") Integer projectId);
+
+    // 파이프라인의 deletedYn 필드를 true로 설정
+    @Modifying
+    @Query("UPDATE PipelineEntity p SET p.deletedYn = true WHERE p.pipelineId = :pipelineId")
+    void markAsDeleted(@Param("pipelineId") String pipelineId);
 }
