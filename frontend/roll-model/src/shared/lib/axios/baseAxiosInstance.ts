@@ -5,7 +5,6 @@ import axios, { AxiosResponse } from 'axios';
 export const baseAxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10000,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,6 +14,8 @@ export const baseAxiosInstance = axios.create({
 baseAxiosInstance.interceptors.request.use(
   (config) => {
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    console.log('baseAxiosInstance token:', token);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,18 +26,20 @@ baseAxiosInstance.interceptors.request.use(
 
 // 응답 인터셉터
 baseAxiosInstance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
+  <T>(response: AxiosResponse<ApiResponse<T>>): T => {
     const apiResponse = response.data;
 
-    if (apiResponse.status !== 200 || apiResponse.error) {
+    // api 응답 status 에러 발생 시
+    if (apiResponse.status >= 400 || apiResponse.error) {
       const message = apiResponse.error?.message || '알 수 없는 에러가 발생했습니다.';
       showErrorToast(message);
-      return Promise.reject(new Error(message));
+      throw new Error(message);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return apiResponse.data as any;
+    return apiResponse.data;
   },
+
+  // HTTP 응답 에러 시
   (error) => {
     const message = error.response?.data?.error?.message || '네트워크 에러가 발생했습니다.';
     console.error('API Error:', message);
