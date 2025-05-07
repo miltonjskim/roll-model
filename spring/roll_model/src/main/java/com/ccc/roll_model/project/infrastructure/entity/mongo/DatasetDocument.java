@@ -44,6 +44,8 @@ public class DatasetDocument {
     private Boolean isPreprocessed; // 전처리 여부
     private String etag;
 
+    @Field("original_dataset_id")
+    private String originalDatasetId; // 원본 데이터셋 ID
     // ------ 중첩 클래스 정의 ------
 
     @Getter
