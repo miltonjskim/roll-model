@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
-import { userAtom, isLoggedInAtom } from '@/features/auth/model/authAtoms';
+import { userAtom, isLoggedInAtom, userToken } from '@/features/auth/model/authAtoms';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
@@ -11,6 +11,7 @@ const CallbackPage = () => {
   const router = useRouter();
   const setUser = useSetAtom(userAtom);
   const setIsLoggedIn = useSetAtom(isLoggedInAtom);
+  const setUserToken = useSetAtom(userToken);
 
   useEffect(() => {
     const getCookieValue = (key: string): string | null => {
@@ -32,6 +33,7 @@ const CallbackPage = () => {
         });
         setUser(response.data);
         setIsLoggedIn(true);
+        setUserToken(accessToken);
         router.push('/');
       } catch (error) {
         console.error(error);

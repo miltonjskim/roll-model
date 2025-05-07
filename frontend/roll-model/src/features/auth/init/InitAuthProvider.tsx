@@ -12,7 +12,7 @@ export const InitAuthProvider = () => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const res = await axiosInstance.get('/api/v1/auth/members/my', { withCredentials: true });
+        const res = await axiosInstance.get('/api/v1/auth/members/my');
         setUser(res.data); // 유저 정보 저장
         setIsLoggedIn(true);
       } catch {
