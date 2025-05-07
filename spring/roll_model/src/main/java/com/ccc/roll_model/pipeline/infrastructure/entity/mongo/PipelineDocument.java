@@ -37,8 +37,14 @@ public class PipelineDocument {
 	@Field("modified_at")
 	private LocalDateTime modifiedAt;
 
+	@Field("original_dataset_id")
+	private String originalDatasetId;
+
 	@Field("original_dataset_etag")
 	private String originalDatasetEtag;
+
+	@Field("original_dataset_object_name")
+	private String originalDatasetObjectName;
 
 	private List<PipelineHistoryItem> history;
 
@@ -70,6 +76,9 @@ public class PipelineDocument {
 		private Map<String, Object> parameters;
 		private int order;
 		private boolean active;
+
+		@Field("preprocessed_dataset_id")
+		private String preprocessedDatasetId;
 
 		@Field("preprocessed_dataset_etag")
 		private String preprocessedDatasetEtag;
