@@ -40,6 +40,6 @@ public class MemberEntity extends BaseCreatedAndUpdatedEntity {
 	@Column(length = 30, nullable = false)
 	private String email;
 
-	@Column(name = "deleted_yn")
-	private Boolean deletedYn;
+	@Column(name = "deleted_yn", columnDefinition = "boolean default false")
+	private Boolean deletedYn = false;
 }
