@@ -279,7 +279,7 @@ public class ModelingService {
 			.title(projectEntity.getTitle())
 			.category(projectEntity.getCategory().name())
 			.domain(projectEntity.getDomain().name())
-			.version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : "1.0")
+				.version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : null)
 			.projectPublicYn(projectEntity.getPublicYn())
 			.pipelinePublicYn(pipelineEntity.getPublicYn())
 			.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
