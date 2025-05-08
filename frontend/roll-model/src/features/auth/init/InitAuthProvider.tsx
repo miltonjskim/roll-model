@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { initUserTokenAtom, isLoggedInAtom, userAtom, userToken } from '@/features/auth/model/authAtoms';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
 export const InitAuthProvider = () => {
   const setIsLoggedIn = useSetAtom(isLoggedInAtom);
@@ -23,7 +24,7 @@ export const InitAuthProvider = () => {
 
     const checkLogin = async () => {
       try {
-        const res = await axiosInstance.get('/api/v1/auth/members/my');
+        const res = await baseAxiosInstance.get('/api/v1/auth/members/my');
         setUser(res.data);
         setIsLoggedIn(true);
       } catch {
