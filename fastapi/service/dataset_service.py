@@ -68,7 +68,7 @@ async def upload_dataset_and_save_metadata(
         file_io = io.BytesIO(file_content)
         minio_client = get_minio_client()
         bucket_name = "datasets"
-        object_name = f"project_{project_id}_{datetime.now()}/{file.filename}"
+        object_name = f"project_{project_id}/{file.filename}"
 
         # MinIO에 파일 업로드
         upload_success = minio_client.upload_file(

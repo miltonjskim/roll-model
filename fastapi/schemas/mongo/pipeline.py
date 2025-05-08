@@ -56,9 +56,9 @@ class PipelineStatus(str, enum.Enum):
     FAILED = "FAILED"
 
 class AlgorithmType(str, enum.Enum):
-    RANDOM_FOREST = "RANDOM_FOREST"
-    LOGISTIC_REGRESSION = "LOGISTIC_REGRESSION"
-    LINEAR_REGRESSION = "LINEAR_REGRESSION"
+    RANDOM_FOREST = "RandomForestClassifier"
+    LOGISTIC_REGRESSION = "LogisticRegression"
+    LINEAR_REGRESSION = "LinearRegression"
 
 class PreprocessingStepType(str, enum.Enum):
     MISSING_VALUE = "MISSING_VALUE"
