@@ -10,18 +10,18 @@ export const baseAxiosInstance = axios.create({
   },
 });
 
-const getCookieValue = (key: string): string | null => {
-  const cookie = document.cookie.split('; ').find((row) => row.startsWith(`${key}=`));
+const getAccessToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  const cookie = document.cookie.split('; ').find((row) => row.startsWith('access_token='));
+
   return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
 };
-
-const token = getCookieValue('access_token');
 
 // 요청 인터셉터
 baseAxiosInstance.interceptors.request.use(
   (config) => {
-    console.log('baseAxiosInstance token:', token);
-
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
