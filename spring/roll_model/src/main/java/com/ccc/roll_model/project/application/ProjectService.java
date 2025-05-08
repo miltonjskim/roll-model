@@ -276,7 +276,7 @@ public class ProjectService {
 
         AtomicInteger elementsCount = new AtomicInteger();
 
-        // 프로젝트 상세 정보 생성
+// 프로젝트 상세 정보 생성
         List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
                 .map(project -> {
                     // 가장 최신의 공개 파이프라인 가져오기
@@ -314,6 +314,16 @@ public class ProjectService {
                     // 작성자 정보
                     MemberEntity writer = project.getMemberEntity();
 
+                    // 타겟 피처 정보 가져오기 - 모델 문서 사용
+                    String targetFeature = null;
+                    if (model != null && model.getTrainInfo() != null && model.getTrainInfo().getTargetFeature() != null) {
+                        targetFeature = model.getTrainInfo().getTargetFeature();
+                    }
+                    // 모델에서 타겟 정보를 찾지 못한 경우 파이프라인의 값을 사용
+                    if (targetFeature == null || targetFeature.isEmpty()) {
+                        targetFeature = pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A";
+                    }
+
                     // 프로젝트 상세 정보 생성
                     return GetOpensourceResponse.Project.builder()
                             .id(pipeline.getPipelineId())
@@ -330,7 +340,7 @@ public class ProjectService {
                             .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
                                     ? model.getPerformance().getRegression().getRmse()
                                     : null)
-                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : null)
+                            .target(targetFeature) // 수정된 부분
                             .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
                             .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                             .likeCount(pipeline.getLikeCount())
