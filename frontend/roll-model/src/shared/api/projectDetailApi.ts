@@ -14,6 +14,7 @@ import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTypes';
 
+
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
   try {
