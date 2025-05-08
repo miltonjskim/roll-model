@@ -9,7 +9,7 @@ import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, project
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
 import { CATEGORY_OPTIONS, DOMAIN_OPTIONS } from '@/features/workspace/constants/selectOptions';
 import { createProject } from '@/features/workspace/service/createProject';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -21,15 +21,15 @@ const InputProjectMetaDataPage = () => {
   const [domain, setDomain] = useAtom(projectDomainAtom);
   const [type, setType] = useAtom(projectCategoryAtom);
   const [isPublic, setIsPublic] = useAtom(projectPublicAtom);
-  const [projectid, setProjectId] = useAtom(projectIdAtom);
+  const setProjectId = useSetAtom(projectIdAtom);
 
   const handleSubmit = async () => {
     try {
-      // const res = await createProject({ title, description, domain, type, isPublic });
-      // console.log('프로젝트 생성 성공:', res);
+      const res = await createProject({ title, description, domain, type, isPublic });
+      console.log('프로젝트 생성 성공:', res);
 
-      // const projectId = res.id;
-      // setProjectId(projectId.toString());
+      const projectId = res.id;
+      setProjectId(projectId.toString());
 
       router.push('/workspace/data-selection');
     } catch (err) {
