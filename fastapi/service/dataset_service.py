@@ -366,8 +366,8 @@ async def store_dataset_to_mongodb(
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
             "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
-            "category": DatasetCategory.CLASSIFICATION.value,
-            "domain": DatasetDomain.GENERAL.value,
+            "category": config.get("type", DatasetCategory.CLASSIFICATION.value),
+            "domain": config.get("domain", DatasetDomain.GENERAL.value),
             "metadata": {
                 "row_count": dataset_analysis["total_rows"],
                 "column_count": dataset_analysis["total_columns"],
