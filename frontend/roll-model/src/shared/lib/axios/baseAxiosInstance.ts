@@ -10,10 +10,16 @@ export const baseAxiosInstance = axios.create({
   },
 });
 
+const getCookieValue = (key: string): string | null => {
+  const cookie = document.cookie.split('; ').find((row) => row.startsWith(`${key}=`));
+  return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+};
+
+const token = getCookieValue('access_token');
+
 // 요청 인터셉터
 baseAxiosInstance.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
     console.log('baseAxiosInstance token:', token);
 
     if (token) {
