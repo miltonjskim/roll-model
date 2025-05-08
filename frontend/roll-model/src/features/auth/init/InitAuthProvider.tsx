@@ -1,19 +1,34 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSetAtom } from 'jotai';
-import { isLoggedInAtom, userAtom } from '@/features/auth/model/authAtoms';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { initUserTokenAtom, isLoggedInAtom, userAtom, UserInfo, userToken } from '@/features/auth/model/authAtoms';
+import { ApiResponse } from '@/shared/model/types/apiResponse';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 
 export const InitAuthProvider = () => {
   const setIsLoggedIn = useSetAtom(isLoggedInAtom);
   const setUser = useSetAtom(userAtom);
+  const token = useAtomValue(userToken);
+  const setInitUserToken = useSetAtom(initUserTokenAtom);
 
   useEffect(() => {
+    setInitUserToken();
+  }, [setInitUserToken]);
+
+  useEffect(() => {
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
+    }
+
     const checkLogin = async () => {
       try {
-        const res = await axiosInstance.get('/api/v1/auth/members/my');
-        setUser(res.data); // 유저 정보 저장
+        const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
+
+        console.log('checkLogin res:', apiResponse);
+
+        setUser(apiResponse.data);
         setIsLoggedIn(true);
       } catch {
         setIsLoggedIn(false);
@@ -21,7 +36,7 @@ export const InitAuthProvider = () => {
     };
 
     checkLogin();
-  }, [setIsLoggedIn, setUser]);
+  }, [token, setIsLoggedIn, setUser]);
 
-  return null; // 렌더링은 없음
+  return null;
 };

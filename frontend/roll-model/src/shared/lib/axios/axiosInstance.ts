@@ -4,21 +4,27 @@ import axios from 'axios';
 export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10000,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+const getAccessToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  const cookie = document.cookie.split('; ').find((row) => row.startsWith('access_token='));
+
+  return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+};
+
 // 요청 인터셉터
 axiosInstance.interceptors.request.use(
   (config) => {
-    // 세션 스토리지에서 토큰 가져옴
-    // const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    // TODO: 로컬 개발 종료 후 해당 주석 해제 및 아래 코드 주석화
+    // const token = getAccessToken();
 
-    // console.log('axiosInstance token:', token);
-
-    const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN; // 테스트토큰 추가 (없어도됨)
+    // TODO: 로컬 테스트용 토큰 추가
+    const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,14 +37,8 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    let message;
-    if (error.response) {
-      message = error.response.data?.error.message;
-      console.error('API Error:', error.response.data?.message || error.message);
-    } else {
-      message = '네트워크 에러가 발생했습니다.';
-      console.error('Network Error:', error.message);
-    }
+    const message = error.response?.data?.error?.message || '네트워크 에러가 발생했습니다.';
+    console.error('API Error:', message);
     showErrorToast(message);
     return Promise.reject(error);
   },

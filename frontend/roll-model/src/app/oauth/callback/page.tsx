@@ -3,9 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
-import { userAtom, isLoggedInAtom, userToken } from '@/features/auth/model/authAtoms';
+import { userAtom, isLoggedInAtom, userToken, UserInfo } from '@/features/auth/model/authAtoms';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
+import { ApiResponse } from '@/shared/model/types/apiResponse';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 
 const CallbackPage = () => {
   const router = useRouter();
@@ -25,15 +26,12 @@ const CallbackPage = () => {
         if (!accessToken) throw new Error('access_token 없음');
 
         sessionStorage.setItem('token', accessToken);
-
-        const response = await baseAxiosInstance.get('/api/v1/auth/members/my', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        setUser(response.data);
-        setIsLoggedIn(true);
         setUserToken(accessToken);
+
+        const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
+
+        setUser(apiResponse.data);
+        setIsLoggedIn(true);
         router.push('/');
       } catch (error) {
         console.error(error);
@@ -44,7 +42,7 @@ const CallbackPage = () => {
     };
 
     fetchUser();
-  }, [router, setUser, setIsLoggedIn]);
+  }, [router, setUser, setIsLoggedIn, setUserToken]);
 
   return <div className="py-10 text-center text-xl">로그인 중입니다...</div>;
 };
