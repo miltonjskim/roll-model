@@ -21,7 +21,11 @@ const getAccessToken = (): string | null => {
 // 요청 인터셉터
 baseAxiosInstance.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
+    // TODO: 로컬 개발 종료 후 해당 주석 해제 및 아래 코드 주석화
+    // const token = getAccessToken();
+
+    // TODO: 로컬 테스트용 토큰 추가
+    const token = process.env.NEXT_PUBLIC_API_TEST_TOKEN;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
