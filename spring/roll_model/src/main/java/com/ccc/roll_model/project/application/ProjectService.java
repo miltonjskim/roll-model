@@ -158,6 +158,16 @@ public class ProjectService {
                                 stats[2]++; // public projects
                             }
                         }
+                        // 타겟 피처 정보 가져오기 - 모델 문서 사용
+                        String targetFeature = null;
+                        if (model != null && model.getTrainInfo() != null && model.getTrainInfo().getTargetFeature() != null) {
+                            targetFeature = model.getTrainInfo().getTargetFeature();
+                        }
+
+                        // 모델에서 타겟 정보를 찾지 못한 경우 파이프라인의 값을 사용
+                        if (targetFeature == null || targetFeature.isEmpty()) {
+                            targetFeature = pipeline.getTargetFeature();
+                        }
 
                         logger.info("Constructed project detail for project ID: {}", project.getProjectId());
                         // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
@@ -175,7 +185,7 @@ public class ProjectService {
                                         ? model.getPerformance().getRegression().getRmse()
                                         : null)
                                 .runningDuration(model != null && model.getLearningDuration() != null ? model.getLearningDuration() : 0)
-                                .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : "N/A")
+                                .target(targetFeature)
                                 .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
                                 .likeCount(pipeline.getLikeCount())
                                 .downloadCount(pipeline.getDownloadCount())
@@ -276,7 +286,7 @@ public class ProjectService {
 
         AtomicInteger elementsCount = new AtomicInteger();
 
-        // 프로젝트 상세 정보 생성
+// 프로젝트 상세 정보 생성
         List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
                 .map(project -> {
                     // 가장 최신의 공개 파이프라인 가져오기
@@ -314,6 +324,18 @@ public class ProjectService {
                     // 작성자 정보
                     MemberEntity writer = project.getMemberEntity();
 
+                    // 타겟 피처 정보 가져오기 - 모델 문서 사용
+                    String targetFeature = null;
+                    if (model != null && model.getTrainInfo() != null && model.getTrainInfo().getTargetFeature() != null) {
+                        targetFeature = model.getTrainInfo().getTargetFeature();
+                    }
+
+                    // 모델에서 타겟 정보를 찾지 못한 경우 파이프라인의 값을 사용 (없으면 null 반환)
+                    if (targetFeature == null || targetFeature.isEmpty()) {
+                        targetFeature = pipeline.getTargetFeature();
+                    }
+
+
                     // 프로젝트 상세 정보 생성
                     return GetOpensourceResponse.Project.builder()
                             .id(pipeline.getPipelineId())
@@ -330,7 +352,7 @@ public class ProjectService {
                             .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
                                     ? model.getPerformance().getRegression().getRmse()
                                     : null)
-                            .target(pipeline.getTargetFeature() != null ? pipeline.getTargetFeature() : null)
+                            .target(targetFeature) // 수정된 부분
                             .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
                             .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                             .likeCount(pipeline.getLikeCount())
