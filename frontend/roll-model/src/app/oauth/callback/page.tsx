@@ -28,6 +28,9 @@ const CallbackPage = () => {
         setUserToken(accessToken);
 
         const response = await baseAxiosInstance.get('/api/v1/auth/members/my');
+
+        console.log('callback res:', response.data);
+
         setUser(response.data);
         setIsLoggedIn(true);
         router.push('/');

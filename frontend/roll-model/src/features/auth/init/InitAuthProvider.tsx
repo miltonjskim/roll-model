@@ -25,6 +25,8 @@ export const InitAuthProvider = () => {
     const checkLogin = async () => {
       try {
         const res = await baseAxiosInstance.get('/api/v1/auth/members/my');
+        console.log('initAuthProvider res:', res.data);
+
         setUser(res.data);
         setIsLoggedIn(true);
       } catch {
