@@ -347,12 +347,16 @@ public class ProjectService {
                 .filter(project -> project != null)
                 .collect(Collectors.toList());
 
-        // 최종 응답 생성
+        // 최종 응답 생성 부분 수정
+        // 실제 표시할 프로젝트 수를 기준으로 페이지 수 계산
+        int actualTotalElements = elementsCount.get();
+        int actualTotalPages = size > 0 ? (int) Math.ceil((double) actualTotalElements / size) : 0;
+
         GetOpensourceResponse response = GetOpensourceResponse.builder()
                 .currentPage(page)
-                .totalPages(projectsPage.getTotalPages())
-                .totalElements(elementsCount.get())
-                .last(projectsPage.isLast())
+                .totalPages(actualTotalPages) // 수정된 부분
+                .totalElements(actualTotalElements)
+                .last(page >= actualTotalPages) // 수정된 부분
                 .projects(projectDetails)
                 .build();
 
