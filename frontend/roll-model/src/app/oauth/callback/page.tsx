@@ -25,15 +25,11 @@ const CallbackPage = () => {
         if (!accessToken) throw new Error('access_token 없음');
 
         sessionStorage.setItem('token', accessToken);
+        setUserToken(accessToken);
 
-        const response = await baseAxiosInstance.get('/api/v1/auth/members/my', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await baseAxiosInstance.get('/api/v1/auth/members/my');
         setUser(response.data);
         setIsLoggedIn(true);
-        setUserToken(accessToken);
         router.push('/');
       } catch (error) {
         console.error(error);
@@ -44,7 +40,7 @@ const CallbackPage = () => {
     };
 
     fetchUser();
-  }, [router, setUser, setIsLoggedIn]);
+  }, [router, setUser, setIsLoggedIn, setUserToken]);
 
   return <div className="py-10 text-center text-xl">로그인 중입니다...</div>;
 };
