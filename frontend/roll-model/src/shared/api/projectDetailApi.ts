@@ -4,6 +4,7 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 //version
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
+import projectDetailApiMock from '@/shared/api/mocks/project-detail/projectDetailApi.json';
 import projectDetailModelClassification from '@/shared/api/mocks/project-detail/projectDetailModelClassification.json'; // 분류 mock data
 import projectDetailModelClassificationTest from '@/shared/api/mocks/project-detail/projectDetailModelClassificationTest.json'; // 분류 mock data 테스트버전
 import projectDetailModelRegression from '@/shared/api/mocks/project-detail/projectDetailModelRegression.json'; // 회귀 mock data
@@ -11,13 +12,13 @@ import projectDetailModelRegressionTest from '@/shared/api/mocks/project-detail/
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
+import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTypes';
 
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
   try {
-    // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/dataset/info`)
-    // return response.data
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/dataset/info`);
+    // return response.data;
 
     // mock data
     return projectDetailDataMock as ProjectDetailDataResponse;
@@ -82,6 +83,21 @@ export const toggePublicPipeline = async (pipelineId: string) => {
     return response.data;
   } catch (error) {
     console.error('파이프라인 공개여부 변경 실패', error);
+    throw error;
+  }
+};
+
+// API 섹션
+export const fetchProjectDetailApi = async (pipelineId: string) => {
+  try {
+    // 나중에 api 완성 후에 활성화
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`)
+    // return response.data
+
+    // mock data
+    return projectDetailApiMock as ProjectDetailApiResponse;
+  } catch (error) {
+    console.error('상세 데이터섹션 호출 실패', error);
     throw error;
   }
 };
