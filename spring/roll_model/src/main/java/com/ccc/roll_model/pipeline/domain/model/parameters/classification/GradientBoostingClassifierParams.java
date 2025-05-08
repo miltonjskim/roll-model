@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class GradientBoostingClassifierParams implements ModelParameter {
 	private Integer n_estimators;

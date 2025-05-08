@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -124,18 +125,17 @@ public class ProjectService {
                             logger.info("No pipeline found for project ID: {}", project.getProjectId());
                             return null;
                         }
-                        logger.info("Fetched pipeline for project ID {}: {}", project.getProjectId(), pipeline);
+                        logger.info("Fetched pipeline for project ID {}: {}", project.getProjectId(), pipeline.getPipelineId());
+                        Integer dataCount = pipeline.getDataCount();
 
-                        // MongoDB: 데이터셋 데이터
-                        DatasetDocument dataset = datasetRepository.findByMemberIdAndProjectId(memberId, project.getProjectId());
-                        if (dataset == null) {
+                        // MongoDB: 데이터셋 데이터 존재 여부 조회
+                        if (!datasetRepository.existsByProjectId(project.getProjectId())) {
                             logger.info("No dataset found for project ID: {}", project.getProjectId());
                             return null;
                         }
-                        logger.info("Fetched dataset for project ID {}: {}", project.getProjectId(), dataset);
 
                         // MongoDB: 모델 데이터
-                        ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
+                        ModelDocument model = modelRepository.findByPipelineId(pipeline.getPipelineId());
                         logger.info("Fetched model for project ID {}: {}", project.getProjectId(), model);
 
                         // 모델 데이터가 없어도 status가 PREPROCESSED인 경우 응답에 포함
@@ -186,7 +186,7 @@ public class ProjectService {
                                         : null)
                                 .runningDuration(model != null && model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                                 .target(targetFeature)
-                                .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
+                                .dataCount(dataCount)
                                 .likeCount(pipeline.getLikeCount())
                                 .downloadCount(pipeline.getDownloadCount())
                                 .publicYn(Boolean.TRUE.equals(project.getPublicYn()))
@@ -260,38 +260,48 @@ public class ProjectService {
 
         // 조건에 따라 적절한 레포지토리 메소드 호출
         Page<ProjectEntity> projectsPage;
+        String calledMethod = "";
         if (keyword != null && !keyword.isEmpty()) {
             if (category != null && domainEnum != null) {
+                calledMethod = "findAllPublicProjectsByKeywordAndCategoryAndDomain";
                 projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategoryAndDomain(keyword, category, domainEnum, pageable);
             } else if (category != null) {
+                calledMethod = "findAllPublicProjectsByKeywordAndCategory";
                 projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategory(keyword, category, pageable);
             } else if (domainEnum != null) {
+                calledMethod = "findAllPublicProjectsByKeywordAndDomain";
                 projectsPage = projectRepository.findAllPublicProjectsByKeywordAndDomain(keyword, domainEnum, pageable);
             } else {
+                calledMethod = "findAllPublicProjectsByKeyword";
                 projectsPage = projectRepository.findAllPublicProjectsByKeyword(keyword, pageable);
             }
         } else {
             if (category != null && domainEnum != null) {
+                calledMethod = "findAllPublicProjectsByCategoryAndDomain";
                 projectsPage = projectRepository.findAllPublicProjectsByCategoryAndDomain(category, domainEnum, pageable);
             } else if (category != null) {
+                calledMethod = "findAllPublicProjectsByCategory";
                 projectsPage = projectRepository.findAllPublicProjectsByCategory(category, pageable);
             } else if (domainEnum != null) {
+                calledMethod = "findAllPublicProjectsByDomain";
                 projectsPage = projectRepository.findAllPublicProjectsByDomain(domainEnum, pageable);
             } else {
+                calledMethod = "findAllPublicProjects";
                 projectsPage = projectRepository.findAllPublicProjects(pageable);
             }
         }
+        logger.info("Called repository method: {}", calledMethod);
 
         logger.info("Fetched {} projects", projectsPage.getContent().size());
 
         AtomicInteger elementsCount = new AtomicInteger();
 
-// 프로젝트 상세 정보 생성
+        // 프로젝트 상세 정보 생성
         List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
                 .map(project -> {
                     // 가장 최신의 공개 파이프라인 가져오기
-                    PipelineEntity pipeline = pipelineRepository.findFirstByProjectIdOrderByRegisteredAtDescAndNotDeletedYnAndStatusIsCompletedAndPublicYn(project.getProjectId())
-                            .orElse(null);
+                    List<PipelineEntity> pipelines = pipelineRepository.findFirstCompletedPublicPipeline(project.getProjectId());
+                    PipelineEntity pipeline = pipelines.isEmpty() ? null : pipelines.get(0);
 
                     // 파이프라인이 없으면 건너뜀
                     if (pipeline == null) {
@@ -300,14 +310,14 @@ public class ProjectService {
                     }
 
                     // MongoDB: 모델 데이터
-                    ModelDocument model = modelRepository.findByProjectId(project.getProjectId());
+                    ModelDocument model = modelRepository.findByPipelineId(pipeline.getPipelineId());
                     if (model == null) {
                         logger.info("No model found for project {}", project.getProjectId());
                         return null;
                     }
 
                     // MongoDB: 데이터셋 데이터
-                    DatasetDocument dataset = datasetRepository.findByProjectId(project.getProjectId());
+                    DatasetDocument dataset = datasetRepository.findByProjectIdAndIsPreprocessed(project.getProjectId(), true);
                     if (dataset == null) {
                         logger.info("No dataset found for project {}", project.getProjectId());
                         return null;

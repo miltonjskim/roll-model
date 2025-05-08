@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class RandomForestClassifierParams implements ModelParameter {
 	private Integer n_estimators;
