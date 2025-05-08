@@ -25,10 +25,9 @@ const InputProjectMetaDataPage = () => {
 
   const handleSubmit = async () => {
     try {
-      const res = await createProject({ title, description, domain, type, isPublic });
-      console.log('프로젝트 생성 성공:', res);
+      const response = await createProject({ title, description, domain, type, isPublic });
 
-      const projectId = res.id;
+      const projectId = response.data.id;
       setProjectId(projectId.toString());
 
       router.push('/workspace/data-selection');
