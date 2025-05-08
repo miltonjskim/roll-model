@@ -10,5 +10,6 @@ export interface UserInfo {
   isActive: boolean;
 }
 
+export const userToken = atom('')
 export const userAtom = atom<UserInfo | null>(null);
 export const isLoggedInAtom = atom<boolean>(false);
