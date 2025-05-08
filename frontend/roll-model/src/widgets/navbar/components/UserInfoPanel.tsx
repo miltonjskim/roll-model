@@ -25,9 +25,9 @@ const UserInfoPanel = ({ user, onLogout }: Props) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {renderProviderIcon()}
-          <span>{user.provider} 로그인</span>
+          <span className="text-sm">{user.provider} 로그인</span>
         </div>
-        <Button variant="outline" className="bg-[theme(color-gray-02)] rounded-sm" onClick={onLogout} size="sm">
+        <Button variant="outline" className="bg-[theme(color-gray-02)] rounded-sm p-2" onClick={onLogout} size="sm">
           로그아웃
         </Button>
       </div>
