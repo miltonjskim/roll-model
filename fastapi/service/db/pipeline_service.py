@@ -77,6 +77,39 @@ Optional[PipelineModel]:
         return None
 
 
+async def _create_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
+    """MongoDB에 새 파이프라인을 저장합니다."""
+    try:
+        # MongoDB 컬렉션 가져오기
+        pipeline_collection = get_pipeline_collection()
+
+        # PipelineModel 객체를 dictionary로 변환 (id 필드 제외)
+        pipeline_dict = pipeline.model_dump(exclude={"id"}, by_alias=True)
+
+        # 생성 및 수정 시간 설정
+        current_time = datetime.now()
+        if not pipeline_dict.get("registered_at"):
+            pipeline_dict["registered_at"] = current_time
+        pipeline_dict["modified_at"] = current_time
+
+        # MongoDB에 삽입
+        result = await pipeline_collection.insert_one(pipeline_dict)
+
+        # 삽입 성공 시 삽입된 파이프라인 반환
+        if result.inserted_id:
+            # 삽입된 파이프라인 조회
+            new_pipeline = await pipeline_collection.find_one({"_id": result.inserted_id})
+            if new_pipeline:
+                return PipelineModel.model_validate(new_pipeline)
+
+        # 삽입 실패 시 None 반환
+        return None
+
+    except Exception as e:
+        # 예외 처리 및 로깅
+        print(f"Error creating pipeline in DB: {e}")
+        return None
+
 class PipelineService:
     def __init__(self):
         pass
@@ -235,6 +268,23 @@ class PipelineService:
             print(f"Error updating pipeline status: {e}")
             return None
 
+    async def create_pipeline(self, pipeline: PipelineModel) -> Optional[PipelineModel]:
+        """새로운 파이프라인을 생성하고 저장합니다."""
+        # 파이프라인 ID가 이미 있는지 확인하고, 있다면 제거 (MongoDB가 자동 생성)
+        if hasattr(pipeline, "id") and pipeline.id:
+            pipeline.id = None
+
+        # 히스토리가 없으면 빈 배열로 초기화
+        if not pipeline.history:
+            pipeline.history = []
+
+        # 생성 시간과 수정 시간 설정
+        current_time = datetime.now()
+        pipeline.registered_at = current_time
+        pipeline.modified_at = current_time
+
+        # DB에 저장
+        return await _create_pipeline_in_db(pipeline)
 
 # FastAPI 의존성 주입 함수
 async def get_pipeline_service() -> PipelineService:

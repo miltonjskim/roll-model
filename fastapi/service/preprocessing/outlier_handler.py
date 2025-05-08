@@ -375,7 +375,7 @@ class OutlierHandler:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{self.result_dir}/processed_data_{timestamp}.csv"
             
-        self.df.to_csv(filename, index=False)
+        self.df.to_csv(filename, index=True, index_label='idx')
         return {"message": f"데이터가 '{filename}'에 저장되었습니다."}
     
     def export_as_json(self):
