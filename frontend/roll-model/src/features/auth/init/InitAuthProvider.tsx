@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { initUserTokenAtom, isLoggedInAtom, userAtom, UserInfo, userToken } from '@/features/auth/model/authAtoms';
-import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
 export const InitAuthProvider = () => {
