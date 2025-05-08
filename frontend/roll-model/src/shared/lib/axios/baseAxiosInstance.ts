@@ -42,6 +42,8 @@ baseAxiosInstance.interceptors.response.use(
       throw new Error(message);
     }
 
+    console.log('apiResponse:', apiResponse);
+
     return apiResponse.data;
   },
 

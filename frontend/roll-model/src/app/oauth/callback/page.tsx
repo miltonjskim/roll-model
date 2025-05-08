@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
-import { userAtom, isLoggedInAtom, userToken } from '@/features/auth/model/authAtoms';
+import { userAtom, isLoggedInAtom, userToken, UserInfo } from '@/features/auth/model/authAtoms';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 
@@ -27,11 +27,9 @@ const CallbackPage = () => {
         sessionStorage.setItem('token', accessToken);
         setUserToken(accessToken);
 
-        const response = await baseAxiosInstance.get('/api/v1/auth/members/my');
+        const userInfo = await baseAxiosInstance.get<UserInfo, UserInfo>('/api/v1/auth/members/my');
 
-        console.log('callback res:', response.data);
-
-        setUser(response.data);
+        setUser(userInfo);
         setIsLoggedIn(true);
         router.push('/');
       } catch (error) {
