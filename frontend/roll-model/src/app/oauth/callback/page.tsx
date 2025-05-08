@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSetAtom } from 'jotai';
 import { userAtom, isLoggedInAtom, userToken, UserInfo } from '@/features/auth/model/authAtoms';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
+import { ApiResponse } from '@/shared/model/types/apiResponse';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 
 const CallbackPage = () => {
   const router = useRouter();
@@ -27,9 +28,9 @@ const CallbackPage = () => {
         sessionStorage.setItem('token', accessToken);
         setUserToken(accessToken);
 
-        const userInfo = await baseAxiosInstance.get<UserInfo, UserInfo>('/api/v1/auth/members/my');
+        const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
 
-        setUser(userInfo);
+        setUser(apiResponse.data);
         setIsLoggedIn(true);
         router.push('/');
       } catch (error) {

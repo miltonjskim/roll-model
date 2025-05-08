@@ -11,9 +11,6 @@ const UserMenu = () => {
   const [user, setUser] = useAtom(userAtom);
   const setUserToken = useSetAtom(userToken);
 
-  console.log('userMenu isLoggedIn:', isLoggedIn);
-  console.log('userMenu user:', user);
-
   const handleLogout = () => {
     sessionStorage.removeItem('token');
     setIsLoggedIn(false);
@@ -31,7 +28,7 @@ const UserMenu = () => {
           </div>
 
           {/* 팝업 부분 */}
-          <div className="bg-[theme(primary-black)] absolute top-10 right-0 z-10 hidden w-56 rounded-md border border-[var(--color-gray-02)] p-4 text-[var(--primary-white)] opacity-90 shadow-md transition-transform duration-200 group-hover:block group-hover:scale-[1.01] hover:block">
+          <div className="bg-[theme(primary-black)] absolute top-10 right-0 z-10 hidden w-64 rounded-md border border-[var(--color-gray-02)] p-4 text-[var(--primary-white)] opacity-90 shadow-md transition-transform duration-200 group-hover:block group-hover:scale-[1.01] hover:block">
             {isLoggedIn && user ? <UserInfoPanel user={user} onLogout={handleLogout} /> : <LoginButtons />}
           </div>
         </div>

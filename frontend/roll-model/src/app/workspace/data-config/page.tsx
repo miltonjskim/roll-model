@@ -6,16 +6,21 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
-import { useAtom, useAtomValue } from 'jotai';
+import { projectIdAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUploadDataset } from '@/app/workspace/data-config/hooks/useUploadData';
+import { UploadDatasetRequest } from '@/entities/workspace/data-config/model/types';
+import { showErrorToast } from '@/shared/lib/toast/toast';
+import { DataPreviewTable } from '@/features/workspace/data-upload/ui/components/DataPreviewTable';
+import { DelimiterSelector } from '@/features/workspace/data-upload/ui/components/DelimiterSelector';
+import { EncodingSelector } from '@/features/workspace/data-upload/ui/components/EncodingSelector';
 
 const ConfigDataPage = () => {
   const router = useRouter();
-  const projectId = '8';
+  const projectId = useAtomValue(projectIdAtom);
   const mutation = useUploadDataset(projectId);
   const file = useAtomValue(uploadedFileAtom);
   const [projectTitle] = useAtom(projectTitleAtom);
@@ -29,6 +34,7 @@ const ConfigDataPage = () => {
   const [editableHeaderIndex, setEditableHeaderIndex] = useState<number | null>(null);
   const [selectedDelimiterOption, setSelectedDelimiterOption] = useState(','); // UI에서 선택된 라디오 옵션
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
+  const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -52,8 +58,44 @@ const ConfigDataPage = () => {
     setColumnTypes(updated);
   };
 
-  const moveToPreprocessPage = () => {
-    router.push('/workspace/data-preprocess');
+  const handleUpload = () => {
+    if (!file) return;
+
+    const delimiterMap: Record<string, UploadDatasetRequest['delimiter']> = {
+      ',': 'comma',
+      ';': 'semicolon',
+      '\t': 'tab',
+      '기타 입력': 'other',
+    };
+
+    const delimiter = delimiterMap[selectedDelimiterOption] ?? 'other';
+
+    const payload = {
+      delimiter: delimiter,
+      customDelimiter: selectedDelimiterOption === '기타 입력' ? customDelimiter : undefined,
+      encoding: encoding as UploadDatasetRequest['encoding'], // 캐스팅
+      hasHeader: useHeaderRow,
+      columns: header.map((col, idx) => ({
+        name: col.length > 0 ? col : `컬럼 ${idx + 1}`,
+        type: columnTypes[idx] as UploadDatasetRequest['columns'][number]['type'], // 캐스팅
+      })),
+    };
+
+    mutation.mutate(
+      { config: payload, file },
+      {
+        onSuccess: (response) => {
+          console.log('onSuccessData:', response.data);
+
+          setUploadedDataset(response.data);
+          router.push('/workspace/data-preprocess');
+        },
+        onError: (err) => {
+          showErrorToast(err.message);
+          console.error(err);
+        },
+      },
+    );
   };
 
   // 컬럼 타입 확인하는 함수
@@ -132,7 +174,7 @@ const ConfigDataPage = () => {
       </div>
 
       <div className="mx-auto mt-4 flex gap-4">
-        <div className="max-w-[50rem] basis-[50rem]">
+        <div className="max-w-[60rem] basis-[60rem]">
           <div className="bg-[theme(primary-white)] rounded-md">
             <div className="p-6 text-left">
               <div className="mb-3">
@@ -156,65 +198,17 @@ const ConfigDataPage = () => {
                 </label>
               </div>
               <div className="overflow-x-auto p-4">
-                <Table className="rounded border">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="bg-[theme(color-gray-05)] border-r">헤더</TableHead>
-
-                      {header.map((col, idx) => (
-                        <TableHead key={idx} className="bg-[theme(color-gray-05)] border-r">
-                          {editableHeaderIndex === idx ? (
-                            <Input
-                              autoFocus
-                              value={header[idx]}
-                              onChange={(e) => handleHeaderChange(idx, e.target.value)}
-                              onBlur={(e) => handleHeaderEditComplete(idx, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleHeaderEditComplete(idx, (e.target as HTMLInputElement).value);
-                                }
-                              }}
-                              className="bg-[theme(primary-white)] w-full"
-                            />
-                          ) : (
-                            <span onClick={() => setEditableHeaderIndex(idx)} className="cursor-pointer" title="클릭하여 수정">
-                              {header[idx] || `컬럼 ${idx + 1}`}
-                            </span>
-                          )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="border-r">값</TableCell>
-                      {previewRow.map((val, idx) => (
-                        <TableCell key={idx} className="border-r">
-                          {val}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="border-r">타입</TableCell>
-                      {columnTypes.map((val, idx) => (
-                        <TableCell key={idx} className="border-r">
-                          <Select value={val} onValueChange={(v) => handleTypeChange(idx, v)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="타입 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="string">string</SelectItem>
-                              <SelectItem value="integer">integer</SelectItem>
-                              <SelectItem value="double">double</SelectItem>
-                              <SelectItem value="boolean">boolean</SelectItem>
-                              <SelectItem value="date">date</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <DataPreviewTable
+                  header={header}
+                  previewRow={previewRow}
+                  columnTypes={columnTypes}
+                  editableHeaderIndex={editableHeaderIndex}
+                  useHeaderRow={useHeaderRow}
+                  onHeaderEdit={handleHeaderChange}
+                  onHeaderEditComplete={handleHeaderEditComplete}
+                  onTypeChange={handleTypeChange}
+                  setEditableHeaderIndex={setEditableHeaderIndex}
+                />
               </div>
             </div>
           </div>
@@ -272,29 +266,7 @@ const ConfigDataPage = () => {
                 올바른 구분자를 선택해 주세요.
               </p>
               <div className="mt-2 space-y-2">
-                <RadioGroup value={selectedDelimiterOption} onValueChange={setSelectedDelimiterOption} className="mt-2 space-y-2">
-                  {[
-                    { label: '쉼표 (,)', value: ',' },
-                    { label: '세미콜론 (;)', value: ';' },
-                    { label: '탭 (\\t)', value: '\t' },
-                  ].map(({ label, value }) => (
-                    <div key={value} className="flex items-center gap-2">
-                      <RadioGroupItem value={value} id={`delimiter-${value}`} />
-                      <label htmlFor={`delimiter-${value}`} className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        {label}
-                      </label>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="기타 입력" id="delimiter-custom" />
-                    <label htmlFor="delimiter-custom" className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      기타 입력
-                    </label>
-                    {selectedDelimiterOption === '기타 입력' && (
-                      <Input placeholder="구분자를 입력하세요" value={customDelimiter} onChange={(e) => setCustomDelimiter(e.target.value)} className="h-fit w-32" />
-                    )}
-                  </div>
-                </RadioGroup>
+                <DelimiterSelector selected={selectedDelimiterOption} customValue={customDelimiter} onDelimiterChange={setSelectedDelimiterOption} onCustomChange={setCustomDelimiter} />
               </div>
             </div>
 
@@ -312,23 +284,12 @@ const ConfigDataPage = () => {
                 </p>
               </div>
 
-              <Select value={encoding} onValueChange={setEncoding}>
-                <SelectTrigger className="mt-2 w-[200px]">
-                  <SelectValue placeholder="인코딩 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UTF-8">UTF-8</SelectItem>
-                  <SelectItem value="CP949">CP949</SelectItem>
-                  <SelectItem value="EUC-KR">EUC-KR</SelectItem>
-                  <SelectItem value="ISO-8859-1">ISO-8859-1</SelectItem>
-                  <SelectItem value="UTF-16">UTF-16</SelectItem>
-                </SelectContent>
-              </Select>
+              <EncodingSelector value={encoding} onChange={setEncoding} />
             </div>
           </div>
 
           <div className="pt-6">
-            <Button variant="black" size="lg" className="h-12 w-full" onClick={moveToPreprocessPage}>
+            <Button variant="black" size="lg" className="h-12 w-full" onClick={handleUpload}>
               전처리 단계로 넘어가기 →
             </Button>
           </div>

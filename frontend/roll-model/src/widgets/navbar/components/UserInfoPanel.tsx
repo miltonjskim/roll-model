@@ -14,9 +14,9 @@ interface Props {
 const UserInfoPanel = ({ user, onLogout }: Props) => {
   const renderProviderIcon = () => {
     if (user.provider === 'google') {
-      return <GoogleIcon className="h-[30px] w-[30px] fill-current" />;
+      return <GoogleIcon className="fill-current" />;
     } else if (user.provider === 'github') {
-      return <GithubIcon className="h-[30px] w-[30px] fill-current" />;
+      return <GithubIcon className="fill-current" />;
     }
     return null;
   };
@@ -25,9 +25,9 @@ const UserInfoPanel = ({ user, onLogout }: Props) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {renderProviderIcon()}
-          <span>{user.provider}</span>
+          <span className="text-sm">{user.provider} 로그인</span>
         </div>
-        <Button variant="outline" className="bg-[theme(color-gray-02)] rounded-sm" onClick={onLogout} size="sm">
+        <Button variant="outline" className="bg-[theme(color-gray-02)] rounded-sm p-2" onClick={onLogout} size="sm">
           로그아웃
         </Button>
       </div>

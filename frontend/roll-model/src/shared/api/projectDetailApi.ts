@@ -9,7 +9,6 @@ import projectDetailModelClassificationTest from '@/shared/api/mocks/project-det
 import projectDetailModelRegression from '@/shared/api/mocks/project-detail/projectDetailModelRegression.json'; // 회귀 mock data
 import projectDetailModelRegressionTest from '@/shared/api/mocks/project-detail/projectDetailModelRegressionTest.json'; // 회귀 mock data 테스트버전
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
-import { baseAxiosInstance } from '@/shared/lib/axios/baseAxiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 
 // 데이터섹션
