@@ -11,6 +11,9 @@ const UserMenu = () => {
   const [user, setUser] = useAtom(userAtom);
   const setUserToken = useSetAtom(userToken);
 
+  console.log('userMenu isLoggedIn:', isLoggedIn);
+  console.log('userMenu user:', user);
+
   const handleLogout = () => {
     sessionStorage.removeItem('token');
     setIsLoggedIn(false);
