@@ -579,12 +579,14 @@ public class ModelingService {
 					String featureName = entry.getKey();
 					NumericFeature feature = entry.getValue();
 
-					// 히스토그램 데이터가 없는 경우 빈 리스트 사용
-					List<Integer> histogram = feature.getHistogram() != null ? feature.getHistogram() : new ArrayList<>();
+					// 이 부분이 중요: 히스토그램 데이터와 min/max 값이 모두 있는 경우에만 축 데이터 생성
+					if (feature.getHistogram() != null && !feature.getHistogram().isEmpty() &&
+							feature.getMin() != null && feature.getMax() != null) {
 
-					// x축 값 생성 (min부터 max까지 균등하게 나눔)
-					List<Object> xValues = new ArrayList<>();
-					if (feature.getMin() != null && feature.getMax() != null && !histogram.isEmpty()) {
+						List<Integer> histogram = feature.getHistogram();
+
+						// x축 값 생성 (min부터 max까지 균등하게 나눔)
+						List<Object> xValues = new ArrayList<>();
 						double min = feature.getMin();
 						double max = feature.getMax();
 						double step = (max - min) / (histogram.size() - 1);
@@ -592,20 +594,26 @@ public class ModelingService {
 						for (int i = 0; i < histogram.size(); i++) {
 							xValues.add(min + i * step);
 						}
-					}
 
-					return DistributionResponse.builder()
-							.name(featureName)
-							.type("histogram")
-							.xAxis(DistributionResponse.AxisDTO.builder()
-									.label(featureName)
-									.values(xValues)
-									.build())
-							.yAxis(DistributionResponse.AxisDTO.builder()
-									.label("Count")
-									.values(new ArrayList<>(histogram))
-									.build())
-							.build();
+						return DistributionResponse.builder()
+								.name(featureName)
+								.type("histogram")
+								.xAxis(DistributionResponse.AxisDTO.builder()
+										.label(featureName)
+										.values(xValues)
+										.build())
+								.yAxis(DistributionResponse.AxisDTO.builder()
+										.label("Count")
+										.values(new ArrayList<>(histogram))
+										.build())
+								.build();
+					} else {
+						// 필요한 데이터가 없는 경우 축 정보를 포함하지 않음
+						return DistributionResponse.builder()
+								.name(featureName)
+								.type("histogram")
+								.build();
+					}
 				})
 				.collect(Collectors.toList());
 	}
