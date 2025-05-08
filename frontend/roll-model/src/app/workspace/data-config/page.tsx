@@ -6,16 +6,18 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
-import { useAtom, useAtomValue } from 'jotai';
+import { projectIdAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUploadDataset } from '@/app/workspace/data-config/hooks/useUploadData';
+import { UploadDatasetRequest } from '@/entities/workspace/data-config/model/types';
+import { showErrorToast } from '@/shared/lib/toast/toast';
 
 const ConfigDataPage = () => {
   const router = useRouter();
-  const projectId = '8';
+  const projectId = useAtomValue(projectIdAtom);
   const mutation = useUploadDataset(projectId);
   const file = useAtomValue(uploadedFileAtom);
   const [projectTitle] = useAtom(projectTitleAtom);
@@ -29,6 +31,7 @@ const ConfigDataPage = () => {
   const [editableHeaderIndex, setEditableHeaderIndex] = useState<number | null>(null);
   const [selectedDelimiterOption, setSelectedDelimiterOption] = useState(','); // UI에서 선택된 라디오 옵션
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
+  const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -52,8 +55,44 @@ const ConfigDataPage = () => {
     setColumnTypes(updated);
   };
 
-  const moveToPreprocessPage = () => {
-    router.push('/workspace/data-preprocess');
+  const handleUpload = () => {
+    if (!file) return;
+
+    const delimiterMap: Record<string, UploadDatasetRequest['delimiter']> = {
+      ',': 'comma',
+      ';': 'semicolon',
+      '\t': 'tab',
+      '기타 입력': 'other',
+    };
+
+    const delimiter = delimiterMap[selectedDelimiterOption] ?? 'other';
+
+    const payload = {
+      delimiter: delimiter,
+      customDelimiter: selectedDelimiterOption === '기타 입력' ? customDelimiter : undefined,
+      encoding: encoding as UploadDatasetRequest['encoding'], // 캐스팅
+      hasHeader: useHeaderRow,
+      columns: header.map((col, idx) => ({
+        name: col.length > 0 ? col : `컬럼 ${idx + 1}`,
+        type: columnTypes[idx] as UploadDatasetRequest['columns'][number]['type'], // 캐스팅
+      })),
+    };
+
+    mutation.mutate(
+      { config: payload, file },
+      {
+        onSuccess: (response) => {
+          console.log('onSuccessData:', response.data);
+
+          setUploadedDataset(response.data);
+          router.push('/workspace/data-preprocess');
+        },
+        onError: (err) => {
+          showErrorToast(err.message);
+          console.error(err);
+        },
+      },
+    );
   };
 
   // 컬럼 타입 확인하는 함수
@@ -328,7 +367,7 @@ const ConfigDataPage = () => {
           </div>
 
           <div className="pt-6">
-            <Button variant="black" size="lg" className="h-12 w-full" onClick={moveToPreprocessPage}>
+            <Button variant="black" size="lg" className="h-12 w-full" onClick={handleUpload}>
               전처리 단계로 넘어가기 →
             </Button>
           </div>
