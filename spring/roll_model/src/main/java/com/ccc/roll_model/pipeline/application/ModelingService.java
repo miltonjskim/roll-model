@@ -262,6 +262,20 @@ public class ModelingService {
 				pipeline.getPipelineId(), modelId);
 	}
 
+	/**
+	 * 파이프라인 ID로 최신 파이프라인 문서를 조회하는 메소드
+	 * modified_at 기준으로 가장 최신 문서를 반환
+	 */
+	private PipelineDocument getLatestPipelineDocument(String pipelineId) {
+		try {
+			// ObjectId로 변환하여 해당 ID로 정확히 찾기
+			ObjectId objectId = new ObjectId(pipelineId);
+			return pipelineMongoRepository.findTopByIdOrderByModifiedAtDesc(objectId);
+		} catch (IllegalArgumentException e) {
+			log.error("유효하지 않은 파이프라인 ID 형식입니다: {}", pipelineId, e);
+			return null;
+		}
+	}
 
 	/**
 	 * 파이프라인 ID를 받아 해당 파이프라인과 관련된 데이터셋 정보를 조회하는 메서드
@@ -281,7 +295,7 @@ public class ModelingService {
 		// 파이프라인 존재 여부 확인 : mongo
 		PipelineDocument pipelineDocument;
 		try {
-			// 소유자 여부와 상관없이 파이프라인 문서 조회 (기본 findById 메서드 사용)
+			// 기존 코드를 그대로 사용
 			pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
 					.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
 
@@ -626,7 +640,8 @@ public class ModelingService {
 	private CorrelationMatrixResponse buildCorrelationMatrixDTO(DatasetDocument datasetDocument) {
 		if (datasetDocument.getMetadata() == null ||
 				datasetDocument.getMetadata().getStatistics() == null ||
-				datasetDocument.getMetadata().getStatistics().getCorrelationMatrix() == null) {
+				datasetDocument.getMetadata().getStatistics().getCorrelationMatrix() == null ||
+				datasetDocument.getMetadata().getStatistics().getNumericFeatures() == null) {
 			return CorrelationMatrixResponse.builder()
 					.featureNames(new ArrayList<>())
 					.matrix(new ArrayList<>())
@@ -636,14 +651,19 @@ public class ModelingService {
 		// 상관 관계 매트릭스 데이터
 		List<List<Double>> correlationMatrix = datasetDocument.getMetadata().getStatistics().getCorrelationMatrix();
 
-		// 특성 이름 목록 (데이터셋에서 추출)
-		List<String> featureNames = new ArrayList<>(datasetDocument.getMetadata().getDataTypes().keySet());
+		// 숫자형 특성의 이름만 추출 (상관 행렬은 숫자형 특성 간의 관계만 담고 있음)
+		List<String> numericFeatureNames = new ArrayList<>(
+				datasetDocument.getMetadata().getStatistics().getNumericFeatures().keySet()
+		);
 
-		// 매트릭스 크기와 특성 이름 목록 크기가 다른 경우 조정
-		if (correlationMatrix.size() != featureNames.size()) {
-			// 간단한 구현을 위해 더 작은 크기로 맞춤
-			int size = Math.min(correlationMatrix.size(), featureNames.size());
-			featureNames = featureNames.subList(0, size);
+		// 행렬의 크기와 숫자형 특성 목록 크기가 일치하는지 확인
+		if (correlationMatrix.size() != numericFeatureNames.size()) {
+			log.warn("Correlation matrix size ({}) does not match the number of numeric features ({})",
+					correlationMatrix.size(), numericFeatureNames.size());
+
+			// 크기가 다른 경우 조정
+			int size = Math.min(correlationMatrix.size(), numericFeatureNames.size());
+			numericFeatureNames = numericFeatureNames.subList(0, size);
 
 			List<List<Double>> adjustedMatrix = new ArrayList<>();
 			for (int i = 0; i < size; i++) {
@@ -658,7 +678,7 @@ public class ModelingService {
 		}
 
 		return CorrelationMatrixResponse.builder()
-				.featureNames(featureNames)
+				.featureNames(numericFeatureNames)
 				.matrix(correlationMatrix)
 				.build();
 	}
