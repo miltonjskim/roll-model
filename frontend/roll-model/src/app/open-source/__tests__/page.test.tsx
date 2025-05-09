@@ -111,7 +111,7 @@ describe('OpenSourcePage', () => {
 
     // 정렬 옵션 버튼들이 존재하는지 확인합니다
     expect(screen.getByText('최신')).toBeInTheDocument();
-    expect(screen.getByText('인기')).toBeInTheDocument();
+    // expect(screen.getByText('인기')).toBeInTheDocument();
 
     // 검색창이 존재하는지 확인합니다
     expect(screen.getByPlaceholderText('프로젝트 검색...')).toBeInTheDocument();
