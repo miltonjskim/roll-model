@@ -201,12 +201,11 @@ async def reload_recent_workspace(
         # 워크스페이스 응답 데이터 구성
         workspace_data = {
             "pipelineId": str(pipeline_details.id),
-            "projectId": pipeline_details.project_id,
             "status": latest_pipeline.status,
             "registeredAt": pipeline_details.registered_at.isoformat(),
             "modifiedAt": pipeline_details.modified_at.isoformat(),
             "preprocessingSteps": [],
-            "modelingInfos": None
+            "modelingInfo": None
         }
         
         # 전처리 단계 정보 추가
@@ -215,7 +214,7 @@ async def reload_recent_workspace(
             if latest_history.preprocessing_steps:
                 workspace_data["preprocessingSteps"]=latest_history.preprocessing_steps
             if latest_history.modeling_info:
-                workspace_data["modelingInfos"] = latest_history.modeling_info
+                workspace_data["modelingInfo"] = latest_history.modeling_info
         
         return ApiResponse(
             status_code =200,
@@ -290,7 +289,7 @@ async def reload_workspace_by_pipeline_version(
             "registeredAt": pipeline_details.registered_at.isoformat(),
             "modifiedAt": pipeline_details.modified_at.isoformat(),
             "preprocessingSteps": [],
-            "modelingInfos": None
+            "modelingInfo": None
         }
         
         # 전처리 단계 정보 추가
@@ -305,7 +304,7 @@ async def reload_workspace_by_pipeline_version(
                         "active": step.active,
                     })
             if latest_history.modeling_info:
-                workspace_data["modelingInfos"] = latest_history.modeling_info
+                workspace_data["modelingInfo"] = latest_history.modeling_info
 
             workspace_data["status"] = latest_history.status
 
@@ -412,12 +411,10 @@ async def fork_pipeline_preprocess(
 
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
-        logger.info(f"11111111111111111111111111 : {original_project_id}")
         # 3. 타겟 프로젝트 결정
         target_project_id = await determine_target_project(
             db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
-        logger.info(f"2222222222222222222222222222 : {target_project_id}")
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 

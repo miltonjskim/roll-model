@@ -113,6 +113,7 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
+            sample_data=dataset_analysis["data_sample"][:10] if dataset_analysis["data_sample"] else []
         )
 
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
@@ -317,7 +318,8 @@ async def store_dataset_to_mongodb(
     dataset_analysis: Dict[str, Any],
     config: Dict[str, Any],
     file_size: int,
-    object_name: str
+    object_name: str,
+    sample_data: List
 ) -> str:
     try:
         dataset_collection = get_dataset_collection()
@@ -368,6 +370,7 @@ async def store_dataset_to_mongodb(
             "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
             "category": config.get("type", DatasetCategory.CLASSIFICATION.value),
             "domain": config.get("domain", DatasetDomain.GENERAL.value),
+            "sample_data": sample_data,
             "metadata": {
                 "row_count": dataset_analysis["total_rows"],
                 "column_count": dataset_analysis["total_columns"],

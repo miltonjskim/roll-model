@@ -330,62 +330,66 @@ async def complete_preprocessing(
 
             inferred_columns.append({"name": col, "type": inferred_type})
 
-        config = {
-            "delimiter": "comma",
-            "customDelimiter": None,  
-            "encoding": "UTF-8", 
-            "hasHeader": True,
-            "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
-        }
-        
-        # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
-        dataset_analysis = await analyze_dataset(buffer, config)
-        # MongoDB에 전처리된 데이터셋 저장
-        buffer.close()
-        dataset_id: str = await store_dataset_to_mongodb(
-            project_id=pipeline.project_id,
-            member_id=member_id,
-            etag=final_dataset_etag,
-            dataset_analysis=dataset_analysis,
-            config=config,
-            file_size=buffer.tell(),
-            object_name=final_dataset_object_name,
-        )
-        # 파이프라인 업데이트
-        updated_pipeline = await pipeline_service.update_pipeline_status(
-            pipeline_id=pipeline_id,
-            new_status=PipelineStatus.PREPROCESSED,
-            project_id=pipeline.project_id,
-            member_id=member_id,
-            preprocessed_dataset_id=dataset_id
-        )
-        
-        if not updated_pipeline:
-            raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
-        # MYSQL 완료된 파이프라인 생성
-        pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
-        if not pipeline:
-            logger.error(f"파이프라인 ID {pipeline_id}에 해당하는 레코드를 찾을 수 없습니다.")
-            raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
-
-            # 파이프라인 상태 업데이트
-        pipeline.status = PipelineStatus.PREPROCESSED
-        pipeline.modified_at = datetime.now()
-        # 변경사항 커밋
-        db.commit()
-        db.refresh(pipeline)
-        # 응답 데이터 구성
-        response = {
-            "status": 200,
-            "message": "전처리 완료",
-            "data": {
-                "pipelineId": pipeline_id,
-                "columns": inferred_columns,
+            config = {
+                "delimiter": "comma",
+                "customDelimiter": None,
+                "encoding": "UTF-8",
+                "hasHeader": True,
+                "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
             }
-        }
-        
-        return response
-        
+
+            # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
+            dataset_analysis = await analyze_dataset(buffer, config)
+            # MongoDB에 전처리된 데이터셋 저장
+            buffer.close()
+            dataset_id: str = await store_dataset_to_mongodb(
+                project_id=pipeline.project_id,
+                member_id=member_id,
+                etag=final_dataset_etag,
+                dataset_analysis=dataset_analysis,
+                config=config,
+                file_size=buffer.tell(),
+                object_name=final_dataset_object_name,
+                sample_data=dataset_analysis["data_sample"][:10] if dataset_analysis["data_sample"] else []
+            )
+            # 파이프라인 업데이트
+            updated_pipeline = await pipeline_service.update_pipeline_status(
+                pipeline_id=pipeline_id,
+                new_status=PipelineStatus.PREPROCESSED,
+                project_id=pipeline.project_id,
+                member_id=member_id,
+                preprocessed_dataset_id=dataset_id
+            )
+
+            if not updated_pipeline:
+                raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
+
+            # MYSQL 완료된 파이프라인 생성
+            pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
+            if not pipeline:
+                logger.error(f"파이프라인 ID {pipeline_id}에 해당하는 레코드를 찾을 수 없습니다.")
+                raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
+
+                # 파이프라인 상태 업데이트
+            pipeline.status = PipelineStatus.PREPROCESSED
+            pipeline.modified_at = datetime.now()
+            # 변경사항 커밋
+            db.commit()
+            db.refresh(pipeline)
+            # 응답 데이터 구성
+            response = {
+                "status": 200,
+                "message": "전처리 완료",
+                "data": {
+                    "pipelineId": pipeline_id,
+                    "columns": inferred_columns,
+                }
+            }
+
+            return response
+        else:
+            raise HTTPException(status_code=404, detail="<UNK> <UNK> <UNK>")
+
     except Exception as e:
         logger.error(f"전처리 완료 처리 중 오류 발생: {str(e)}")
         raise HTTPException(status_code=500, detail=f"전처리 완료 처리 중 오류 발생: {str(e)}")
