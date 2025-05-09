@@ -1,5 +1,7 @@
 package com.ccc.roll_model.pipeline.application;
 
+import com.ccc.roll_model.like.infrastructure.repository.mysql.PipelineLikeRepository;
+import com.ccc.roll_model.member.infrastructure.MemberJpaRepository;
 import com.ccc.roll_model.pipeline.infrastructure.repository.mongo.PipelineMongoRepository;
 import com.ccc.roll_model.pipeline.ui.dto.response.ClassificationResponse;
 import com.ccc.roll_model.pipeline.ui.dto.response.GetModelAndMetricResponse;
@@ -19,6 +21,10 @@ import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;
+import com.ccc.roll_model.like.infrastructure.entity.PipelineLikeEntity;
+import com.ccc.roll_model.pipeline.ui.dto.request.PipelineLikeRequest;
+import com.ccc.roll_model.pipeline.ui.dto.response.PipelineLikeResponse;
+import com.ccc.roll_model.member.infrastructure.MemberEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +37,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PipelineService {
 	private final PipelineRepository pipelineRepository;
+	private final MemberJpaRepository memberRepository;
+	private final PipelineLikeRepository pipelineLikeRepository;
 	private final PipelineMongoRepository pipelineMongoRepository;
 	private final ModelRepository modelRepository;
 	private final ProjectRepository ProjectRepository;
@@ -61,6 +69,47 @@ public class PipelineService {
 				.build();
 	}
 
+	@Transactional
+	public PipelineLikeResponse updatePipelineLike(String pipelineId, Integer memberId, PipelineLikeRequest request) {
+		// 파이프라인 존재 여부 확인
+		PipelineEntity pipeline = pipelineRepository.findById(pipelineId)
+				.orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+
+		// 사용자 존재 여부 확인
+		MemberEntity member = memberRepository.findById(memberId)
+				.orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+
+		// 기존 좋아요 여부 확인
+		boolean alreadyLiked = pipelineLikeRepository.existsByPipelineEntityAndMemberEntity(pipeline, member);
+
+		if (Boolean.TRUE.equals(request.getLikeYn())) {
+			// 좋아요 요청이고 아직 좋아요가 없으면 추가
+			if (!alreadyLiked) {
+				PipelineLikeEntity like = PipelineLikeEntity.builder()
+						.memberEntity(member)
+						.pipelineEntity(pipeline)
+						.build();
+				pipelineLikeRepository.save(like);
+
+				// 파이프라인 좋아요 수 증가
+				pipeline.incrementLikeCount();
+				pipelineRepository.save(pipeline);
+			}
+			return PipelineLikeResponse.builder().likeYn(true).build();
+		} else {
+			// 좋아요 취소 요청이고 좋아요가 있으면 삭제
+			if (alreadyLiked) {
+				pipelineLikeRepository.findByPipelineEntityAndMemberEntity(pipeline, member)
+						.ifPresent(pipelineLikeRepository::delete);
+
+				// 파이프라인 좋아요 수 감소
+				pipeline.decrementLikeCount();
+				pipelineRepository.save(pipeline);
+			}
+			return PipelineLikeResponse.builder().likeYn(false).build();
+		}
+	}
+}
 	/**
 	 *
 	 * @param pipelineId

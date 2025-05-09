@@ -1,6 +1,8 @@
 package com.ccc.roll_model.pipeline.ui;
 
+import com.ccc.roll_model.pipeline.ui.dto.request.PipelineLikeRequest;
 import com.ccc.roll_model.pipeline.ui.dto.request.UpdatePipelineVisibilityRequest;
+import com.ccc.roll_model.pipeline.ui.dto.response.PipelineLikeResponse;
 import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;
 import com.ccc.roll_model.pipeline.ui.dto.response.GetModelAndMetricResponse;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,20 @@ public class PipelineController {
         return ResponseEntity.ok(ApiUtils.success(response));
     }
 
+    @PostMapping("/{pipelineId}/likes")
+    public ResponseEntity<ApiResponse<PipelineLikeResponse>> updatePipelineLike(
+            @PathVariable String pipelineId,
+            @AuthenticationPrincipal Integer memberId,
+            @RequestBody PipelineLikeRequest request) {
+
+        PipelineLikeResponse response = pipelineService.updatePipelineLike(
+                pipelineId,
+                memberId,
+                request
+        );
+
+        return ResponseEntity.ok(ApiUtils.success(response));
+    }
     // 모델링 평가 조회
     @GetMapping("/{pipelineId}/modelInfo")
     public ApiUtils.ApiResponse<GetModelAndMetricResponse> getModelAndMetric(
@@ -53,6 +69,5 @@ public class PipelineController {
 
         return ApiUtils.success(response);
     }
-
 }
 
