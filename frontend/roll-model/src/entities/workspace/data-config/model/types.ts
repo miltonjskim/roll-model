@@ -29,26 +29,26 @@ export interface UploadDatasetResponse {
 
   // 데이터 요약
   summary: {
-    totalRows: number;
-    totalColumns: number;
-    filename: string;
-    encoding: string;
-    delimiter: string;
-    customDelimiter?: string;
+    totalRows: number; // 총 행 수
+    totalColumns: number; // 총 열 수
+    filename: string; // 파일 이름
+    encoding: string; // 인코딩 방식
+    delimiter: string; // 구분자
+    customDelimiter?: string; // 커스텀 구분자를 사용했는지
   };
 
   // 결측치 데이터
   missingValues: {
-    columns: string[];
+    columns: string[]; // 결측치가 존재하는 컬럼명 배열
     details: {
       [column: string]: {
-        count: number;
-        percentage: number;
+        count: number; // 결측치 행 개수
+        percentage: number; // 결측치 비율
         rowIndices: number[]; // 몇 번째 행이 결측치인지
       };
     };
   };
 
   // 원본 데이터셋 정보
-  original_datasets: OriginalDatasetType;
+  originalDatasets: OriginalDatasetType;
 }
