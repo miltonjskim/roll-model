@@ -22,11 +22,11 @@ const transformDashboardResponse = (response: DashboardResponse): DashboardRespo
 // 실제 API 연동 시 사용할 함수
 export const fetchDashboardData = async () => {
   try {
-    // const response = await axiosInstance.get<DashboardResponse>('/api/v1/projects/my');
-    // return transformDashboardResponse(response.data);
+    const response = await axiosInstance.get<DashboardResponse>('/api/v1/projects/my');
+    return transformDashboardResponse(response.data);
 
     // Mock 데이터 사용 (실제 API 연동 전까지)
-    return transformDashboardResponse(dashboardMock as DashboardResponse);
+    // return transformDashboardResponse(dashboardMock as DashboardResponse);
   } catch (error) {
     console.error('대시보드 데이터 로딩 실패:', error);
     throw error;

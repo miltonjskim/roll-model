@@ -16,11 +16,11 @@ import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTyp
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
   try {
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/dataset/info`);
-    // return response.data;
+    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/dataset/info`);
+    return response.data;
 
     // mock data
-    return projectDetailDataMock as ProjectDetailDataResponse;
+    // return projectDetailDataMock as ProjectDetailDataResponse;
   } catch (error) {
     console.error('상세 데이터섹션 호출 실패', error);
     throw error;
