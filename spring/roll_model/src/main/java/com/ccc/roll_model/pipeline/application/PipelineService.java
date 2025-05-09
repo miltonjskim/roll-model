@@ -7,6 +7,7 @@ import com.ccc.roll_model.global.exception.ApiException;
 import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
+import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,5 +27,18 @@ public class PipelineService {
 				.orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
 
 		pipelineRepository.markAsDeleted(pipelineId);
+	}
+
+	@Transactional
+	public UpdatePipelineVisibilityResponse updatePipelineVisibility(String pipelineId, Integer memberId, Boolean publicYn) {
+		PipelineEntity pipeline = pipelineRepository.findByPipelineIdAndProjectMemberId(pipelineId, memberId)
+				.orElseThrow(() -> new ApiException(ErrorCode.ACCESS_DENIED));
+
+		pipeline.updateVisibility(publicYn);
+		pipelineRepository.save(pipeline);
+
+		return UpdatePipelineVisibilityResponse.builder()
+				.isPublic(publicYn)
+				.build();
 	}
 }
