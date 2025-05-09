@@ -1,9 +1,27 @@
+import { downloadYourModel } from '@/shared/api/projectDetailApi';
 import { IoMdDownload } from 'react-icons/io';
 
-export default function ApiDownloadCard() {
-  const handleDownload = () => {
-    console.log('다운로드');
-    alert('다운로드');
+interface ApiDownloadCardProps {
+  pipelineId: string;
+}
+
+export default function ApiDownloadCard({ pipelineId }: ApiDownloadCardProps) {
+  const handleDownload = async () => {
+    try {
+      const response = await downloadYourModel(pipelineId);
+      const { downloadUrl, fileName, fileSize } = response.data;
+      const fileSizeMB = fileSize ? (fileSize / (1024 * 1024)).toFixed(2) : '알 수 없음';
+      // 동적으로 a 태그 생성하여 다운로드 트리거
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl; // 서명된 URL 설정
+      downloadLink.download = fileName || `model-${pipelineId}.pkl`; // 파일명 설정
+      document.body.appendChild(downloadLink);
+      downloadLink.click(); // 다운로드 시작
+      document.body.removeChild(downloadLink); // 사용 후 요소 제거
+    } catch (e) {
+      alert('다운로드 시작도 못함');
+      console.error('다운로드 시작도 못함', e);
+    }
   };
 
   return (

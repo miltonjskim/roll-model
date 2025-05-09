@@ -38,7 +38,7 @@ export default function ApiSectionPage() {
 
   return (
     <>
-      <ApiDownloadCard></ApiDownloadCard>
+      <ApiDownloadCard pipelineId={pipelineId}></ApiDownloadCard>
       <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} />
       <ApiEndpointCard endpoint={endpoint}></ApiEndpointCard>
       <ApiExamplesCard inputSchema={inputSchema} endpoint={endpoint} projectCategory={projectDetailApi.projectInfo.category}></ApiExamplesCard>
