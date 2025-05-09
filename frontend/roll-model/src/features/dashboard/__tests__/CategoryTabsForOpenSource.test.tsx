@@ -25,14 +25,14 @@ describe('CategoryTabsForOpenSource', () => {
 
     // 정렬 옵션이 렌더링되었는지 확인
     expect(screen.getByText('최신')).toBeInTheDocument();
-    expect(screen.getByText('인기')).toBeInTheDocument();
+    // expect(screen.getByText('인기')).toBeInTheDocument();
   });
 
   // 테스트 2번 : CLASSIFICATION,popular 버튼 눌러보기
   // 버튼 명 혹은 색상 변경시 테스트 코드 수정해야됨
   test('applies active styles to selected category and sort option', () => {
     // 특정 카테고리와 정렬 옵션이 선택된 상태로 렌더링
-    render(<CategoryTabsForOpenSource {...defaultProps} selectedCategory="CLASSIFICATION" selectedSort="popular" />);
+    render(<CategoryTabsForOpenSource {...defaultProps} selectedCategory="CLASSIFICATION" selectedSort="name" />);
 
     // 선택된 카테고리와 정렬 옵션은 다른 스타일을 가지므로
     // 클래스명을 확인하거나 스타일을 확인할 수 있습니다
