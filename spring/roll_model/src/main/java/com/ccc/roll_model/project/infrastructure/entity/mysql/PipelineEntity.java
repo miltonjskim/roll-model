@@ -67,4 +67,15 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
         this.status = status;
     }
 
+    // 좋아요 수 증가
+    public void incrementLikeCount() {
+        this.likeCount = this.likeCount != null ? this.likeCount + 1 : 1;
+    }
+
+    // 좋아요 수 감소
+    public void decrementLikeCount() {
+        if (this.likeCount != null && this.likeCount > 0) {
+            this.likeCount -= 1;
+        }
+    }
 }

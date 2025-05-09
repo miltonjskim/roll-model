@@ -1,6 +1,8 @@
 package com.ccc.roll_model.pipeline.ui;
 
+import com.ccc.roll_model.pipeline.ui.dto.request.PipelineLikeRequest;
 import com.ccc.roll_model.pipeline.ui.dto.request.UpdatePipelineVisibilityRequest;
+import com.ccc.roll_model.pipeline.ui.dto.response.PipelineLikeResponse;
 import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,6 +41,21 @@ public class PipelineController {
                 memberId,
                 request.getPublicYn()
         );
+        return ResponseEntity.ok(ApiUtils.success(response));
+    }
+
+    @PostMapping("/{pipelineId}/likes")
+    public ResponseEntity<ApiResponse<PipelineLikeResponse>> updatePipelineLike(
+            @PathVariable String pipelineId,
+            @AuthenticationPrincipal Integer memberId,
+            @RequestBody PipelineLikeRequest request) {
+
+        PipelineLikeResponse response = pipelineService.updatePipelineLike(
+                pipelineId,
+                memberId,
+                request
+        );
+
         return ResponseEntity.ok(ApiUtils.success(response));
     }
 }

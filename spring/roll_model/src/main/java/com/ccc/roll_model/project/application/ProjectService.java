@@ -1,6 +1,6 @@
 package com.ccc.roll_model.project.application;
 
-import com.ccc.roll_model.like.infrastructure.repository.LikeRepository;
+import com.ccc.roll_model.like.infrastructure.repository.mysql.PipelineLikeRepository;
 import com.ccc.roll_model.member.domain.Member;
 import com.ccc.roll_model.member.domain.MemberRepository;
 import com.ccc.roll_model.member.infrastructure.MemberEntity;
@@ -26,10 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -44,7 +42,7 @@ public class ProjectService {
     private final DatasetRepository datasetRepository;
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
-    private final LikeRepository likeRepository;
+    private final PipelineLikeRepository likeRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ProjectEntity createProject(CreateProjectCommand command) {
