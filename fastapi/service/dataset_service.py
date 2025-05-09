@@ -61,6 +61,8 @@ async def upload_dataset_and_save_metadata(
         file: UploadFile,
         config_json: str,
         background_tasks: BackgroundTasks,
+        category: str,
+        domain: str
 ) -> Dict[str, Any]:
     try:
         config = json.loads(config_json)
@@ -113,6 +115,8 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
+            category=category,
+            domain=domain
         )
 
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
@@ -121,7 +125,7 @@ async def upload_dataset_and_save_metadata(
             member_id=member_id,
             etag=etag,
             dataset_id=dataset_id,
-            object_name=object_name,
+            object_name=object_name
         )
 
         # MySQL에 파이프라인 데이터 저장 (MongoDB 파이프라인 ID 사용)
@@ -317,7 +321,9 @@ async def store_dataset_to_mongodb(
     dataset_analysis: Dict[str, Any],
     config: Dict[str, Any],
     file_size: int,
-    object_name: str
+    object_name: str,
+    category: str,
+    domain: str
 ) -> str:
     try:
         dataset_collection = get_dataset_collection()
@@ -366,8 +372,8 @@ async def store_dataset_to_mongodb(
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
             "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
-            "category": config.get("type", DatasetCategory.CLASSIFICATION.value),
-            "domain": config.get("domain", DatasetDomain.GENERAL.value),
+            "category": category,
+            "domain": domain,
             "metadata": {
                 "row_count": dataset_analysis["total_rows"],
                 "column_count": dataset_analysis["total_columns"],
