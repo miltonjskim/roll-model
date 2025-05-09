@@ -55,12 +55,16 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
     @Column(name = "parent_pipeline_id", nullable = false)
     private String parentPipelineId;
 
-    // 프로젝트 ID를 얻기 위한 안전한 메소드 추가
+    // 프로젝트 ID를 얻음
     public Integer getProjectId() {
         return projectEntity != null ? projectEntity.getProjectId() : null;
     }
 
+    public void updateVisibility(Boolean publicYn) {
+        this.publicYn = publicYn;
+    }
     public void updateStatus(Status status) {
         this.status = status;
     }
+
 }
