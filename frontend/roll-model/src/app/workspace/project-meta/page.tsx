@@ -46,69 +46,81 @@ const InputProjectMetaDataPage = () => {
   };
 
   return (
-    <div>
+    <div className="mx-auto max-w-[90%]">
       <div>
-        <h1>프로젝트 메타데이터 입력</h1>
+        <h1 className="text-xl font-bold">프로젝트 메타데이터 입력</h1>
         <h2>프로젝트 정보를 입력해 주세요.</h2>
       </div>
-      <div>
-        <div>
-          <label htmlFor="project-name">프로젝트 이름</label>
-          <Input type="text" value={title} id="project-name" placeholder="프로젝트 이름은 필수 입력 값입니다." onChange={(e) => setTitle(e.target.value)} />
-        </div>
 
-        <div>
-          <label htmlFor="project-description">프로젝트 설명</label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
-        </div>
+      <div className="bg-[theme(primary-white)] mx-auto mt-4 flex max-w-[70%] min-w-[44rem] flex-col justify-between gap-12 rounded-lg px-6 pt-8 pb-6 text-left">
+        <div className="my-auto flex flex-col justify-center gap-8">
+          <div className="flex items-center gap-2">
+            <label htmlFor="project-name" className="flex-1/5 font-semibold">
+              프로젝트 이름
+            </label>
+            <Input type="text" value={title} id="project-name" placeholder="프로젝트 이름은 필수 입력 값입니다." onChange={(e) => setTitle(e.target.value)} className="flex-4/5 font-medium" />
+          </div>
 
-        <div>
-          <label htmlFor="project-domain">도메인 선택</label>
-          <Select value={domain} onValueChange={(val) => setDomain(val as projectDomain)}>
-            <SelectTrigger>
-              <SelectValue placeholder="선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {DOMAIN_OPTIONS.map((d) => (
-                <SelectItem key={d.value} value={d.value}>
-                  {d.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="project-description" className="flex-1/5 font-semibold">
+              목표 변수 설정
+            </label>
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="" className="flex-4/5 font-medium" />
+          </div>
 
-        <div>
-          <label htmlFor="project-category">모델 종류 선택</label>
-          <Select value={type} onValueChange={(val) => setType(val as projectCategory)}>
-            <SelectTrigger>
-              <SelectValue placeholder="선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORY_OPTIONS.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="project-domain" className="flex-1/5 font-semibold">
+              도메인 선택
+            </label>
+            <Select value={domain} onValueChange={(val) => setDomain(val as projectDomain)}>
+              <SelectTrigger className="flex-4/5 font-medium">
+                <SelectValue placeholder="선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {DOMAIN_OPTIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div>
-          <label htmlFor="project-public">프로젝트 공개 여부</label>
-          <RadioGroup value={isPublic ? 'true' : 'false'} onValueChange={(value) => setIsPublic(value === 'true')} className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="true" id="public" />
-              <label htmlFor="public">공개</label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="false" id="private" />
-              <label htmlFor="private">비공개</label>
-            </div>
-          </RadioGroup>
-        </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="project-category" className="flex-1/5 font-semibold">
+              모델 종류 선택
+            </label>
+            <Select value={type} onValueChange={(val) => setType(val as projectCategory)}>
+              <SelectTrigger className="flex-4/5 font-medium">
+                <SelectValue placeholder="선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Button variant="black" onClick={handleSubmit}>
+          <div className="flex gap-2">
+            <label htmlFor="project-public" className="flex-1/5 font-semibold">
+              프로젝트 공개 여부
+            </label>
+            <RadioGroup value={isPublic ? 'true' : 'false'} onValueChange={(value) => setIsPublic(value === 'true')} className="flex flex-4/5 gap-6 text-sm font-medium">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="true" id="public" />
+                <label htmlFor="public">공개</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="false" id="private" />
+                <label htmlFor="private">비공개</label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+        <Button variant="black" onClick={handleSubmit} size="lg" className="w-full">
           다음 단계로
         </Button>
       </div>
