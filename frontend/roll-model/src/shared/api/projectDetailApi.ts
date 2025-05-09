@@ -78,7 +78,7 @@ export const deletePipeline = async (pipelineId: string) => {
 // 파이프라인 공개여부 변경
 export const toggePublicPipeline = async (pipelineId: string, publicYn: boolean) => {
   try {
-    const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/visibility` , {publicYn: publicYn});
+    const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/visibility`, { publicYn: publicYn });
     return response.data;
   } catch (error) {
     console.error('파이프라인 공개여부 변경 실패', error);
