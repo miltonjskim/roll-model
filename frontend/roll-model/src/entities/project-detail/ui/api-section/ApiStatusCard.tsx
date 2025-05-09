@@ -1,4 +1,5 @@
 import { ApiStatus } from '@/entities/project-detail/model/ApiTypes';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { useState, useEffect } from 'react';
 
 interface ApiStatusCardProps {
@@ -38,18 +39,13 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
       const requestUrl = `${endpoint}${queryString ? `?${queryString}` : ''}`;
 
       // API 요청 보내기
-      const response = await fetch(requestUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axiosInstance.get(requestUrl);
 
       // 응답 시간 계산
       const responseTime = Date.now() - startTime;
 
       setApiActiveStatus({
-        isActive: response.ok,
+        isActive: response.status === 200,
         performance: responseTime,
         isChecking: false,
       });
