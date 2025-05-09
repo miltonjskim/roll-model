@@ -12,6 +12,8 @@
 파이프라인의 시작점
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
 """
+from typing import Optional
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
 from fastapi.params import Query
 from sqlalchemy.orm import Session
@@ -20,14 +22,18 @@ import logging
 import json
 
 from core.security import verify_token
+from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
+from models.project.dataset_models import DatasetColumnsResponse, DatasetPageResponse
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project, Pipeline
-from service.db.pipeline_cache_service import PipelineCacheService, get_pipeline_cache_service
-# from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
-#     create_new_pipeline_model
+from service.db.pipeline_service import PipelineService, get_pipeline_service
+from service.pipeline_fork_service import create_new_pipeline_model, save_new_pipeline, prepare_response_data
+
+from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
+    create_new_pipeline_model
 router = APIRouter()
 logger = logging.getLogger()
 
@@ -147,7 +153,7 @@ async def upload_project_dataset(
 async def reload_recent_workspace(
     project_id: int = Path(..., title="프로젝트 ID"),                  
     member_id: int = Depends(verify_token),
-    pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db)
 ):
     """
@@ -176,18 +182,18 @@ async def reload_recent_workspace(
                 
         if not latest_pipeline:
             return ApiResponse(
-                status=404,
+                status_code =404,
                 message="프로젝트에 파이프라인이 존재하지 않습니다.",
                 data=None
             )
         
         # MongoDB에서 파이프라인 상세 정보 조회
         pipeline_id = latest_pipeline.pipeline_id
-        pipeline_details:PipelineModel = await pipeline_cache_service.get_pipeline(pipeline_id, project_id, member_id)
+        pipeline_details:PipelineModel = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
         
         if not pipeline_details:
             return ApiResponse(
-                status=404,
+                status_code =404,
                 message="파이프라인 상세 정보를 찾을 수 없습니다.",
                 data=None
             )
@@ -197,7 +203,6 @@ async def reload_recent_workspace(
             "pipelineId": str(pipeline_details.id),
             "projectId": pipeline_details.project_id,
             "status": latest_pipeline.status,
-            "historyCount": len(pipeline_details.history),
             "registeredAt": pipeline_details.registered_at.isoformat(),
             "modifiedAt": pipeline_details.modified_at.isoformat(),
             "preprocessingSteps": [],
@@ -208,19 +213,12 @@ async def reload_recent_workspace(
         if pipeline_details.history and len(pipeline_details.history) > 0:
             latest_history = pipeline_details.history[-1]
             if latest_history.preprocessing_steps:
-                for step in latest_history.preprocessing_steps:
-                    workspace_data["preprocessingSteps"].append({
-                        "type": step.type,
-                        "parameters": step.parameters,
-                        "order": step.order,
-                        "active": step.active,
-                        "datasetEtag": step.preprocessed_dataset_etag
-                    })
+                workspace_data["preprocessingSteps"]=latest_history.preprocessing_steps
             if latest_history.modeling_info:
                 workspace_data["modelingInfos"] = latest_history.modeling_info
         
         return ApiResponse(
-            status=200,
+            status_code =200,
             message="최근 워크스페이스를 불러왔습니다.",
             data=workspace_data
         )
@@ -228,7 +226,7 @@ async def reload_recent_workspace(
     except Exception as e:
         logger.error(f"워크스페이스 조회 중 오류 발생: {str(e)}")
         return ApiResponse(
-            status=500,
+            status_code =500,
             message=f"워크스페이스 조회 중 오류가 발생했습니다: {str(e)}",
             data=None
         )
@@ -238,7 +236,7 @@ async def reload_workspace_by_pipeline_version(
     project_id: int = Path(..., title="프로젝트 ID"),
     pipeline_id: str = Path(..., description="파이프라인 ID"),                   
     member_id: int = Depends(verify_token),
-    pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db)
 ):
     """
@@ -269,17 +267,17 @@ async def reload_workspace_by_pipeline_version(
         
         if not pipeline:
             return ApiResponse(
-                status=404,
+                status_code=404,
                 message="해당 파이프라인을 찾을 수 없습니다.",
                 data=None
             )
         
         # MongoDB에서 파이프라인 상세 정보 조회
-        pipeline_details = await pipeline_cache_service.get_pipeline(pipeline_id, project_id, member_id)
+        pipeline_details = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
         
         if not pipeline_details:
             return ApiResponse(
-                status=404,
+                status_code=404,
                 message="파이프라인 상세 정보를 찾을 수 없습니다.",
                 data=None
             )
@@ -312,7 +310,7 @@ async def reload_workspace_by_pipeline_version(
             workspace_data["status"] = latest_history.status
 
         return ApiResponse(
-            status=200,
+            status_code=200,
             message="워크스페이스를 불러왔습니다.",
             data=workspace_data
         )
@@ -320,12 +318,12 @@ async def reload_workspace_by_pipeline_version(
     except Exception as e:
         logger.error(f"워크스페이스 조회 중 오류 발생: {str(e)}")
         return ApiResponse(
-            status=500,
+            status_code=500,
             message=f"워크스페이스 조회 중 오류가 발생했습니다: {str(e)}",
             data=None
         )
     
-@router.post("/versions", response_class=ApiResponse)
+@router.get("/versions", response_class=ApiResponse)
 async def get_pipeline_versions(
     project_id: int = Path(..., description="프로젝트 ID"),
     member_id: int = Depends(verify_token),
@@ -356,7 +354,7 @@ async def get_pipeline_versions(
         
         if not pipelines:
             return ApiResponse(
-                status=404,
+                status_code=404,
                 message="프로젝트에 파이프라인이 존재하지 않습니다.",
                 data={"versions": []}
             )
@@ -369,13 +367,13 @@ async def get_pipeline_versions(
                 "parentPipelineId": pipeline.parent_pipeline_id,
                 "status": pipeline.status,
                 "version": pipeline.version,
-                "registeredAt": pipeline.registered_at,
-                "modifiedAt": pipeline.modified_at,
+                "registeredAt": pipeline.registered_at.isoformat(),
+                "modifiedAt": pipeline.modified_at.isoformat(),
             }
             versions.append(version_info)
         
         return ApiResponse(
-            status=200,
+            status_code=200,
             message="파이프라인 버전 목록을 불러왔습니다.",
             data={"versions": versions}
         )
@@ -383,7 +381,251 @@ async def get_pipeline_versions(
     except Exception as e:
         logger.error(f"파이프라인 버전 조회 중 오류 발생: {str(e)}")
         return ApiResponse(
-            status=500,
+            status_code=500,
             message=f"파이프라인 버전 조회 중 오류가 발생했습니다: {str(e)}",
             data=None
+        )
+
+@router.post("/pipelines/{pipeline_id}/fork/preprocess", response_class=ApiResponse)
+async def fork_pipeline_preprocess(
+        project_id: int = Path(..., description="프로젝트 ID"),
+        pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
+        member_id: int = Depends(verify_token),
+        pipeline_service: PipelineService = Depends(get_pipeline_service),
+        db: Session = Depends(get_mysql_db)
+):
+    """
+    기존 파이프라인의 전처리 단계만 복제하여 새로운 파이프라인을 생성합니다.
+    복제 로직:
+    1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
+    2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
+    3. 내 원본 프로젝트에서 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
+    """
+    try:
+        # 1. 원본 파이프라인 조회
+        logger.info(f"1111111111111111111111231231231211111 : {pipeline_id}")
+        source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
+            db, pipeline_id, project_id, pipeline_service
+        )
+        if error_response:
+            return error_response
+
+        # 2. 최초 파이프라인 정보 조회
+        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+        logger.info(f"11111111111111111111111111 : {original_project_id}")
+        # 3. 타겟 프로젝트 결정
+        target_project_id = await determine_target_project(
+            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+        )
+        logger.info(f"2222222222222222222222222222 : {target_project_id}")
+        # 4. 새로운 파이프라인 모델 생성
+        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+
+        # 5. 전처리 단계만 복제
+        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
+            latest_history = source_pipeline_details.history[-1]
+
+            # 전처리 단계만 포함한 새 히스토리 항목 생성
+            new_history_item = PipelineHistoryItem(
+                preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
+                status=PipelineStatus.PREPROCESSED
+            )
+
+            new_pipeline.history.append(new_history_item)
+
+        # 7. 새 파이프라인 저장
+        new_pipeline_id = await save_new_pipeline(
+            db, new_pipeline, pipeline_id, target_project_id, member_id,
+            source_pipeline, PipelineStatus.PREPROCESSED, None, pipeline_service
+        )
+
+        # 8. 응답 데이터 준비
+        response_data = await prepare_response_data(
+            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
+            None, new_pipeline, include_all_history=False
+        )
+
+        return ApiResponse(
+            status_code=200,
+            message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
+            data=response_data
+        )
+
+    except Exception as e:
+        logger.error(f"파이프라인 전처리 단계 복제 중 오류 발생: {str(e)}")
+        return ApiResponse(
+            status_code=500,
+            message=f"파이프라인 전처리 단계 복제 중 오류가 발생했습니다: {str(e)}",
+            data=None
+        )
+
+
+@router.post("/pipelines/{pipeline_id}/fork/total", response_class=ApiResponse)
+async def fork_pipeline_total(
+        project_id: int = Path(..., description="프로젝트 ID"),
+        pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
+        member_id: int = Depends(verify_token),
+        pipeline_service: PipelineService = Depends(get_pipeline_service),
+        db: Session = Depends(get_mysql_db)
+):
+    """
+    기존 파이프라인을 전체 복제하여 새로운 파이프라인을 생성합니다.
+    복제 로직:
+    1. 일반적인 경우: 본인의 파이프라인 복제 → 같은 프로젝트에 새 버전 생성
+    2. 타인의 파이프라인 복제 → 내 프로젝트에 새 파이프라인 생성
+    3. 내 원본 프로젝트에서 직간접적으로 포크된 파이프라인을 복제 → 원본 프로젝트에 새 버전 생성
+    """
+    try:
+        # 1. 원본 파이프라인 조회
+        source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
+            db, pipeline_id, project_id, pipeline_service
+        )
+        if error_response:
+            return error_response
+
+        # 2. 최초 파이프라인 정보 조회
+        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+
+        # 3. 타겟 프로젝트 결정
+        target_project_id = await determine_target_project(
+            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+        )
+
+        # 4. 새로운 파이프라인 모델 생성
+        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+
+        # 5. 모든 히스토리 복제
+        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
+            for history_item in source_pipeline_details.history:
+                new_pipeline.history.append(history_item.model_copy())
+
+        # 7. 새 파이프라인 저장
+        new_pipeline_id = await save_new_pipeline(
+            db, new_pipeline, pipeline_id, target_project_id, member_id,
+            source_pipeline, source_pipeline.status, None, pipeline_service
+        )
+
+        # 8. 응답 데이터 준비
+        response_data = await prepare_response_data(
+            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
+            None, new_pipeline, include_all_history=True
+        )
+
+        return ApiResponse(
+            status_code=200,
+            message="파이프라인이 성공적으로 복제되었습니다.",
+            data=response_data
+        )
+
+    except Exception as e:
+        logger.error(f"파이프라인 복제 중 오류 발생: {str(e)}")
+        return ApiResponse(
+            status_code=500,
+            message=f"파이프라인 복제 중 오류가 발생했습니다: {str(e)}",
+            data=None
+        )
+
+
+@router.get("/pipelines/{pipeline_id}/dataset", response_class=ApiResponse)
+async def get_dataset_page(
+        pipeline_id: str = Path(..., description="파이프라인 ID"),
+        page: int = Query(1, description="페이지 번호 (1부터 시작)"),
+        size: int = Query(10, description="페이지 크기"),
+        filter_condition: Optional[str] = Query(None, description="필터링 조건 (SQL WHERE 절)"),
+        sort_by: Optional[str] = Query(None, description="정렬 컬럼"),
+        sort_order: str = Query("ASC", description="정렬 순서 (ASC 또는 DESC)"),
+        pipeline_service: PipelineService = Depends(get_pipeline_service),
+        minio_client: MinioClient = Depends(get_minio_client)
+):
+    """
+    파이프라인의 데이터셋을 페이징하여 조회합니다.
+    """
+    try:
+        # 파이프라인 정보 조회
+        pipeline = await pipeline_service.get_pipeline(pipeline_id)
+        if not pipeline:
+            return ApiResponse(
+                status_code=404,
+                message=f"파이프라인 ID {pipeline_id}를 찾을 수 없습니다."
+            )
+
+        # 파이프라인에서 데이터셋 정보 추출
+        # 실제 구현에서는 파이프라인 모델에 따라 정확한 필드명 및 구조가 다를 수 있음
+        bucket_name = "datasets"
+        object_name = pipeline.original_dataset_object_name
+
+        if not bucket_name or not object_name:
+            return ApiResponse(
+                status_code=404,
+                message="파이프라인에 연결된 데이터셋 정보가 없습니다."
+            )
+
+        # MinioClient에서 CSV 데이터 조회
+        dataset_page = await minio_client.query_csv_with_paging(
+            bucket_name=bucket_name,
+            object_name=object_name,
+            page=page,
+            page_size=size,
+            filter_condition=filter_condition,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
+        return ApiResponse(
+            status_code=200,
+            message="데이터셋 조회 성공",
+            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page)))
+        )
+
+    except Exception as e:
+        return ApiResponse(
+            status_code=400,
+            message=f"데이터셋 조회 실패: {str(e)}"
+        )
+
+
+@router.get("/pipelines/{pipeline_id}/dataset/columns", response_class=ApiResponse)
+async def get_dataset_columns(
+        pipeline_id: str = Path(..., description="파이프라인 ID"),
+        pipeline_service: PipelineService = Depends(get_pipeline_service),
+        minio_client: MinioClient = Depends(get_minio_client)
+):
+    """
+    파이프라인 데이터셋의 컬럼 목록을 조회합니다.
+    """
+    try:
+        # 파이프라인 정보 조회
+        pipeline = await pipeline_service.get_pipeline(pipeline_id)
+        if not pipeline:
+            return ApiResponse(
+                status_code=400,
+                message=f"파이프라인 ID {pipeline_id}를 찾을 수 없습니다."
+            )
+
+        # 파이프라인에서 데이터셋 정보 추출
+        bucket_name = "datasets"
+        object_name = pipeline.original_dataset_object_name
+
+        if not bucket_name or not object_name:
+            return ApiResponse(
+                status_code=404,
+                message="파이프라인에 연결된 데이터셋 정보가 없습니다."
+            )
+
+        # MinioClient에서 CSV 컬럼 정보 조회
+        columns = await minio_client.get_csv_columns(
+            bucket_name=bucket_name,
+            object_name=object_name
+        )
+
+        return ApiResponse(
+            status_code=200,
+            message="데이터셋 컬럼 조회 성공",
+            data=DatasetColumnsResponse(columns=columns)
+        )
+
+    except Exception as e:
+        return ApiResponse(
+            status_code=400,
+            message=f"데이터셋 컬럼 조회 실패: {str(e)}"
         )

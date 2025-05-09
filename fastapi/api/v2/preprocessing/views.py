@@ -12,7 +12,7 @@ from models.preprocessing.missing_value_models import MissingValueImputationRequ
 from schemas.mongo.pipeline import PreprocessingStep, PreprocessingStepType, PipelineHistoryItem
 from schemas.mysql.schemas import PipelineStatus, Pipeline
 from service.dataset_service import store_dataset_to_mongodb, analyze_dataset
-from service.db.pipeline_cache_service import PipelineCacheService, get_pipeline_cache_service
+from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.missing_value_handler import MissingValueHandler
 import pandas as pd
 import logging
@@ -47,7 +47,7 @@ async def remove_missing_values(
         request: MissingValueImputationRequest,
         pipeline_id: str = Path(..., description="파이프라인 ID"),
         member_id: int = Depends(verify_token),
-        pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service)
+        pipeline_cache_service: PipelineService = Depends(get_pipeline_service)
     ):
     """
     결측치 제거거 API 응답 시뮬레이션
@@ -73,120 +73,14 @@ async def remove_missing_values(
     dict
         API 응답 형식의 결과
     """
-
-    pipeline = await pipeline_cache_service.get_pipeline(pipeline_id)
-    logger.info(f"pipeline_id: {pipeline_id} \n pipeline_content: {pipeline}")
-    # 데이터셋 ObjectId 찾기
-    dataset_etag = None
-
-    if pipeline is None:
-        raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다.")
-
-    # 히스토리가 있고, 가장 최근 히스토리에 preprocessed_dataset_etag가 있는지 확인
-    if pipeline.history and len(pipeline.history) > 0:
-        latest_history = pipeline.history[-1]
-        dataset_etag = latest_history.preprocessing_steps[-1].preprocessed_dataset_etag
-    logger.info(f"pipeline_id: {dataset_etag}")
-
-    # 히스토리에서 찾지 못했으면 원본 데이터셋 ID 사용
-    if not dataset_etag:
-        dataset_etag = pipeline.original_dataset_etag
-    
-    if not dataset_etag:
-        raise HTTPException(status_code=404, detail="Dataset ID not found in pipeline")
-
-    # MinIO 클라이언트 가져오기
-    minio_client = get_minio_client()
-    bucket_name = "datasets"
-
-    # 결측치 처리
-    minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
-    logger.info(f" minio 호출 결과 : {minio_output['data']}")
-    data_io = io.BytesIO(minio_output["data"])
-    handler = MissingValueHandler(data_io)
-    result = handler.handle_missing_values(column=request.column, method=request.method)
-    data_io.close()
-    logger.info(f"result: {result}")
-    df = result["data"]
-    
-    # MinIO에 저장할 객체 경로 생성
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
-    buffer = io.BytesIO()
-    df.to_csv(buffer, index=False)
-    buffer.seek(0)  # 버퍼의 포인터를 처음으로 되돌림
-
-    # MinIO에 저장하고 etag 받기
-    etag = await minio_client.save_object_with_etag(
-        bucket_name=bucket_name,
-        object_name=object_name,
-        data=buffer,
-        content_type="text/csv"
-    )
-    buffer.close()
-
-    # 결과 redis 저장
-    logger.info(f"etag : {etag}")
-    # pipeline.history 확인 및 처리
-    if not pipeline.history:
-        step = PreprocessingStep(
-            type=PreprocessingStepType.MISSING_VALUE,
-            parameters={
-                "column": request.column,
-                "method": request.method
-            },
-            order=1,
-            active=True,
-            preprocessed_dataset_etag=etag,
-            preprocessed_dataset_object_name=object_name
-        )
-        # history가 비어 있는 경우, 새로운 history 항목 생성
-        history_item = PipelineHistoryItem(
-            preprocessing_steps=[step]
-        )
-    else:
-        # 둘 다 존재하는 경우, 기존 steps에 추가
-        step = PreprocessingStep(
-            type=PreprocessingStepType.MISSING_VALUE,
-            parameters={
-                "column": request.column,
-                "method": request.method
-            },
-            order=pipeline.history[-1].preprocessing_steps[-1].order+1,
-            active=True,
-            preprocessed_dataset_etag=etag,
-            preprocessed_dataset_object_name=object_name
-        )
-        history_item = pipeline.history[-1].preprocessing_steps.copy()
-        history_item.append(step)
-
-    # 새 history 항목을 리스트에 추가
-    await pipeline_cache_service.add_pipeline_history(pipeline, history_item)
-    imputation_detail = ImputationResultDetail(
-        column=result["column"],
-        method=result["method"],
-        fill_value=result["fill_value"],
-        changed_indices=result["changed_indices"],
-        original_rows=result["original_rows"],
-        changed_rows=result["changed_rows"],
-        timestamp=result["timestamp"]
-    )
-    response = MissingValueImputationResponse(
-        pipeline_id=1,  
-        success=True,  # Set based on your operation success
-        original_missing_count=len(result["changed_indices"]),  # Count of missing values before imputation
-        imputed_count=len(result["changed_indices"]),  # Count of successfully imputed values
-        result=imputation_detail
-    )
-
-    return response
+    return
 
 @router.post('/missing-values/imputation')
 async def imputate_missing_values(
         request: MissingValueImputationRequest,
         pipeline_id: str = Path(..., description="파이프라인 ID"),
         member_id: int = Depends(verify_token),
-        pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+        pipeline_service: PipelineService = Depends(get_pipeline_service),
     ):
     """
     결측치 처리 API 응답 시뮬레이션
@@ -213,10 +107,10 @@ async def imputate_missing_values(
         API 응답 형식의 결과
     """
 
-    pipeline = await pipeline_cache_service.get_pipeline(pipeline_id)
+    pipeline = await pipeline_service.get_pipeline(pipeline_id)
     logger.info(f"pipeline_id: {pipeline_id} \n pipeline_content: {pipeline}")
     # 데이터셋 ObjectId 찾기
-    dataset_etag = None
+    dataset_object_name = None
 
     if pipeline is None:
         raise HTTPException(status_code=404, detail="<UNK> <UNK> <UNK>")
@@ -224,28 +118,25 @@ async def imputate_missing_values(
     # 히스토리가 있고, 가장 최근 히스토리에 preprocessed_dataset_etag가 있는지 확인
     if pipeline.history and len(pipeline.history) > 0:
         latest_history = pipeline.history[-1]
-        dataset_etag = latest_history.preprocessing_steps[-1].preprocessed_dataset_etag
+        dataset_object_name = latest_history.preprocessing_steps[-1].preprocessed_dataset_object_name
 
     # 히스토리에서 찾지 못했으면 원본 데이터셋 ID 사용
-    if not dataset_etag:
-        dataset_etag = pipeline.original_dataset_etag
+    if not dataset_object_name:
+        dataset_object_name = pipeline.original_dataset_object_name
     
-    logger.info(f"original dataset etag: {dataset_etag}")
-    if not dataset_etag:
-        raise HTTPException(status_code=404, detail="Dataset ID not found in pipeline")
+    logger.info(f"original dataset object name: {dataset_object_name}")
+    if not dataset_object_name:
+        raise HTTPException(status_code=404, detail="dataset_object_name not found in pipeline")
 
     # MinIO 클라이언트 가져오기
     minio_client = get_minio_client()
     bucket_name = "datasets"
 
     # 결측치 처리
-    minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
-    logger.info(f" minio 호출 결과 : {minio_output['data']}")
-    # 결측치 처리
-    minio_output = await minio_client.get_object_by_etag(bucket_name, dataset_etag)
-    logger.info(f" minio 호출 결과 : {minio_output['data']}")
+    minio_output = minio_client.get_file(bucket_name, dataset_object_name)
+    logger.info(f" minio 호출 결과 : {minio_output}")
 
-    data_io = io.BytesIO(minio_output["data"])
+    data_io = io.BytesIO(minio_output)
     handler = MissingValueHandler(data_io)
     result = handler.handle_missing_values(column=request.column, method=request.method)
     data_io.close()
@@ -256,16 +147,17 @@ async def imputate_missing_values(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
     buffer = io.BytesIO()
-    df.to_csv(buffer, index=False)
+    df.to_csv(buffer, index=True, index_label='idx')
     buffer.seek(0)  # 버퍼의 포인터를 처음으로 되돌림
 
     # MinIO에 저장하고 etag 받기
-    etag = await minio_client.save_object_with_etag(
+    etag = minio_client.save_object_with_etag(
         bucket_name=bucket_name,
         object_name=object_name,
         data=buffer,
         content_type="text/csv"
     )
+
     buffer.close()
     # 결과 redis 저장
     logger.info(f"etag : {etag}")
@@ -309,7 +201,7 @@ async def imputate_missing_values(
         )
 
     # 새 history 항목을 리스트에 추가
-    await pipeline_cache_service.add_pipeline_history(pipeline, history_item)
+    await pipeline_service.add_pipeline_history(pipeline, history_item)
 
     imputation_detail = ImputationResultDetail(
         column=result["column"],
@@ -334,7 +226,7 @@ async def imputate_missing_values(
 async def complete_preprocessing(
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     member_id: int = Depends(verify_token),
-    pipeline_cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db),
 ):
     """
@@ -358,20 +250,21 @@ async def complete_preprocessing(
     """
     try:
         # 1. 파이프라인 정보 가져오기
-        pipeline = await pipeline_cache_service.get_pipeline(pipeline_id)
+        pipeline = await pipeline_service.get_pipeline(pipeline_id)
         
         if pipeline is None:
             raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다")
         
-        # 2. 최종 전처리된 데이터셋 ETag 확인
+        # 2. 최종 전처리된 데이터셋 object name 확인
+        final_dataset_object_name = None
         final_dataset_etag = None
-        
         if pipeline.history and len(pipeline.history) > 0:
             latest_history = pipeline.history[-1]
             if latest_history.preprocessing_steps and len(latest_history.preprocessing_steps) > 0:
-                final_dataset_etag = latest_history.preprocessing_steps[-1].preprocessed_dataset_etag
+                final_dataset_object_name = latest_history.preprocessing_steps[-1].final_dataset_object_name
+                final_dataset_etag = latest_history.preprocessing_steps[-1].final_dataset_etag
         
-        if not final_dataset_etag:
+        if not final_dataset_object_name:
             raise HTTPException(status_code=400, detail="전처리된 데이터셋이 없습니다")
         
         # MinIO 클라이언트 가져오기
@@ -379,24 +272,14 @@ async def complete_preprocessing(
         bucket_name = "datasets"
         
         # 3. 최종 데이터셋 데이터 가져오기
-        logger.info(f"required etag : {final_dataset_etag}")
-        minio_output = await minio_client.get_object_by_etag(bucket_name, final_dataset_etag)
-        if not minio_output or not minio_output.get("data"):
+        logger.info(f"required object name : {final_dataset_object_name}")
+        minio_output = minio_client.get_file(bucket_name, final_dataset_object_name)
+        if not minio_output:
             raise HTTPException(status_code=404, detail="최종 데이터셋을 찾을 수 없습니다")
 
         # 데이터프레임으로 변환
-        file_content = minio_output.get("data")
+        file_content = minio_output
         buffer = io.BytesIO(file_content)
-        
-        updated_pipeline = await pipeline_cache_service.update_pipeline_status(
-            pipeline_id=pipeline_id,
-            new_status=PipelineStatus.PREPROCESSED,
-            project_id=pipeline.project_id,
-            member_id=member_id
-        )
-        
-        if not updated_pipeline:
-            raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
 
         # 타입 추론
         buffer.seek(0)
@@ -459,17 +342,26 @@ async def complete_preprocessing(
         dataset_analysis = await analyze_dataset(buffer, config)
         # MongoDB에 전처리된 데이터셋 저장
         buffer.close()
-        await store_dataset_to_mongodb(
+        dataset_id: str = await store_dataset_to_mongodb(
             project_id=pipeline.project_id,
             member_id=member_id,
-            file_name=minio_output.get("object_name"),
             etag=final_dataset_etag,
             dataset_analysis=dataset_analysis,
             config=config,
-            file_size=minio_output.get("size"),
-            object_name=minio_output.get("object_name"),
+            file_size=buffer.tell(),
+            object_name=final_dataset_object_name,
         )
-
+        # 파이프라인 업데이트
+        updated_pipeline = await pipeline_service.update_pipeline_status(
+            pipeline_id=pipeline_id,
+            new_status=PipelineStatus.PREPROCESSED,
+            project_id=pipeline.project_id,
+            member_id=member_id,
+            preprocessed_dataset_id=dataset_id
+        )
+        
+        if not updated_pipeline:
+            raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
         # MYSQL 완료된 파이프라인 생성
         pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
         if not pipeline:
