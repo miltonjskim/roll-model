@@ -33,7 +33,9 @@ export const FileUploadDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="black">로컬 파일 사용하기</Button>
+        <Button variant="black" className="text-md h-full flex-1/2">
+          로컬 파일 사용하기
+        </Button>
       </DialogTrigger>
       <DialogContent className="bg-[theme(primary-white)] w-150 sm:max-w-[50%]">
         <DialogHeader className="text-center">
