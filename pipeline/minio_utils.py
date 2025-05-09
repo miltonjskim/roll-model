@@ -8,34 +8,36 @@ from config import (
     MINIO_SECRET_KEY,
     MINIO_SECURE,
     MINIO_MODELS_BUCKET,
-    MINIO_DATASETS_BUCKET
-)
-
-# MinIO 클라이언트 초기화
-client = Minio(
-    endpoint=MINIO_ENDPOINT,
-    access_key=MINIO_ACCESS_KEY,
-    secret_key=MINIO_SECRET_KEY,
-    secure=MINIO_SECURE
+    MINIO_DATASETS_BUCKET,
+    MINIO_ENDPOINT_G4DN
 )
 
 
-def ensure_bucket_exists(bucket_name):
-    """지정된 버킷이 존재하는지 확인하고, 없으면 생성합니다."""
-    try:
-        if not client.bucket_exists(bucket_name):
-            client.make_bucket(bucket_name)
-            print(f"버킷 '{bucket_name}'을 생성했습니다.")
-        return True
-    except S3Error as e:
-        print(f"버킷 확인 중 오류 발생: {e}")
-        return False
+# def ensure_bucket_exists(bucket_name, client):
+#     """지정된 버킷이 존재하는지 확인하고, 없으면 생성합니다."""
+#     try:
+#         if not client.bucket_exists(bucket_name):
+#             client.make_bucket(bucket_name)
+#             print(f"버킷 '{bucket_name}'을 생성했습니다.")
+#         return True
+#     except S3Error as e:
+#         print(f"버킷 확인 중 오류 발생: {e}")
+#         return False
 
 
 def upload_model(data, object_name, bucket_name=MINIO_MODELS_BUCKET, content_type='application/octet-stream'):
+
+    # MinIO 클라이언트 초기화
+    client = Minio(
+        endpoint=MINIO_ENDPOINT_G4DN,
+        access_key=MINIO_ACCESS_KEY,
+        secret_key=MINIO_SECRET_KEY,
+        secure=MINIO_SECURE
+    )
+
     """모델 데이터를 MinIO에 업로드합니다."""
     try:
-        ensure_bucket_exists(bucket_name)
+        #ensure_bucket_exists(bucket_name, client)
         client.put_object(
             bucket_name=bucket_name,
             object_name=object_name,
@@ -51,6 +53,14 @@ def upload_model(data, object_name, bucket_name=MINIO_MODELS_BUCKET, content_typ
 
 
 def download_dataset(object_name, file_path, bucket_name=MINIO_DATASETS_BUCKET):
+
+    client = Minio(
+        endpoint=MINIO_ENDPOINT,
+        access_key=MINIO_ACCESS_KEY,
+        secret_key=MINIO_SECRET_KEY,
+        secure=MINIO_SECURE
+    )
+
     """MinIO에서 데이터셋을 다운로드합니다."""
     try:
         # 디렉토리가 없으면 생성
@@ -66,21 +76,6 @@ def download_dataset(object_name, file_path, bucket_name=MINIO_DATASETS_BUCKET):
     except S3Error as e:
         print(f"데이터셋 다운로드 중 오류 발생: {e}")
         return None
-
-
-def get_file_url(object_name, bucket_name, expires=7 * 24 * 60 * 60):
-    """MinIO에서 파일에 접근하기 위한 URL을 생성합니다."""
-    try:
-        url = client.presigned_get_object(
-            bucket_name=bucket_name,
-            object_name=object_name,
-            expires=expires
-        )
-        return url
-    except S3Error as e:
-        print(f"URL 생성 중 오류 발생: {e}")
-        return None
-
 
 def parse_s3_url(s3_url):
     """S3 URL을 버킷 이름과 객체 이름으로 파싱합니다."""

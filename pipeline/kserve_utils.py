@@ -5,10 +5,9 @@ import tempfile
 from jinja2 import Environment, FileSystemLoader
 from config import (
     MINIO_ENDPOINT,
-    MINIO_ACCESS_KEY,
-    MINIO_SECRET_KEY,
     MINIO_SECURE,
-    MINIO_MODELS_BUCKET
+    MINIO_ENDPOINT_G4DN,
+    MINIO_ENDPOINT_G4DN_KUBE
 )
 
 
@@ -70,9 +69,7 @@ def generate_inference_service_yaml(model_name, model_path, namespace="default",
     template = env.get_template('mlflow-inferenceservice_template.yaml.j2')
 
     # 템플릿 변수
-    endpoint_url = f"http://{MINIO_ENDPOINT}"
-    if MINIO_SECURE:
-        endpoint_url = f"https://{MINIO_ENDPOINT}"
+    endpoint_url = {MINIO_ENDPOINT_G4DN_KUBE}
 
     # 쿠버네티스 리소스 이름 규칙에 맞게 변환
     service_name = sanitize_k8s_name(model_name)
@@ -82,8 +79,6 @@ def generate_inference_service_yaml(model_name, model_path, namespace="default",
         model_name=service_name,
         model_path=model_path,
         namespace=namespace,
-        access_key=MINIO_ACCESS_KEY,
-        secret_key=MINIO_SECRET_KEY,
         endpoint_url=endpoint_url,
         gpu_fraction=gpu_fraction,
         cpu_request=cpu_request,

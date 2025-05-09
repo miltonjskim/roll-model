@@ -44,6 +44,8 @@ MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY')
 MINIO_SECURE = os.environ.get('MINIO_SECURE', 'False').lower() == 'true'
 MINIO_MODELS_BUCKET = os.environ.get('MINIO_MODELS_BUCKET')
 MINIO_DATASETS_BUCKET = os.environ.get('MINIO_DATASETS_BUCKET')
+MINIO_ENDPOINT_G4DN = os.environ.get('MINIO_ENDPOINT_G4DN')
+MINIO_ENDPOINT_G4DN_KUBE = os.environ.get('MINIO_ENDPOINT_G4DN_KUBE')
 
 # MongoDB 설정
 MONGODB_URI = os.environ.get('MONGODB_URI')

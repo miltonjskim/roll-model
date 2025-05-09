@@ -16,7 +16,7 @@ from config import (
     MINIO_DATASETS_BUCKET,
     MINIO_MODELS_BUCKET,
 )
-from minio_utils import upload_model, download_dataset, ensure_bucket_exists, get_file_url, parse_s3_url
+from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
 from mlflow_utils import log_model_to_mlflow
 from kserve_utils import generate_inference_service_yaml, deploy_inference_service, get_inference_service_url, sanitize_k8s_name
@@ -376,7 +376,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 save_path = f"models/{save_filename}"
 
         # MinIO에 모델 저장
-        ensure_bucket_exists(MINIO_MODELS_BUCKET)
+        #ensure_bucket_exists(MINIO_MODELS_BUCKET)
         s3_model_path = upload_model(
             model_bytes,
             os.path.basename(save_path),
