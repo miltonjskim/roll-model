@@ -109,7 +109,6 @@ public class PipelineService {
 			return PipelineLikeResponse.builder().likeYn(false).build();
 		}
 	}
-}
 	/**
 	 *
 	 * @param pipelineId
@@ -198,6 +197,8 @@ public class PipelineService {
 
 		return null;
 	}
-
-
 }
+
+
+
+
