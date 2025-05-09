@@ -114,6 +114,8 @@ async def upload_project_dataset(
             )
 
         member_id = project.member_id
+        category = project.category
+        domain = project.domain
 
         # 데이터셋 업로드 및 분석
         result = await upload_dataset_and_save_metadata(
@@ -123,6 +125,8 @@ async def upload_project_dataset(
             file=dataFile,
             config_json=config,
             background_tasks=background_tasks,
+            category = category,
+            domain = domain
         )
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result))
