@@ -8,6 +8,8 @@ import ModelOverview from '@/entities/project-detail/ui/model-section/ModelOverv
 import ClassificationEvaluation from '@/entities/project-detail/ui/model-section/ClassificationEvaluation';
 import RegressionEvaluation from '@/entities/project-detail/ui/model-section/RegressionEvaluation';
 import FeatureImportanceChart from '@/entities/project-detail/ui/model-section/FeatureImportanceChart';
+import ModelInfoCard from '@/entities/project-detail/ui/model-section/ModelInfoCard';
+import PerformanceMetricsCard from '@/entities/project-detail/ui/model-section/PerformanceMetricsCard';
 
 export default function ModelSectionPage() {
   const { id } = useParams();
@@ -33,12 +35,15 @@ export default function ModelSectionPage() {
 
   return (
     <div className="space-y-8 p-4">
-      <ModelOverview
+      <ModelInfoCard
         category={projectDetailModel.projectInfo.category}
         algorithmName={algorithmName}
         koreanModelName={koreanModelName}
         modelParameters={projectDetailModel.modelParameters}
         targetInfo={projectDetailModel.targetInfo}
+      />
+
+      <PerformanceMetricsCard
         performanceMetrics={projectDetailModel.performanceMetrics}
       />
 
