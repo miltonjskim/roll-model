@@ -35,7 +35,7 @@ export const FileUploadDialog = () => {
       <DialogTrigger asChild>
         <Button variant="black">로컬 파일 사용하기</Button>
       </DialogTrigger>
-      <DialogContent className="bg-[theme(primary-white)] sm:max-w-[50%]">
+      <DialogContent className="bg-[theme(primary-white)] w-150 sm:max-w-[50%]">
         <DialogHeader className="text-center">
           <DialogTitle>로컬 데이터 업로드</DialogTitle>
         </DialogHeader>
@@ -88,7 +88,7 @@ export const FileUploadDialog = () => {
               </label>
             </div>
 
-            <div className="relative mt-6 flex w-full items-center gap-4">
+            <div className="relative mx-auto mt-6 flex max-w-lg items-center justify-center gap-4">
               <input
                 ref={fileInputRef}
                 id="file"
@@ -108,16 +108,16 @@ export const FileUploadDialog = () => {
                 }}
               />
               <div
-                className={`flex-1 truncate rounded-md border px-4 py-2 text-sm ${isError ? 'border-[color:var(--color-error)] text-[color:var(--color-error-text)]' : 'border-[color:var(--color-gray-03)] text-[color:var(--color-gray-01)]'}`}
+                className={`flex-3/4 truncate rounded-md border px-4 py-2 text-sm ${isError ? 'border-[color:var(--color-error)] text-[color:var(--color-error-text)]' : 'border-[color:var(--color-gray-03)] text-[color:var(--color-gray-01)]'}`}
               >
                 {file ? file.name : '.csv, .parquet 형식의 파일 1개만 업로드 가능합니다.'}
               </div>
-              <Button variant="black" onClick={handleClickFileButton} className="rounded-md">
+              <Button variant="black" onClick={handleClickFileButton} className="flex-1/4 rounded-md hover:text-[color:var(--primary-white)]">
                 찾아보기
               </Button>
             </div>
 
-            <p className="text-sm text-[color:var(--color-gray-01)]">
+            <p className="text-center text-sm text-[color:var(--color-gray-01)]">
               <span className="text-[color:var(--color-error-text)]">*</span>
               <span>{isError ? '지원하지 않는 파일 형식입니다.' : '.csv, .parquet 형식만 지원하며 500MB 이하의 파일 1개만 업로드 해주세요.'}</span>
             </p>

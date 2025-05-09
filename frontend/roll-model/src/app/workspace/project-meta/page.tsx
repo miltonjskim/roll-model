@@ -11,7 +11,7 @@ import { CATEGORY_OPTIONS, DOMAIN_OPTIONS } from '@/features/workspace/constants
 import { createProject } from '@/features/workspace/service/createProject';
 import { useAtom, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const InputProjectMetaDataPage = () => {
   const router = useRouter();
@@ -22,6 +22,15 @@ const InputProjectMetaDataPage = () => {
   const [type, setType] = useAtom(projectCategoryAtom);
   const [isPublic, setIsPublic] = useAtom(projectPublicAtom);
   const setProjectId = useSetAtom(projectIdAtom);
+
+  useEffect(() => {
+    // 페이지 최초 진입 시만 초기화
+    setTitle('');
+    setDescription('');
+    setDomain('GENERAL');
+    setType('REGRESSION');
+    setIsPublic(true);
+  }, [setTitle, setDescription, setDomain, setType, setIsPublic]);
 
   const handleSubmit = async () => {
     try {
