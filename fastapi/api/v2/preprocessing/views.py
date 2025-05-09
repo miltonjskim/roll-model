@@ -9,7 +9,7 @@ from core.storage import get_minio_client
 from db.mysql_config import get_mysql_db
 from models.preprocessing.missing_value_models import MissingValueImputationRequest, ImputationResultDetail, \
     MissingValueImputationResponse
-from schemas.mongo.pipeline import PreprocessingStep, PreprocessingStepType, PipelineHistoryItem
+from schemas.mongo.pipeline import PreprocessingStep, PreprocessingStepType, PipelineHistoryItem, PipelineModel
 from schemas.mysql.schemas import PipelineStatus, Pipeline
 from service.dataset_service import store_dataset_to_mongodb, analyze_dataset
 from service.db.pipeline_service import PipelineService, get_pipeline_service
@@ -250,7 +250,7 @@ async def complete_preprocessing(
     """
     try:
         # 1. 파이프라인 정보 가져오기
-        pipeline = await pipeline_service.get_pipeline(pipeline_id)
+        pipeline:PipelineModel = await pipeline_service.get_pipeline(pipeline_id)
         
         if pipeline is None:
             raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다")
@@ -365,14 +365,15 @@ async def complete_preprocessing(
                 raise HTTPException(status_code=500, detail="파이프라인 업데이트 실패")
 
             # MYSQL 완료된 파이프라인 생성
-            pipeline = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
+            pipeline:Pipeline | None = db.query(Pipeline).filter(Pipeline.pipeline_id == pipeline_id).first()
             if not pipeline:
                 logger.error(f"파이프라인 ID {pipeline_id}에 해당하는 레코드를 찾을 수 없습니다.")
                 raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
 
                 # 파이프라인 상태 업데이트
+            pipeline.data_count = len(dataset_analysis["data_sample"])
             pipeline.status = PipelineStatus.PREPROCESSED
-            pipeline.modified_at = datetime.now()
+            pipeline.modified_at  = datetime.now()
             # 변경사항 커밋
             db.commit()
             db.refresh(pipeline)
