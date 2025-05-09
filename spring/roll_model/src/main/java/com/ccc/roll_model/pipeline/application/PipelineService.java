@@ -7,7 +7,7 @@ import com.ccc.roll_model.global.exception.ApiException;
 import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
-import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;  // 이 줄 추가
+import com.ccc.roll_model.pipeline.ui.dto.response.UpdatePipelineVisibilityResponse;
 
 import lombok.RequiredArgsConstructor;
 
