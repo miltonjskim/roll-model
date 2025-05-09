@@ -13,7 +13,6 @@ import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTypes';
 
-
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
   try {
@@ -39,7 +38,7 @@ export const fetchProjectDetailVersion = async (pipelineId: string) => {
     // 시간차 어택 제거
     return projectDetailVersionMock as ProjectDetailVersionResponse;
   } catch (error) {
-    console.error('상세 데이터섹션 호출 실패', error);
+    console.error('상세 버전섹션 호출 실패', error);
     throw error;
   }
 };
@@ -60,7 +59,7 @@ export const fetchProjectDetailModel = async (pipelineId: string) => {
     // mock data 회귀일때 테스트전용
     // return projectDetailModelRegressionTest as ProjectDetailModelResponse;
   } catch (error) {
-    console.error('상세 데이터섹션 호출 실패', error);
+    console.error('상세 모델섹션 호출 실패', error);
     throw error;
   }
 };
@@ -97,7 +96,19 @@ export const fetchProjectDetailApi = async (pipelineId: string) => {
     // mock data
     return projectDetailApiMock as ProjectDetailApiResponse;
   } catch (error) {
-    console.error('상세 데이터섹션 호출 실패', error);
+    console.error('상세 api섹션 호출 실패', error);
+    throw error;
+  }
+};
+
+// api섹션의 모델다운로드기능
+export const downloadYourModel = async (pipelineId: string) => {
+  try {
+    // 나중에 api 완성 후에 활성화
+    const response = await axiosInstance.get(`/api/v1/models/${pipelineId}/export`);
+    return response.data;
+  } catch (error) {
+    console.error('모델 다운로드 api 호출 실패', error);
     throw error;
   }
 };
