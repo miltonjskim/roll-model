@@ -115,6 +115,7 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
+            sample_data=dataset_analysis["data_sample"][:10] if dataset_analysis["data_sample"] else [],
             category=category,
             domain=domain
         )
@@ -323,7 +324,8 @@ async def store_dataset_to_mongodb(
     file_size: int,
     object_name: str,
     category: str,
-    domain: str
+    domain: str,
+    sample_data: List
 ) -> str:
     try:
         dataset_collection = get_dataset_collection()
@@ -372,6 +374,7 @@ async def store_dataset_to_mongodb(
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
             "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
+            "sample_data": sample_data,
             "category": category,
             "domain": domain,
             "metadata": {

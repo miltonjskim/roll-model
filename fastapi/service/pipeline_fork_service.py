@@ -302,7 +302,7 @@ async def determine_target_project(db, project_id, member_id, source_pipeline, o
         except Exception as create_error:
             logger.error(f"새 프로젝트 생성 중 오류 발생: {str(create_error)}")
             # 마지막 대안: 사용자의 첫 번째 프로젝트 또는 원본 프로젝트
-            return ApiResponse(message="오류오류")
+            return ApiResponse(status_code=500, message="타겟 프로젝트 결정 중 오류가 발생했습니다.", data=None)
     
     logger.info(f"최종 타겟 프로젝트: {target_project_id}")
     return target_project_id
@@ -426,7 +426,6 @@ async def prepare_response_data(new_pipeline_id, target_project_id, pipeline_id,
         "projectId": target_project_id,
         "version": new_version,
         "isOriginalProject": target_project_id == original_project_id,
-        "registeredAt": new_pipeline.registered_at.isoformat(),
     }
 
     # 히스토리 정보 추가
