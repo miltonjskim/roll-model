@@ -115,7 +115,7 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
-            sample_data=dataset_analysis["data_sample"][:10] if dataset_analysis["data_sample"] else [],
+            sample_data = dataset_analysis["data_sample"]["data"][:10] if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else [],
             category=category,
             domain=domain
         )

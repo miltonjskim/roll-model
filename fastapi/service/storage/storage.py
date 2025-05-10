@@ -14,7 +14,6 @@ import logging
 from typing import Optional, BinaryIO, Dict, Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-import io
 
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
