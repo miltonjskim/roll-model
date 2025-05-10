@@ -49,7 +49,7 @@ class MissingValueHandler:
         
         return result
     
-    def handle_missing_values(self, column, method='mean'):
+    def handle_missing_values_imputation(self, column, method='mean'):
         """
         선택한 컬럼의 결측치 처리
         
@@ -111,11 +111,7 @@ class MissingValueHandler:
             fill_value = self.df[column].mode()[0]
             description = f"{column} 컬럼의 결측치를 최빈값({fill_value})으로 대체"
         else:
-            raise CustomAPIException(
-                status_code=400,
-                error_code="MVH_006",
-                message=f"유효하지 않은 대체 방법입니다. 'mean', 'median', 'mode' 중 하나를 사용하세요."
-            )
+            fill_value = method
             
         # 결측치 대체
         self.df[column].fillna(fill_value, inplace=True)
@@ -136,3 +132,81 @@ class MissingValueHandler:
         }
             
         return result
+
+    def handle_missing_values_remove(self, method='ROW_REMOVE'):
+        """
+        결측치가 포함된 행 또는 열 제거
+
+        Parameters:
+        -----------
+        method : str, default='ROW_REMOVE'
+            제거 방법 ('ROW_REMOVE': 행 제거, 'COL_REMOVE': 열 제거)
+
+        Returns:
+        --------
+        dict
+            처리 결과 정보
+        """
+        # 결측치 개수 확인
+        original_missing_count = self.df.isnull().sum().sum()
+
+        if original_missing_count == 0:
+            raise CustomAPIException(
+                status_code=400,
+                error_code="MVH_006",
+                message="데이터에 결측치가 없습니다."
+            )
+
+        # 결측치가 있는 행 또는 열 찾기
+        missing_indices = []
+        imputed_rows = []
+        imputed_columns = []
+
+        if method == 'ROW_REMOVE':
+            # 결측치가 있는 행 인덱스
+            missing_indices = self.df[self.df.isnull().any(axis=1)].index.tolist()
+
+            # 제거 전 원본 행 저장
+            imputed_rows = self.df.loc[missing_indices].copy().to_dict('records')
+
+            # 행 제거
+            self.df = self.df.dropna(axis=0)
+
+        elif method == 'COL_REMOVE':
+            # 결측치가 있는 열 이름
+            imputed_columns = [col for col in self.df.columns if self.df[col].isnull().any()]
+
+            # 열 제거
+            self.df = self.df.dropna(axis=1)
+
+        else:
+            raise CustomAPIException(
+                status_code=400,
+                error_code="MVH_007",
+                message=f"지원하지 않는 제거 방법입니다: {method}. 'ROW_REMOVE' 또는 'COL_REMOVE'를 사용하세요."
+            )
+
+        # 결측치 처리 후 남은 결측치 개수
+        remaining_missing_count = self.df.isnull().sum().sum()
+        imputed_count = original_missing_count - remaining_missing_count
+
+        # 결과 구성
+        result = {
+            "method": method,
+            "changedIndices": missing_indices,
+            "imputedRows": imputed_rows,
+            "imputedColumns": imputed_columns,
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        }
+
+        # 전체 응답 구조 (메서드에서는 data 부분만 반환)
+        response_data = {
+            "pipelineId": None,  # 외부에서 설정해야 할 값
+            "success": True,
+            "message": "결측치 처리 완료",
+            "originalMissingCount": int(original_missing_count),
+            "imputedCount": int(imputed_count),
+            "result": result
+        }
+
+        return response_data
