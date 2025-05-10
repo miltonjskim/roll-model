@@ -41,7 +41,7 @@ const ClassificationEvaluation = memo(({ confusionMatrix }: ClassificationEvalua
       }
     }
 
-    return total > 0 ? ((diagonal / total) * 100).toFixed(1) : '0';
+    return total > 0 ? ((diagonal / total) * 100).toFixed(2) : '0';
   }, [matrixData]);
 
   return (

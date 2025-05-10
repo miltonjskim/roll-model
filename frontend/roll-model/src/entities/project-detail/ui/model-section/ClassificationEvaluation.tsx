@@ -86,7 +86,7 @@ export default function ClassificationEvaluation({ confusionMatrix }: Classifica
       }
     }
 
-    return { name: bestClass, accuracy: (maxAccuracy * 100).toFixed(1) };
+    return { name: bestClass, accuracy: (maxAccuracy * 100).toFixed(2) };
   }, [matrixData, labels]);
 
   // 커스텀 툴팁 렌더러

@@ -49,7 +49,7 @@ export interface FeatureImportance {
 export interface ApiStatus {
   expiresAt: string; // ISO 8601 형식 날짜
   accuracy: number | null; // 분류 모델의 정확도
-  rmse: number | null; // 회귀 모델의 RMSE
+  rSquared: number | null; // 회귀 모델의 rSquared
 }
 
 // API 엔드포인트 정보
