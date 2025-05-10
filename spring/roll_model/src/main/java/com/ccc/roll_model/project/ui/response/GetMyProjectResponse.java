@@ -40,7 +40,7 @@ public class GetMyProjectResponse {
         private String status;
         private String domain;
         private Double accuracy;
-        private Double rmse;
+        private Double rSquared;
         private String target;
         private int dataCount;
         private int runningDuration;
