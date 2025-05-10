@@ -1,0 +1,140 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "Diabetes Prediction Dataset",
+      "category": "CLASSIFICATION",
+      "domain": "HEALTHCARE",
+      "version": "4.1",
+      "projectPublicYn": true,
+      "pipelinePublicYn": false,
+      "ownerYn": true
+    },
+    "preprocessingSteps": [
+      {
+        "type": "MISSING_VALUE",
+        "parameters": {
+          "columnId": "age",
+          "imputationMethod": "MEAN"
+        },
+        "order": 1,
+        "active": true
+      },
+      {
+        "type": "OUTLIER_DETECTION",
+        "parameters": {
+          "columnId": "income",
+          "outlierMethod": "Z_SCORE",
+          "threshold": 3
+        },
+        "order": 2,
+        "active": true
+      }
+    ],
+    "algorithm": "RandomForestClassifier",
+    "modelParameters": [
+      {
+        "parameterName": "트리 개수",
+        "parameterValue": "100 개",
+        "parameterKey": "n_estimators"
+      },
+      {
+        "parameterName": "최대 깊이",
+        "parameterValue": "10 레벨",
+        "parameterKey": "max_depth"
+      }
+    ],
+    "targetInfo": [
+      {
+        "targetName": "특성 수",
+        "targetValue": "자동",
+        "targetKey": "feature_count"
+      },
+      {
+        "durationName": "학습 시간",
+        "durationValue": "5.2 초",
+        "durationKey": "learning_duration"
+      }
+    ],
+    "featureImportance": [
+      {
+        "featureName": "혈당",
+        "importanceValue": "35%",
+        "importanceKey": "blood_sugar"
+      },
+      {
+        "featureName": "BMI",
+        "importanceValue": "28%",
+        "importanceKey": "bmi"
+      },
+      {
+        "featureName": "나이",
+        "importanceValue": "21%",
+        "importanceKey": "age"
+      },
+      {
+        "featureName": "혈압",
+        "importanceValue": "16%",
+        "importanceKey": "blood_pressure"
+      }
+    ],
+    "apiStatus": {
+      "expiresAt": "2025-08-08T23:59:59Z",
+      "accuracy": 0.92,
+      "rmse": null
+    },
+    "endpoint": {
+      "url": "https://api.testtesttesttesttesttest.com/models/proj-12345/predict",
+      "apiKey": "sk_12345abcdef67890"
+    },
+    "inputSchema": {
+      "features": [
+        {
+          "name": "age",
+          "type": "number",
+          "required": true,
+          "example": 25.4
+        },
+        {
+          "name": "gender",
+          "type": "enum",
+          "required": true,
+          "options": ["male", "female", "other"],
+          "example": "female"
+        },
+        {
+          "name": "bmi",
+          "type": "number",
+          "required": true,
+          "example": 27.5
+        },
+        {
+          "name": "blood_pressure",
+          "type": "number",
+          "required": true,
+          "example": 120.0
+        },
+        {
+          "name": "glucose",
+          "type": "number",
+          "required": true,
+          "example": 95.2
+        },
+        {
+          "name": "insulin",
+          "type": "number",
+          "required": false,
+          "example": 34.6
+        },
+        {
+          "name": "has_family_history",
+          "type": "boolean",
+          "required": false,
+          "example": true
+        }
+      ]
+    }
+  },
+  "error": null
+}

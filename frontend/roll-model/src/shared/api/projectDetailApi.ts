@@ -4,6 +4,7 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 //version
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
+import projectDetailOverviewMock from '@/shared/api/mocks/project-detail/projectDetailOverview.json';
 import projectDetailApiMock from '@/shared/api/mocks/project-detail/projectDetailApi.json';
 import projectDetailModelClassification from '@/shared/api/mocks/project-detail/projectDetailModelClassification.json'; // 분류 mock data
 import projectDetailModelClassificationTest from '@/shared/api/mocks/project-detail/projectDetailModelClassificationTest.json'; // 분류 mock data 테스트버전
@@ -12,6 +13,7 @@ import projectDetailModelRegressionTest from '@/shared/api/mocks/project-detail/
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTypes';
+import { ProjectDetailOverviewResponse } from '@/entities/project-detail/model/overviewTypes';
 
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
@@ -47,11 +49,11 @@ export const fetchProjectDetailVersion = async (pipelineId: string) => {
 export const fetchProjectDetailModel = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/modelInfo`);
-    return response.data;
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/modelInfo`);
+    // return response.data;
 
     // mock data 분류일때
-    // return projectDetailModelClassification as ProjectDetailModelResponse;
+    return projectDetailModelClassification as ProjectDetailModelResponse;
     // mock data 분류일때 테스트전용
     // return projectDetailModelClassificationTest as ProjectDetailModelResponse; // (혼동행렬 class 12개)화면박살남
     // mock data 회귀일때
@@ -126,6 +128,21 @@ export const downloadYourModel = async (pipelineId: string) => {
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   } catch (error) {
     console.error('모델 다운로드 api 호출 실패', error);
+    throw error;
+  }
+};
+
+// 개요 섹션
+export const fetchProjectDetailOverview = async (pipelineId: string) => {
+  try {
+    // 나중에 api 완성 후에 활성화
+    // const response = await axiosInstance.get(`/api/v1/projects/{projectId}/overview`)
+    // return response.data
+
+    // mock data
+    return projectDetailOverviewMock as ProjectDetailOverviewResponse;
+  } catch (error) {
+    console.error('상세 api섹션 호출 실패', error);
     throw error;
   }
 };

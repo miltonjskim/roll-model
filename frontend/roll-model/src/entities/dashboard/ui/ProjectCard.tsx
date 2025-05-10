@@ -34,7 +34,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         <span
           className={`rounded px-2 py-1 text-xs ${
             project.status === 'COMPLETED'
-              ? project.visibility
+              ? project.publicYn
                 ? 'bg-green-100 text-green-800' // 완료&공개
                 : 'bg-blue-100 text-blue-800' // 완료&비공개
               : project.status === 'PREPROCESSED'
@@ -44,7 +44,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                   : 'bg-red-100 text-red-800' // 실패
           }`}
         >
-          {project.status === 'COMPLETED' ? (project.visibility ? '공개' : '비공개') : project.status === 'PREPROCESSED' ? '작업중' : project.status === 'LEARNING' ? '학습중' : '실패'}
+          {project.status === 'COMPLETED' ? (project.publicYn ? '공개' : '비공개') : project.status === 'PREPROCESSED' ? '작업중' : project.status === 'LEARNING' ? '학습중' : '실패'}
         </span>
       </div>
 
@@ -72,8 +72,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           <span className="mr-1">⬇️</span> {project.downloadCount}
         </span>
         <span className="flex items-center">
-          <span className="mr-1">{project.visibility ? '🌐' : '🔒'}</span>
-          {project.visibility ? '공개' : '비공개'}
+          <span className="mr-1">{project.publicYn ? '🌐' : '🔒'}</span>
+          {project.publicYn ? '공개' : '비공개'}
         </span>
         <span className="flex items-center">
           <span className="mr-1">⏱️</span>
