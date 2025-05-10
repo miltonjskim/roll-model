@@ -38,7 +38,7 @@ export default function ApiEndpointCard({ endpoint }: ApiEndpointCardProps) {
 
   return (
     <div className="mb-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-6 text-xl font-semibold text-gray-800">API 엔드포인트</h2>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">API 엔드포인트</h2>
 
       {/* URL */}
       <div className="mb-6">

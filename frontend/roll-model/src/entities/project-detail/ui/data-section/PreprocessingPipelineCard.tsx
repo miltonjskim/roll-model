@@ -20,8 +20,8 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
 
   return (
     <div className="bg-[theme(primary-white)] mb-4 rounded-lg p-4 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold">전처리 파이프라인</h2>
-      <p className="text-[theme(color-muted-foreground)] mb-4 text-sm">데이터에 적용된 전처리 과정과 세부 파라미터입니다</p>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">전처리 파이프라인</h2>
+      <p className="text-[theme(color-muted-foreground)] mb-2 text-sm">데이터에 적용된 전처리 과정과 세부 파라미터입니다</p>
 
       <div className="w-full overflow-x-auto py-6">
         <div className="flex items-center justify-between">

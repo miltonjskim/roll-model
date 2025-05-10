@@ -39,8 +39,8 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-xl font-semibold text-gray-800">특성 중요도</h2>
-      <p className="mb-4 text-sm text-gray-500">모델의 예측에 각 특성이 미치는 영향력을 보여줍니다. 막대가 길수록 모델 예측에 더 중요한 역할을 합니다.</p>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">특성 중요도</h2>
+      <p className="text-[theme(color-muted-foreground)] mb-2 text-sm">모델의 예측에 각 특성이 미치는 영향력을 보여줍니다. 막대가 길수록 모델 예측에 더 중요한 역할을 합니다.</p>
       {/* 차트 */}
       <div className="mt-4">
         <ResponsiveContainer width="100%" height={Math.max(300, sortedData.length * 40)}>

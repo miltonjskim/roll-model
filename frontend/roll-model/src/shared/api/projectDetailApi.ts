@@ -49,11 +49,11 @@ export const fetchProjectDetailVersion = async (pipelineId: string) => {
 export const fetchProjectDetailModel = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/modelInfo`);
-    return response.data;
+    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/modelInfo`);
+    // return response.data;
 
     // mock data 분류일때
-    // return projectDetailModelClassification as ProjectDetailModelResponse;
+    return projectDetailModelClassification as ProjectDetailModelResponse;
     // mock data 분류일때 테스트전용
     // return projectDetailModelClassificationTest as ProjectDetailModelResponse; // (혼동행렬 class 12개)화면박살남
     // mock data 회귀일때
@@ -132,7 +132,7 @@ export const downloadYourModel = async (pipelineId: string) => {
   }
 };
 
-// API 섹션
+// 개요 섹션
 export const fetchProjectDetailOverview = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
@@ -140,7 +140,7 @@ export const fetchProjectDetailOverview = async (pipelineId: string) => {
     // return response.data
 
     // mock data
-    return projectDetailOverviewMock as ProjectDetailOverviewResponse; // 수정해
+    return projectDetailOverviewMock as ProjectDetailOverviewResponse;
   } catch (error) {
     console.error('상세 api섹션 호출 실패', error);
     throw error;

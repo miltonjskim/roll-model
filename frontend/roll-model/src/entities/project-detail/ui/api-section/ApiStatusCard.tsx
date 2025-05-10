@@ -144,7 +144,7 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
     // 주석: 전체 컨테이너 스타일 업데이트
     <div className="mb-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       {/* 주석: 제목 스타일 변경 */}
-      <h2 className="mb-6 text-xl font-semibold text-gray-800">API 상태 정보</h2>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">API 상태 정보</h2>
 
       {/* 주석: 카드 레이아웃 완전히 변경 - 그리드 시스템 및 반응형 디자인 적용 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

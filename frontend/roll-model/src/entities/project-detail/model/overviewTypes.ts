@@ -11,7 +11,7 @@ export interface ProjectInfo {
   ownerYn: boolean;
 }
 
-// 전처리 파라미터 타입 정의
+// 전처리 파라미터 타입 정의 
 export type PreprocessingParameter = string | number | boolean | undefined;
 
 export interface PreprocessingStep {

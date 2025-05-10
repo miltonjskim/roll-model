@@ -43,11 +43,11 @@ export default function ModelSectionPage() {
         targetInfo={projectDetailModel.targetInfo}
       />
 
-      <PerformanceMetricsCard
-        performanceMetrics={projectDetailModel.performanceMetrics}
-      />
+      <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} />
 
-      {isClassification && <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />}
+      {isClassification && (projectDetailModel as ClassificationModelData).confusionMatrix && (
+  <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />
+)}
 
       {isRegression && (
         <RegressionEvaluation actualVsPredicted={(projectDetailModel as RegressionModelData).actualVsPredicted} residualPlot={(projectDetailModel as RegressionModelData).residualPlot} />
