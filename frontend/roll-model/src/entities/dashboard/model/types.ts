@@ -18,7 +18,7 @@ export interface Project {
   runnungDuration: number | null; // 학습시간 (전처리만완료시 null)
   likeCount: number; // 좋아요
   downloadCount: number; // 다운로드
-  visibility: boolean; // 공개여부
+  publicYn: boolean; // 공개여부
   createdAt: string; // 생성
   updatedAt: string; // 수정
 }

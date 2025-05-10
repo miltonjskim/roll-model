@@ -23,6 +23,8 @@ const transformDashboardResponse = (response: DashboardResponse): DashboardRespo
 export const fetchDashboardData = async () => {
   try {
     const response = await axiosInstance.get<DashboardResponse>('/api/v1/projects/my');
+    console.log(response.data);
+
     return transformDashboardResponse(response.data);
 
     // Mock 데이터 사용 (실제 API 연동 전까지)
