@@ -309,36 +309,38 @@ async def complete_preprocessing(
             has_nan = df[col].isna().any()
 
             # 데이터 타입 추론 로직
-            sample_data = df[col].dropna().iloc[:10] if len(df[col].dropna()) > 0 else []
 
             # 기본값 설정
             inferred_type = "string"
 
-            if len(sample_data) > 0:
-                # 날짜 형식 확인
-                first_val = sample_data.iloc[0]
+            if len(df[col]) > 0:
                 is_datetime = False
 
                 # 문자열인 경우만 날짜 확인 시도
-                if isinstance(first_val, str):
-                    date_attempt = pd.to_datetime(first_val, errors='coerce')
-                    is_datetime = not pd.isna(date_attempt)
 
+                if df[col].dtype == 'object':  # 문자열 컬럼인 경우
+                    try:
+                        # 모든 값을 날짜로 변환 시도
+                        parsed_dates = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
+                        # 모든 값이 성공적으로 날짜로 변환되었는지 확인
+                        is_datetime = parsed_dates.notna().all()
+                    except (ValueError, TypeError) as e:
+                        is_datetime = False
                 if is_datetime:
                     inferred_type = "datetime"
                 # 숫자 형식 확인
-                elif pd.api.types.is_numeric_dtype(sample_data):
+                elif pd.api.types.is_numeric_dtype(df[col]):
                     # NaN이 있으면서 정수 같은 값들이라면 float으로 처리
-                    if has_nan and all(sample_data.apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                    if has_nan and all(df[col].apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
                         inferred_type = "double"
                     # NaN이 없고 모든 값이 정수처럼 보이면 integer
                     elif not has_nan and all(
-                            sample_data.apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
+                            df[col].apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
                         inferred_type = "integer"
                     else:
                         inferred_type = "double"
                 # 불리언 값 확인
-                elif all(sample_data.isin([True, False, "True", "False", "true", "false", 0, 1])):
+                elif all(df[col].isin([True, False, "True", "False", "true", "false", 0, 1])):
                     inferred_type = "boolean"
 
             inferred_columns.append({"name": col, "type": inferred_type})
