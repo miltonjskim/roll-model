@@ -7,7 +7,9 @@ from fastapi import Depends
 from db.mongo_config import get_pipeline_collection
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 
+import logging
 
+logger = logging.getLogger()
 async def _update_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
     """데이터베이스에서 파이프라인을 업데이트합니다."""
     try:
@@ -51,19 +53,18 @@ Optional[PipelineModel]:
 
         # ObjectId로 변환
         pipeline_object_id = ObjectId(pipeline_id) if not isinstance(pipeline_id, ObjectId) else pipeline_id
-
+        logger.info(f"파이프라인 ObjectId: {pipeline_object_id}")
         # 기본 쿼리는 ID만으로 구성
         query = {"_id": pipeline_object_id}
-
+        logger.info(f"파이프라인 쿼리: {query}")
         # 추가 필터가 있는 경우 쿼리에 추가
         if project_id is not None:
             query["project_id"] = project_id
         if member_id is not None:
             query["member_id"] = member_id
-
+        logger.info(f"파이프라인 쿼리 (추가 필터 포함): {query}")
         # MongoDB에서 파이프라인 조회
         pipeline_data = await pipeline_collection.find_one(query)
-
         # 조회 결과가 있으면 PipelineModel로 변환하여 반환
         if pipeline_data:
             return PipelineModel.model_validate(pipeline_data)
@@ -117,6 +118,7 @@ class PipelineService:
     async def get_pipeline(self, pipeline_id: str, project_id: int = None, member_id: int = None) -> Optional[
         PipelineModel]:
         """MongoDB에서 파이프라인을 조회합니다."""
+        logger.info(f"파이프라인 조회: {pipeline_id}, {project_id}, {member_id}")
         return await _fetch_pipeline_from_db(pipeline_id, project_id, member_id)
 
     async def update_pipeline(self,
@@ -127,8 +129,8 @@ class PipelineService:
                               ) -> Optional[PipelineModel]:
         """파이프라인을 업데이트합니다."""
         # 현재 파이프라인 데이터 가져오기
+        logger.info(f"파이프라인 {pipeline_id}의 현재 데이터: {project_id}, {member_id}")
         pipeline = await self.get_pipeline(pipeline_id, project_id, member_id)
-
         if not pipeline:
             return None
 
@@ -285,6 +287,101 @@ class PipelineService:
 
         # DB에 저장
         return await _create_pipeline_in_db(pipeline)
+
+    async def revert_to_preprocessing_step(self,
+                                           pipeline_id: str,
+                                           step_index: Optional[int] = None,
+                                           project_id: int = None,
+                                           member_id: int = None,
+                                           add_to_history: bool = True) -> Optional[Dict[str, Any]]:
+        """
+        특정 전처리 스텝까지 되돌립니다.
+
+        Args:
+            pipeline_id: 파이프라인 ID
+            step_index: 되돌아갈 스텝의 인덱스 (None이면 마지막 스텝 제거)
+            project_id: 프로젝트 ID (선택적)
+            member_id: 멤버 ID (선택적)
+            add_to_history: 변경사항을 히스토리에 기록할지 여부
+
+        Returns:
+            변경 후 현재 최신 스텝 정보 또는 None
+        """
+        try:
+            # 현재 파이프라인 데이터 가져오기
+            pipeline = await self.get_pipeline(pipeline_id, project_id, member_id)
+
+            if not pipeline:
+                logger.error(f"Pipeline {pipeline_id} not found")
+                return None
+
+            # 파이프라인에 히스토리가 없으면 처리할 수 없음
+            if not pipeline.history:
+                logger.error(f"Pipeline {pipeline_id} has no history")
+                return None
+
+            current_history = pipeline.history[-1]
+
+            # 전처리 스텝이 없으면 처리할 수 없음
+            if not current_history.preprocessing_steps:
+                logger.info(f"Pipeline {pipeline_id} has no preprocessing steps")
+                return {"message": "No preprocessing steps to revert"}
+
+            # step_index가 None이면 마지막 스텝 제거 (현재 길이 - 1)
+            if step_index is None:
+                step_index = len(current_history.preprocessing_steps) - 2
+
+            # 스텝 인덱스 유효성 검사
+            if step_index < -1 or step_index >= len(current_history.preprocessing_steps):
+                logger.error(f"Invalid step index {step_index}")
+                return None
+
+            # step_index가 -1이면 모든 스텝 제거
+            if step_index == -1:
+                new_steps = []
+            else:
+                new_steps = current_history.preprocessing_steps[:step_index + 1]
+
+            # 변경사항을 히스토리에 기록
+            if add_to_history:
+                # 새로운 히스토리 항목 생성
+                new_history_item = PipelineHistoryItem(
+                    status=current_history.status,
+                    preprocessing_steps=new_steps.copy()
+                )
+                pipeline.history.append(new_history_item)
+            else:
+                # 현재 히스토리 항목을 직접 수정
+                current_history.preprocessing_steps = new_steps
+
+            # 수정 시간 업데이트
+            pipeline.modified_at = datetime.now()
+
+            # DB 업데이트
+            updated_pipeline = await _update_pipeline_in_db(pipeline)
+
+            if not updated_pipeline:
+                logger.error(f"Failed to update pipeline {pipeline_id}")
+                return None
+
+            # 업데이트된 파이프라인의 최신 스텝 반환
+            latest_history = updated_pipeline.history[-1]
+            if latest_history.preprocessing_steps:
+                latest_step = latest_history.preprocessing_steps[-1]
+                return {
+                    "latestStep": latest_step.model_dump(),
+                    "totalSteps": len(latest_history.preprocessing_steps),
+                }
+            else:
+                # 더 이상 전처리 스텝이 없음
+                return {
+                    "latestStep": None,
+                    "totalSteps": 0,
+                }
+
+        except Exception as e:
+            logger.error(f"Error reverting preprocessing step: {e}")
+            return None
 
 # FastAPI 의존성 주입 함수
 async def get_pipeline_service() -> PipelineService:

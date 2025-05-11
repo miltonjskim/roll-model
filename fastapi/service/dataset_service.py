@@ -28,7 +28,7 @@ from schemas.mysql.schemas import ProjectDataset
 import math
 import numpy as np
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
-from schemas.mongo.dataset import DatasetDomain, DatasetCategory, ColumnType
+from schemas.mongo.dataset import ColumnType
 from service.db.pipeline_mysql_service import create_mysql_pipeline
 
 logger = logging.getLogger()
@@ -47,6 +47,10 @@ def replace_nan_values(obj):
         if np.isnan(obj):
             return "NaN"
         return float(obj)
+    elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.integer):
+        if np.isnan(obj):
+            return "NaN"
+        return int(obj)
     else:
         return obj
 
