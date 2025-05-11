@@ -7,14 +7,19 @@ import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/Prepro
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { useAtomValue } from 'jotai';
 import { useEffect, useRef, useState } from 'react';
 
 const PreprocessDataPage = () => {
   const uploadedData = useAtomValue(uploadedDatasetAtom);
+  const pipelineId = uploadedData?.pipelineId;
   const projectTitle = useAtomValue(projectTitleAtom);
   const optionRef = useRef<HTMLDivElement>(null);
   const [highlight, setHighlight] = useState(false);
+  const [selectedColumn, setSelectedColumn] = useState<string | undefined>(undefined);
+  const columnNames = uploadedData?.originalDatasets.columns;
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!uploadedData) {
@@ -29,6 +34,18 @@ const PreprocessDataPage = () => {
       optionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setHighlight(true);
       setTimeout(() => setHighlight(false), 1000);
+    }
+  };
+
+  const requestAISuggestion = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/recommendation`);
+      console.log(response.data);
+    } catch (error) {
+      console.error('AI 추천 요청 실패:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,11 +69,23 @@ const PreprocessDataPage = () => {
           {/* 전처리 기능 선택 섹션 */}
           <div className="bg-[theme(primary-white)] rounded-md p-4 text-left">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-
+            <div className="mt-2 mb-4">
+              <label htmlFor="column-select" className="text-sm font-medium">
+                전처리할 컬럼 선택
+              </label>
+              <select id="column-select" className="mt-1 w-full rounded border px-2 py-1 text-sm" value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
+                <option value="">컬럼을 선택하세요</option>
+                {columnNames?.map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="">
               {/* 전처리 기능 목록 섹션 */}
               <div className="${ highlight ? 'shadow-accent' : '' mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
-                <PreprocessingOptions />
+                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} />
               </div>
 
               {/* AI 추천 버튼 */}
@@ -66,7 +95,7 @@ const PreprocessDataPage = () => {
                   <span className="">추천 결과 적용 시 기본 설정값이 자동으로 입력됩니다.</span>
                 </div>
 
-                <Button variant="black" size="lg">
+                <Button variant="black" size="lg" onClick={requestAISuggestion}>
                   AI 추천 결과 적용하기
                 </Button>
               </div>
@@ -105,16 +134,6 @@ const PreprocessDataPage = () => {
               <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
             </div>
             <PreprocessingTable />
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-4 text-left">
-          {/* 전처리 결과 후 어떻게 변화됐는지 확인하는 섹션 */}
-          <div className="bg-[theme(primary-white)] rounded-md p-4">
-            <div>
-              <h4 className="text-[1.07rem] font-semibold">전처리 효과 요약</h4>
-              <p className="text-sm text-[var(--color-gray-01)]">전처리 적용 후 결과를 확인할 수 있습니다.</p>
-            </div>
           </div>
 
           {/* 전처리 종료 버튼 */}
