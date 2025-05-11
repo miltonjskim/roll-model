@@ -256,6 +256,7 @@ public class ModelingService {
 
 		// 3. MySQL 파이프라인 상태 변경
 		pipeline.updateStatus(Status.LEARNING);
+		pipeline.updateTargetFeature(modelingInfo.getTargetFeature());
 		pipelineRepository.save(pipeline);
 
 		log.info("파이프라인 상태를 LEARNING으로 업데이트했습니다. 파이프라인 ID: {}, 초기 모델 ID: {}",
