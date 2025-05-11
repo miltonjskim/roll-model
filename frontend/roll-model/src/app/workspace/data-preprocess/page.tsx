@@ -1,14 +1,15 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
-import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
+import PreprocessingPipeline, { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useRef, useState } from 'react';
 
 const PreprocessDataPage = () => {
@@ -20,6 +21,8 @@ const PreprocessDataPage = () => {
   const [selectedColumn, setSelectedColumn] = useState<string | undefined>(undefined);
   const columnNames = uploadedData?.originalDatasets.columns;
   const [isLoading, setIsLoading] = useState(false);
+  const [recommendedSteps, setRecommendedSteps] = useState<Step[]>([]);
+  const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!uploadedData) {
@@ -41,12 +44,17 @@ const PreprocessDataPage = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/recommendation`);
+      setRecommendedSteps(response.data.data.preprocessingSteps);
       console.log(response.data);
     } catch (error) {
       console.error('AI 추천 요청 실패:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const mergeChangedCells = (newCells: Record<string, boolean>) => {
+    setChangedCells((prev) => ({ ...prev, ...newCells }));
   };
 
   return (
@@ -73,19 +81,23 @@ const PreprocessDataPage = () => {
               <label htmlFor="column-select" className="text-sm font-medium">
                 전처리할 컬럼 선택
               </label>
-              <select id="column-select" className="mt-1 w-full rounded border px-2 py-1 text-sm" value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
-                <option value="">컬럼을 선택하세요</option>
-                {columnNames?.map((col) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedColumn} onValueChange={setSelectedColumn}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="컬럼을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {columnNames?.map((col) => (
+                    <SelectItem key={col} value={col}>
+                      {col}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="">
               {/* 전처리 기능 목록 섹션 */}
               <div className="${ highlight ? 'shadow-accent' : '' mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
-                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} />
+                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={mergeChangedCells} />
               </div>
 
               {/* AI 추천 버튼 */}
@@ -122,7 +134,7 @@ const PreprocessDataPage = () => {
                 <p className="text-sm text-[var(--color-gray-01)]">현재까지 적용한 전처리 과정을 확인할 수 있습니다.</p>
                 <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">단계를 삭제하거나 추가할 수 있습니다.</p>
               </div>
-              <PreprocessingPipeline onAdd={handleAddClick} />
+              <PreprocessingPipeline onAdd={handleAddClick} recommendedSteps={recommendedSteps} />
             </div>
           </div>
 
@@ -133,7 +145,7 @@ const PreprocessDataPage = () => {
               <p className="text-sm text-[var(--color-gray-01)]">적용된 전처리 결과를 미리 확인할 수 있습니다.</p>
               <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
             </div>
-            <PreprocessingTable />
+            <PreprocessingTable changedCells={changedCells} />
           </div>
 
           {/* 전처리 종료 버튼 */}
