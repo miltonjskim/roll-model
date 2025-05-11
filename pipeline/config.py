@@ -44,11 +44,16 @@ MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY')
 MINIO_SECURE = os.environ.get('MINIO_SECURE', 'False').lower() == 'true'
 MINIO_MODELS_BUCKET = os.environ.get('MINIO_MODELS_BUCKET')
 MINIO_DATASETS_BUCKET = os.environ.get('MINIO_DATASETS_BUCKET')
+MINIO_ENDPOINT_G4DN = os.environ.get('MINIO_ENDPOINT_G4DN')
+MINIO_ENDPOINT_G4DN_KUBE = os.environ.get('MINIO_ENDPOINT_G4DN_KUBE')
 
 # MongoDB 설정
 MONGODB_URI = os.environ.get('MONGODB_URI')
 MONGODB_DATABASE = os.environ.get('MONGODB_DATABASE')
 MONGODB_COLLECTION = os.environ.get('MONGODB_COLLECTION')
+
+# MLflow 설정
+MLFLOW_TRACKING_URI = os.environ.get('MLFLOW_TRACKING_URI')
 
 def get_absolute_path(path):
     """상대 경로를 절대 경로로 변환"""

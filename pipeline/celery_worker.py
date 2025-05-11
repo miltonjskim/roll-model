@@ -16,8 +16,13 @@ from config import (
     MINIO_DATASETS_BUCKET,
     MINIO_MODELS_BUCKET,
 )
-from minio_utils import upload_model, download_dataset, ensure_bucket_exists, get_file_url, parse_s3_url
+from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
+from mlflow_utils import log_model_to_mlflow
+from kserve_utils import (
+    sanitize_k8s_name,
+    deploy_model_with_virtual_service
+)
 
 # Celery 앱 설정 (RabbitMQ 브로커 사용)
 app = Celery('ml_worker',
@@ -192,11 +197,11 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 모델 유형 설정
             model_category = "CLASSIFICATION"
             algorithm_map = {
-                'LogisticRegression': 'LOGISTIC_REGRESSION',
-                'SVC': 'SVM',
-                'KNeighborsClassifier': 'KNN',
-                'RandomForestClassifier': 'RANDOM_FOREST',
-                'GradientBoostingClassifier': 'GRADIENT_BOOSTING'
+                'LogisticRegression': 'LogisticRegression',
+                'SVC': 'SVC',
+                'KNeighborsClassifier': 'KNeighborsClassifier',
+                'RandomForestClassifier': 'RandomForestClassifier',
+                'GradientBoostingClassifier': 'GradientBoostingClassifier'
             }
             algorithm = algorithm_map.get(model_type, model_type.upper())
 
@@ -275,10 +280,10 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 모델 유형 설정
             model_category = "REGRESSION"
             algorithm_map = {
-                'ElasticNet': 'ELASTIC_NET',
-                'SVR': 'SVM',
-                'RandomForestRegressor': 'RANDOM_FOREST',
-                'GradientBoostingRegressor': 'GRADIENT_BOOSTING'
+                'ElasticNet': 'ElasticNet',
+                'SVR': 'SVR',
+                'RandomForestRegressor': 'RandomForestRegressor',
+                'GradientBoostingRegressor': 'GradientBoostingRegressor'
             }
             algorithm = algorithm_map.get(model_type, model_type.upper())
 
@@ -360,29 +365,22 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
         model_bytes = pickle.dumps(model)
 
         # 모델 저장 경로 처리
-        if save_path is None:
-            timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
-            if pipeline_id:
-                save_filename = f"{model_type.lower()}_{pipeline_id}_{timestamp}.pkl"
-            else:
-                save_filename = f"{model_type.lower()}_{timestamp}.pkl"
+        timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
+        save_filename = f"{pipeline_id}.pkl"
 
-            if project_id:
-                save_path = f"models/{project_id}/{save_filename}"
-            else:
-                save_path = f"models/{save_filename}"
+        # pipeline_id가 있으면 해당 폴더 내에 저장
+        if pipeline_id:
+            s3_object_name = f"project{project_id}/{save_filename}"
+        else:
+            s3_object_name = save_filename
 
         # MinIO에 모델 저장
-        ensure_bucket_exists(MINIO_MODELS_BUCKET)
+        #ensure_bucket_exists(MINIO_MODELS_BUCKET)
         s3_model_path = upload_model(
             model_bytes,
-            os.path.basename(save_path),
+            s3_object_name,
             MINIO_MODELS_BUCKET
         )
-
-        # TODO: 모델 서빙 API 엔드포인트 생성
-        # 실제로는 모델 배포 단계에서 생성됨
-        api_endpoint = "uri/example"
 
         # 업데이트할 모델 메타데이터 구성 - 지정된 필드만 포함
         model_metadata = {
@@ -403,7 +401,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             "feature_importance": feature_importance,
             "learning_duration": float(train_end_time - train_start_time),  # 정수 대신 실수로 저장
             "model_file_path": s3_model_path,
-            "api_endpoint": api_endpoint,
             "registered_at": end_time_iso
         }
 
@@ -424,16 +421,83 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             from mongo_utils import save_to_mongodb
             save_to_mongodb(model_metadata)
 
-        # 결과 반환
+        # MLflow에 모델 로깅
+        mlflow_info = log_model_to_mlflow(
+            model=model,
+            model_type=model_type,
+            model_params=model_params,
+            metrics=performance,
+            feature_importance=feature_importance,
+            pipeline_id=pipeline_id,
+            project_id=project_id,
+            features_info=features_info,
+            target_column=target_column
+        )
+
+        # KServe InferenceService 배포
+        if mlflow_info:
+            # 모델 이름 생성 (MLflow 등록 이름 사용)
+            model_name = mlflow_info["registered_model"]
+            model_version = mlflow_info["registered_model_version"]
+
+            full_model_name = f"{model_name}-{model_version}"
+
+            # 모델 경로 설정 (MinIO 버킷 내부) -> MinIO 저장 경로와 동일
+            model_path = s3_object_name
+
+            # InferenceService와 VirtualService 모두 배포
+            deployment_success, deployment_message, service_name, service_url = deploy_model_with_virtual_service(
+                model_name=pipeline_id,
+                model_path=model_path,
+                namespace="default",
+                gpu_fraction=0,  # GPU 사용량 설정 (필요시 수정)
+                cpu_request="100m",
+                cpu_limit="300m",
+                memory_request="256Mi",
+                memory_limit="512Mi"
+            )
+
+            if deployment_success:
+                # 배포 정보 기록
+                deployment_info = {
+                    "status": "deployed",
+                    "service_name": service_name,
+                    "url": service_url,
+                    "deployment_time": pd.Timestamp.now().isoformat()
+                }
+            else:
+                deployment_info = {
+                    "status": "failed",
+                    "error": deployment_message,
+                    "deployment_time": pd.Timestamp.now().isoformat()
+                }
+        else:
+            deployment_info = {
+                "status": "skipped",
+                "reason": "MLflow 모델 등록 실패"
+            }
+
+        # 결과 반환에 MLflow 및 배포 정보 추가
         result = {
             "status": "success",
             "model_type": model_type,
             "s3_model_path": s3_model_path,
-            "model_metadata": model_metadata
+            "model_metadata": model_metadata,
+            "mlflow_info": mlflow_info,
+            "deployment_info": deployment_info
         }
 
         if pipeline_id:
             result["pipeline_id"] = pipeline_id
+
+            # MongoDB에 배포 상태 업데이트
+            if deployment_info["status"] == "deployed":
+                update_data = {
+                    "deployment_status": "deployed",
+                    "api_endpoint": deployment_info["url"],
+                    "deployment_timestamp": deployment_info["deployment_time"]
+                }
+                update_model_by_pipeline_id(pipeline_id, update_data)
 
         return result
 

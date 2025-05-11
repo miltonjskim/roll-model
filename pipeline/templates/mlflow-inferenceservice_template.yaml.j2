@@ -1,0 +1,49 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ model_name }}
+  namespace: default
+  annotations:
+    serving.kserve.io/timeout: "300"
+    serving.kserve.io/enable-prometheus-metrics: "true"
+    serving.kserve.io/s3-endpoint: {{ endpoint_url }}
+    serving.kserve.io/s3-usehttps: "0"
+    serving.kserve.io/s3-verifyssl: "0"
+    serving.kserve.io/s3-region: "us-east-1"
+    serving.kserve.io/s3-bucket: "ml-models"
+    serving.kserve.io/s3-secret: "minio-creds"
+    serving.kserve.io/enable-external-traffic: "true"
+spec:
+  predictor:
+    serviceAccountName: kserve-sa
+    minReplicas: 1
+    maxReplicas: 3
+    # 자동 스케일링을 위한 지표 설정
+    scaleMetric: concurrency
+    scaleTarget: 10
+    containerConcurrency: 5
+    sklearn:
+      image: "miltonjunseokkim/sklearn-server:1.6.1"
+      storageUri: s3://ml-models/{{ model_path }}
+      resources:
+        requests:
+          cpu: {{ cpu_request }}
+          memory: {{ memory_request }}
+          {% if gpu_fraction > 0 %}
+          nvidia.com/gpu: {{ gpu_fraction }}
+          {% endif %}
+        limits:
+          cpu: {{ cpu_limit }}
+          memory: {{ memory_limit }}
+          {% if gpu_fraction > 0 %}
+          nvidia.com/gpu: {{ gpu_fraction }}
+          {% endif %}
+      {% if gpu_fraction > 0 %}
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+      {% endif %}
