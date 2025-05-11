@@ -3,6 +3,7 @@ package com.ccc.roll_model.project.ui.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -57,7 +58,10 @@ public class GetProjectVersionsResponse {
         private Double runnungDuration;
         private Integer likeCount;
         private Integer downloadCount;
+
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updatedAt;
+
         private boolean ownerYn;
     }
 }
