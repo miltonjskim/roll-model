@@ -176,7 +176,7 @@ async def reload_recent_workspace(
         워크스페이스 정보
     """
     try:
-        latest_pipeline = db.query(Pipeline)\
+        latest_pipeline: Pipeline | None = db.query(Pipeline)\
             .join(Project, Project.project_id == Pipeline.project_id)\
             .filter(Pipeline.project_id == project_id)\
             .filter(Project.member_id == member_id)\
@@ -211,14 +211,23 @@ async def reload_recent_workspace(
             "preprocessingSteps": [],
             "modelingInfo": None
         }
-        
+
         # 전처리 단계 정보 추가
         if pipeline_details.history and len(pipeline_details.history) > 0:
             latest_history = pipeline_details.history[-1]
             if latest_history.preprocessing_steps:
-                workspace_data["preprocessingSteps"]=latest_history.preprocessing_steps
+                for step in latest_history.preprocessing_steps:
+                    workspace_data["preprocessingSteps"].append({
+                        "type": step.type,
+                        "parameters": step.parameters,
+                        "order": step.order,
+                        "active": step.active,
+                        "result": step.result,
+                    })
             if latest_history.modeling_info:
                 workspace_data["modelingInfo"] = latest_history.modeling_info
+
+            workspace_data["status"] = latest_history.status
         
         return ApiResponse(
             status_code =200,
@@ -306,6 +315,7 @@ async def reload_workspace_by_pipeline_version(
                         "parameters": step.parameters,
                         "order": step.order,
                         "active": step.active,
+                        "result": step.result,
                     })
             if latest_history.modeling_info:
                 workspace_data["modelingInfo"] = latest_history.modeling_info
@@ -406,7 +416,6 @@ async def fork_pipeline_preprocess(
     """
     try:
         # 1. 원본 파이프라인 조회
-        logger.info(f"1111111111111111111111231231231211111 : {pipeline_id}")
         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
             db, pipeline_id, project_id, pipeline_service
         )
@@ -582,51 +591,4 @@ async def get_dataset_page(
         return ApiResponse(
             status_code=400,
             message=f"데이터셋 조회 실패: {str(e)}"
-        )
-
-
-@router.get("/pipelines/{pipeline_id}/dataset/columns", response_class=ApiResponse)
-async def get_dataset_columns(
-        pipeline_id: str = Path(..., description="파이프라인 ID"),
-        pipeline_service: PipelineService = Depends(get_pipeline_service),
-        minio_client: MinioClient = Depends(get_minio_client)
-):
-    """
-    파이프라인 데이터셋의 컬럼 목록을 조회합니다.
-    """
-    try:
-        # 파이프라인 정보 조회
-        pipeline = await pipeline_service.get_pipeline(pipeline_id)
-        if not pipeline:
-            return ApiResponse(
-                status_code=400,
-                message=f"파이프라인 ID {pipeline_id}를 찾을 수 없습니다."
-            )
-
-        # 파이프라인에서 데이터셋 정보 추출
-        bucket_name = "datasets"
-        object_name = pipeline.original_dataset_object_name
-
-        if not bucket_name or not object_name:
-            return ApiResponse(
-                status_code=404,
-                message="파이프라인에 연결된 데이터셋 정보가 없습니다."
-            )
-
-        # MinioClient에서 CSV 컬럼 정보 조회
-        columns = await minio_client.get_csv_columns(
-            bucket_name=bucket_name,
-            object_name=object_name
-        )
-
-        return ApiResponse(
-            status_code=200,
-            message="데이터셋 컬럼 조회 성공",
-            data=DatasetColumnsResponse(columns=columns)
-        )
-
-    except Exception as e:
-        return ApiResponse(
-            status_code=400,
-            message=f"데이터셋 컬럼 조회 실패: {str(e)}"
         )
