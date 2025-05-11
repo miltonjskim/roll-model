@@ -118,9 +118,11 @@ public class ProjectVersionService {
 
         if (pipeline.getResult() != null) {
             if (project.getCategory() == Category.CLASSIFICATION) {
-                accuracy = pipeline.getResult().doubleValue();
+                // 소수점 둘째 자리까지 반올림
+                accuracy = Math.round(pipeline.getResult().doubleValue() * 100) / 100.0;
             } else if (project.getCategory() == Category.REGRESSION) {
-                rSquared = pipeline.getResult().doubleValue();
+                // 소수점 둘째 자리까지 반올림
+                rSquared = Math.round(pipeline.getResult().doubleValue() * 100) / 100.0;
             }
         }
 
@@ -128,6 +130,8 @@ public class ProjectVersionService {
         Double runningDuration = null;
         if (model != null && model.getLearningDuration() != null) {
             runningDuration = model.getLearningDuration().doubleValue();
+            // TODO: 필요하다면? 러닝 타임도 소수점 둘째 자리까지 반올림
+            // runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
         }
 
         // parent_pipeline_id에 해당하는 버전 정보
