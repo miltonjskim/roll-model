@@ -7,7 +7,9 @@ from fastapi import Depends
 from db.mongo_config import get_pipeline_collection
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 
+import logging
 
+logger = logging.getLogger()
 async def _update_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
     """데이터베이스에서 파이프라인을 업데이트합니다."""
     try:
@@ -51,21 +53,22 @@ Optional[PipelineModel]:
 
         # ObjectId로 변환
         pipeline_object_id = ObjectId(pipeline_id) if not isinstance(pipeline_id, ObjectId) else pipeline_id
-
+        logger.info(f"파이프라인 ObjectId: {pipeline_object_id}")
         # 기본 쿼리는 ID만으로 구성
         query = {"_id": pipeline_object_id}
-
+        logger.info(f"파이프라인 쿼리: {query}")
         # 추가 필터가 있는 경우 쿼리에 추가
         if project_id is not None:
             query["project_id"] = project_id
         if member_id is not None:
             query["member_id"] = member_id
-
+        logger.info(f"파이프라인 쿼리 (추가 필터 포함): {query}")
         # MongoDB에서 파이프라인 조회
         pipeline_data = await pipeline_collection.find_one(query)
-
+        logger.info(f"파이프라인 조회 결과: {pipeline_data}")
         # 조회 결과가 있으면 PipelineModel로 변환하여 반환
         if pipeline_data:
+            logger.info(f"파이프라인 데이터 변환: {pipeline_data}")
             return PipelineModel.model_validate(pipeline_data)
 
         # 조회 결과가 없으면 None 반환
@@ -117,6 +120,7 @@ class PipelineService:
     async def get_pipeline(self, pipeline_id: str, project_id: int = None, member_id: int = None) -> Optional[
         PipelineModel]:
         """MongoDB에서 파이프라인을 조회합니다."""
+        logger.info(f"파이프라인 조회: {pipeline_id}, {project_id}, {member_id}")
         return await _fetch_pipeline_from_db(pipeline_id, project_id, member_id)
 
     async def update_pipeline(self,
@@ -127,8 +131,8 @@ class PipelineService:
                               ) -> Optional[PipelineModel]:
         """파이프라인을 업데이트합니다."""
         # 현재 파이프라인 데이터 가져오기
+        logger.info(f"파이프라인 {pipeline_id}의 현재 데이터: {project_id}, {member_id}")
         pipeline = await self.get_pipeline(pipeline_id, project_id, member_id)
-
         if not pipeline:
             return None
 

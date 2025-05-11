@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Path, HTTPException
 from sqlalchemy.orm import Session
 
-from core.security import verify_token
+from core.security import verify_token, verify_pipeline_ownership
 from core.storage import get_minio_client
 from db.mysql_config import get_mysql_db
 from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, TargetEncodingRequest, \
@@ -17,6 +17,7 @@ from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
+from typing import Dict
 import pandas as pd
 import logging
 
@@ -31,7 +32,7 @@ router = APIRouter()
 async def remove_missing_values(
     request: MissingValueRemoveRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """결측치 제거 API"""
@@ -48,7 +49,7 @@ async def remove_missing_values(
 async def imputate_missing_values(
     request: MissingValueImputationRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """결측치 대체 API"""
@@ -65,7 +66,7 @@ async def imputate_missing_values(
 async def detect_outlier(
     request: LabelEncodingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """이상치 탐지 API"""
@@ -82,7 +83,7 @@ async def detect_outlier(
 async def impute_outlier(
     request: LabelEncodingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """이상치 대체 API"""
@@ -99,7 +100,7 @@ async def impute_outlier(
 async def remove_outlier(
     request: LabelEncodingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """이상치 제거 API"""
@@ -116,7 +117,7 @@ async def remove_outlier(
 async def scale_zscore(
     request: ZScoreRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """Z-Score 표준화 API"""
@@ -133,7 +134,7 @@ async def scale_zscore(
 async def scale_minmax(
     request: MinMaxScalingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """Min-Max 스케일링 API"""
@@ -150,7 +151,7 @@ async def scale_minmax(
 async def transform_log(
     request: LogTransformRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """로그 변환 API"""
@@ -167,7 +168,7 @@ async def transform_log(
 async def transform_sqrt(
     request: SqrtTransformRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """제곱근 변환 API"""
@@ -184,7 +185,7 @@ async def transform_sqrt(
 async def encode_onehot(
     request: OneHotEncodingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """원-핫 인코딩 API"""
@@ -201,7 +202,7 @@ async def encode_onehot(
 async def encode_label(
     request: LabelEncodingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """레이블 인코딩 API"""
@@ -235,7 +236,7 @@ async def encode_target(
 async def balance_class(
     request: ClassBalancingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
     """클래스 불균형 처리 API"""
@@ -252,7 +253,7 @@ async def balance_class(
 @router.post('/complete')
 async def complete_preprocessing(
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    member_id: int = Depends(verify_token),
+    member_id: int = Depends(verify_pipeline_ownership),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db),
 ):
@@ -313,7 +314,6 @@ async def complete_preprocessing(
 
             # 기본값 설정
             inferred_type = "string"
-
             if len(sample_data) > 0:
                 # 날짜 형식 확인
                 first_val = sample_data.iloc[0]
@@ -350,15 +350,17 @@ async def complete_preprocessing(
             "hasHeader": True,
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }
-        
+        logger.info(config)
         project = db.query(Project).filter(Project.project_id == pipeline.project_id).first()
-        
+        logger.info(project)
+
         # 버퍼 위치를 처음으로 되돌림
         buffer.seek(0)
         
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
         dataset_analysis = await analyze_dataset(buffer, config)
         
+        logger.info(dataset_analysis)
         # MongoDB에 전처리된 데이터셋 저장
         dataset_id: str = await store_dataset_to_mongodb(
             project_id=pipeline.project_id,
@@ -372,10 +374,8 @@ async def complete_preprocessing(
             category = project.category,
             domain = project.domain
         )
-        
         # 이제 버퍼를 닫음
         buffer.close()
-        
         # 파이프라인 업데이트
         updated_pipeline = await pipeline_service.update_pipeline_status(
             pipeline_id=pipeline_id,
