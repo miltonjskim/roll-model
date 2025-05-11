@@ -19,8 +19,10 @@ from config import (
 from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
 from mlflow_utils import log_model_to_mlflow
-from kserve_utils import generate_inference_service_yaml, deploy_inference_service, get_inference_service_url, sanitize_k8s_name
-
+from kserve_utils import (
+    sanitize_k8s_name,
+    deploy_model_with_virtual_service
+)
 
 # Celery 앱 설정 (RabbitMQ 브로커 사용)
 app = Celery('ml_worker',
@@ -363,23 +365,20 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
         model_bytes = pickle.dumps(model)
 
         # 모델 저장 경로 처리
-        if save_path is None:
-            timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
-            if pipeline_id:
-                save_filename = f"{model_type.lower()}_{pipeline_id}_{timestamp}.pkl"
-            else:
-                save_filename = f"{model_type.lower()}_{timestamp}.pkl"
+        timestamp = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
+        save_filename = f"{pipeline_id}.pkl"
 
-            if project_id:
-                save_path = f"models/{project_id}/{save_filename}"
-            else:
-                save_path = f"models/{save_filename}"
+        # pipeline_id가 있으면 해당 폴더 내에 저장
+        if pipeline_id:
+            s3_object_name = f"project{project_id}/{save_filename}"
+        else:
+            s3_object_name = save_filename
 
         # MinIO에 모델 저장
         #ensure_bucket_exists(MINIO_MODELS_BUCKET)
         s3_model_path = upload_model(
             model_bytes,
-            os.path.basename(save_path),
+            s3_object_name,
             MINIO_MODELS_BUCKET
         )
 
@@ -443,29 +442,22 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
 
             full_model_name = f"{model_name}-{model_version}"
 
-            # sanitize_k8s_name 함수 호출 결과 미리 확인 (선택 사항)
-            k8s_model_name = sanitize_k8s_name(full_model_name)
-            print(f"원본 모델 이름: {full_model_name}")
-            print(f"쿠버네티스 리소스 이름: {k8s_model_name}")
+            # 모델 경로 설정 (MinIO 버킷 내부) -> MinIO 저장 경로와 동일
+            model_path = s3_object_name
 
-            # 모델 경로 설정 (MinIO 버킷 내부)
-            model_path = f"{project_id}/{model_type}/{model_version}" if project_id else f"{model_type}/{model_version}"
-
-            # InferenceService YAML 생성
-            # (generate_inference_service_yaml 내부에서 sanitize_k8s_name 호출함)
-            yaml_path = generate_inference_service_yaml(
-                model_name=full_model_name,
-                model_path=model_path
+            # InferenceService와 VirtualService 모두 배포
+            deployment_success, deployment_message, service_name, service_url = deploy_model_with_virtual_service(
+                model_name=pipeline_id,
+                model_path=model_path,
+                namespace="default",
+                gpu_fraction=0,  # GPU 사용량 설정 (필요시 수정)
+                cpu_request="100m",
+                cpu_limit="300m",
+                memory_request="256Mi",
+                memory_limit="512Mi"
             )
 
-            # InferenceService 배포
-            deployment_success, deployment_message = deploy_inference_service(yaml_path)
-
             if deployment_success:
-                # 쿠버네티스 명명 규칙에 맞게 서비스 이름 변환
-                service_name = sanitize_k8s_name(f"{model_name}-{model_version}")
-                service_url = get_inference_service_url(service_name)
-
                 # 배포 정보 기록
                 deployment_info = {
                     "status": "deployed",

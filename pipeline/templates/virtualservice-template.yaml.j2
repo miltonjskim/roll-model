@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ service_name }}-vs
+  namespace: default
+spec:
+  gateways:
+  - kserve-gateway
+  hosts:
+  - "*"
+  http:
+  - match:
+    - uri:
+        prefix: /v1/models/{{ service_name }}
+    route:
+    - destination:
+        host: {{ service_name }}-predictor
+        port:
+          number: 80
