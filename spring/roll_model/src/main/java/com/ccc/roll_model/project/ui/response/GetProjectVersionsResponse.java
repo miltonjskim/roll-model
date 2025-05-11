@@ -3,6 +3,8 @@ package com.ccc.roll_model.project.ui.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,7 +43,15 @@ public class GetProjectVersionsResponse {
         private boolean deletedYn;
         private String parent;
         private Double accuracy;
+
+        @JsonProperty("rSquared")
         private Double rSquared;
+        // 이 필드는 Jackson이 자동 생성하는 필드를 무시하도록 함
+        @JsonIgnore
+        public Double getRsquared() {
+            return rSquared;
+        }
+
         private Integer dataCount;
         private String target;
         private Double runnungDuration;
