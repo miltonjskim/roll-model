@@ -63,4 +63,8 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
     public void updateStatus(Status status) {
         this.status = status;
     }
+
+    public void updateTargetFeature(String targetFeature) {
+        this.targetFeature = targetFeature;
+    }
 }
