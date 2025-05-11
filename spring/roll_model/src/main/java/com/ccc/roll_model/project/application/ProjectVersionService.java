@@ -124,19 +124,28 @@ public class ProjectVersionService {
             }
         }
 
-        // 학습 소요 시간은 ModelDocument에서 가져옴
+        // 학습 소요 시간은 ModelDocument에서 가져올게.
         Double runningDuration = null;
         if (model != null && model.getLearningDuration() != null) {
             runningDuration = model.getLearningDuration().doubleValue();
         }
 
-        // 응답 객체 생성
+        // parent_pipeline_id에 해당하는 버전 정보
+        String parentVersion = "1.0"; // 기본값(부모 파이프라인 못 찾으면)
+        if (pipeline.getParentPipelineId() != null && !pipeline.getParentPipelineId().isEmpty()) {
+            Optional<PipelineEntity> parentPipeline = pipelineRepository.findById(pipeline.getParentPipelineId());
+            if (parentPipeline.isPresent()) {
+                parentVersion = parentPipeline.get().getVersion().toString();
+            }
+        }
+
+        // 응답 객체
         return PipelineInfo.builder()
                 .pipelineId(pipeline.getPipelineId())
                 .version(pipeline.getVersion().toString())
                 .publicYn(pipeline.getPublicYn())
                 .deletedYn(pipeline.getDeletedYn())
-                .parent(pipeline.getParentPipelineId())
+                .parent(parentVersion)
                 .accuracy(accuracy)
                 .rSquared(rSquared)
                 .dataCount(pipeline.getDataCount())
@@ -145,7 +154,7 @@ public class ProjectVersionService {
                 .likeCount(pipeline.getLikeCount())
                 .downloadCount(pipeline.getDownloadCount())
                 .updatedAt(pipeline.getModifiedAt())
-                .ownerYn(isProjectOwner) // 프로젝트 소유자 기준으로 파이프라인 소유권 결정
+                .ownerYn(isProjectOwner) // 프로젝트 소유자 ==> 파이프라인 소유자
                 .build();
     }
 }
