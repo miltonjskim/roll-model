@@ -2,17 +2,22 @@
 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline, { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { showErrorToast } from '@/shared/lib/toast/toast';
+import { ApiResponse } from '@/shared/model/types/apiResponse';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { ApiError } from 'next/dist/server/api-utils';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 const PreprocessDataPage = () => {
+  const router = useRouter();
   const uploadedData = useAtomValue(uploadedDatasetAtom);
   const pipelineId = uploadedData?.pipelineId;
   const projectTitle = useAtomValue(projectTitleAtom);
@@ -23,6 +28,7 @@ const PreprocessDataPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedSteps, setRecommendedSteps] = useState<Step[]>([]);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
+  const setCompletedDataset = useSetAtom(completedDatasetAtom);
 
   useEffect(() => {
     if (!uploadedData) {
@@ -55,6 +61,22 @@ const PreprocessDataPage = () => {
 
   const mergeChangedCells = (newCells: Record<string, boolean>) => {
     setChangedCells((prev) => ({ ...prev, ...newCells }));
+  };
+
+  const handleCompletePreprocessing = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/complete`);
+      setCompletedDataset(response.data.columns);
+
+      router.push('/workspace/data-preprocess/complete');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,7 +171,7 @@ const PreprocessDataPage = () => {
           </div>
 
           {/* 전처리 종료 버튼 */}
-          <Button variant="black" size="lg" className="w-full p-6">
+          <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing}>
             전처리 결과 확인
           </Button>
         </div>
