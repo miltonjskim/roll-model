@@ -20,6 +20,10 @@ public enum ErrorCode {
 
 	// 파이프라인 관련
 	PIPELINE_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "파이프라인을 찾을 수 없습니다."),
+
+	// 모델 관련
+	MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "모델을 찾을 수 없습니다."),
+	MODEL_EXPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "M002", "모델 내보내기에 실패했습니다."),
 	;
 
 	private final HttpStatus status;
