@@ -7,12 +7,29 @@ class BasePreprocessingRequest(BaseModel):
 
 # 결측치 제거 요청
 class MissingValueRemoveRequest(BasePreprocessingRequest):
+    column: str = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="제거 방법 ('ROW_REMOVE' 또는 'COL_REMOVE')")
 
 # 결측치 대체 요청
 class MissingValueImputationRequest(BasePreprocessingRequest):
     column: str = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="대체 방법 ('MEAN', 'MEDIAN', 'MODE')")
+
+class OutlierRemoveRequest(BasePreprocessingRequest):
+    column: str = Field(..., description="처리할 컬럼 이름")
+    method: str = Field(..., description="제거 방법 ('ROW_REMOVE' 또는 'COL_REMOVE')")
+    detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
+
+# 결측치 대체 요청
+class OutlierImputationRequest(BasePreprocessingRequest):
+    column: str = Field(..., description="처리할 컬럼 이름")
+    method: str = Field(..., description="제거 방법 ('MEAN', 'MEDIAN', 'MODE', ‘THRESHOLD’)")
+    detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
+
+
+class OutlierDetectionRequest(BasePreprocessingRequest):
+    column: str = Field(..., description="처리할 컬럼 이름")
+    detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
 
 # Z-Score 표준화 요청
 class ZScoreRequest(BasePreprocessingRequest):

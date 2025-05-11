@@ -5,7 +5,8 @@ from core.storage import get_minio_client
 from schemas.mongo.pipeline import PipelineHistoryItem, PreprocessingStep
 import logging
 import io
-
+from fastapi.encoders import jsonable_encoder
+from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 
 
@@ -78,13 +79,13 @@ class PreprocessingHandler:
         if df is None:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
 
-        object_name, etag = self._save_to_minio(pipeline_id, df)
+        object_name, etag = await self._save_to_minio(pipeline_id, df)
 
         # 6. 파이프라인 히스토리 업데이트
         await self._update_pipeline_history(pipeline, preprocessing_type, request, etag, object_name)
 
         # 7. 응답 생성
-        response = self._create_response(pipeline_id, result)
+        response = self._create_response(pipeline_id, result, df.to_dict(orient="records"))
 
         return response
 
@@ -175,18 +176,20 @@ class PreprocessingHandler:
         await self.pipeline_service.add_pipeline_history(pipeline, history_item)
         self.logger.info(f"파이프라인 히스토리 업데이트 성공: {preprocessing_type}")
 
-    def _create_response(self, pipeline_id, result):
+    def _create_response(self, pipeline_id, result, dataset):
         """결과 응답 생성"""
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         # 기본 응답 구조
-        return {
+        response = {
             "status": 200,
             "message": "Success",
             "data": {
                 "pipelineId": pipeline_id,
-                "result": result  # result 구조에 따라 조정
+                "result": result,  # result 구조에 따라 조정
+                "dataset": dataset  # 전처리된 데이터셋을 여기에 추가
             }
         }
+        return jsonable_encoder(replace_nan_values(response))
 
 # 공통 의존성 함수
 def get_preprocessing_handler(
