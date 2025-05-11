@@ -11,8 +11,8 @@ export interface Project {
   status: ProjectStatus; // 성공 or 진행중==전처리만완료?
   domain: ApiProjectDomain; // 의료 금융 등
   displayDomain?: string; // 화면 표시용 한글 도메인
-  accuracy: number | null; // 정확도 (전처리만완료시 accuracy and rmse null)
-  rmse: number | null; // 회귀일때의 정확도 (전처리만완료시 accuracy and rmse null)
+  accuracy: number | null; // 정확도 (전처리만완료시 accuracy and rSquared null)
+  rSquared: number | null; // 회귀일때의 정확도 (전처리만완료시 accuracy and rSquared null)
   target: string | null; // 목표변수 (전처리만완료시 null)
   dataCount: number; // 데이터수
   runnungDuration: number | null; // 학습시간 (전처리만완료시 null)

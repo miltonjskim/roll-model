@@ -133,7 +133,7 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
     {
       name: '모델 정확도',
       icon: '📊',
-      value: apiStatus.accuracy ? `${(apiStatus.accuracy * 100).toFixed(2)}%` : apiStatus.rmse ? `RMSE: ${apiStatus.rmse.toFixed(4)}` : '정보 없음',
+      value: apiStatus.accuracy ? `${(apiStatus.accuracy * 100).toFixed(2)}%` : apiStatus.rSquared ? `R²: ${(apiStatus.rSquared * 100).toFixed(2)}` : '정보 없음',
       description: apiStatus.accuracy ? '분류 모델 정확도' : '회귀 모델 성능',
       bg: 'bg-violet-50',
       textColor: 'text-violet-700',
