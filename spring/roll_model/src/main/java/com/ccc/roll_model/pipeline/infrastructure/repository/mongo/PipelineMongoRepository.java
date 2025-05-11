@@ -10,6 +10,6 @@ import com.ccc.roll_model.pipeline.infrastructure.entity.mongo.PipelineDocument;
 public interface PipelineMongoRepository extends MongoRepository<PipelineDocument, ObjectId> {
 	Optional<PipelineDocument> findById(ObjectId id, Integer memberId);
 
-	// 소유자 여부와 상관없이 파이프라인 문서를 조회하는 메서드
-	// 기본 findById 메서드를 사용하면 됨 (MongoRepository에서 상속)
+	 // id 필드를 사용하여 수정 일시 기준 가장 최신 문서를 조회
+	 PipelineDocument findTopByIdOrderByModifiedAtDesc(ObjectId id);
 }

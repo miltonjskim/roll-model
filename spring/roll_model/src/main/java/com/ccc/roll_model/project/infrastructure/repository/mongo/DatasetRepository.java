@@ -20,4 +20,6 @@ public interface DatasetRepository extends MongoRepository<DatasetDocument, Obje
     // DatasetDocument findByOriginalDatasetId(String originalDatasetId);
 
     DatasetDocument findByEtag(String etag);
+
+    boolean existsByProjectId(Integer projectId);
 }

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class SVRParams implements ModelParameter {
 	private Double c;

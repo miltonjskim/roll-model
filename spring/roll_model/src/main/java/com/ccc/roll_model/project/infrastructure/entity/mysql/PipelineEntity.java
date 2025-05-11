@@ -55,13 +55,28 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
     @Column(name = "parent_pipeline_id", nullable = false)
     private String parentPipelineId;
 
-    // 프로젝트 ID를 얻기 위한 안전한 메소드 추가
+    // 프로젝트 ID를 얻음
     public Integer getProjectId() {
         return projectEntity != null ? projectEntity.getProjectId() : null;
     }
 
+    public void updateVisibility(Boolean publicYn) {
+        this.publicYn = publicYn;
+    }
     public void updateStatus(Status status) {
         this.status = status;
+    }
+
+    // 좋아요 수 증가
+    public void incrementLikeCount() {
+        this.likeCount = this.likeCount != null ? this.likeCount + 1 : 1;
+    }
+
+    // 좋아요 수 감소
+    public void decrementLikeCount() {
+        if (this.likeCount != null && this.likeCount > 0) {
+            this.likeCount -= 1;
+        }
     }
 
     public void updateTargetFeature(String targetFeature) {

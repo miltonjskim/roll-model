@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class GradientBoostingRegressorParams implements ModelParameter {
 	private Integer n_estimators;

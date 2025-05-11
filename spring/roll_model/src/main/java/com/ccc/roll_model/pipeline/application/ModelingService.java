@@ -58,12 +58,12 @@ public class ModelingService {
 
 		// 파이프라인 존재 여부 확인 : mysql
 		PipelineEntity pipeline = pipelineRepository.findById(command.getPipelineId())
-			.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
+				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
 
 		// 파이프라인 존재 여부 확인 : mongo
 		System.out.println(command.getModelingInfo());
 		PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
-			.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
+				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
 
 		String filePath = getDatasetFilePath(pipelineDocument);
 
@@ -73,8 +73,8 @@ public class ModelingService {
 		ModelingInfo modelingInfo = command.getModelingInfo();
 
 		ModelParameter modelParameter = ModelParameterFactory.createModelParameters(
-			modelingInfo.getModelType(),
-			modelingInfo.getParameters()
+				modelingInfo.getModelType(),
+				modelingInfo.getParameters()
 		);
 
 		log.info("params validate: {}", modelParameter.validateParameters());
@@ -83,11 +83,11 @@ public class ModelingService {
 
 		// 상태 저장
 		saveModelingStatus(
-			command,
-			pipeline,
-			pipelineDocument,
-			modelingInfo,
-			modelParameter
+				command,
+				pipeline,
+				pipelineDocument,
+				modelingInfo,
+				modelParameter
 		);
 
 		// 카프카 메시징
@@ -125,7 +125,7 @@ public class ModelingService {
 		DatasetDocument datasetDocument;
 		try {
 			datasetDocument = datasetRepository.findById(new ObjectId(datasetId))
-				.orElseThrow(()->new EntityNotFoundException("데이터셋을 찾을 수 없습니다."));
+					.orElseThrow(()->new EntityNotFoundException("데이터셋을 찾을 수 없습니다."));
 		} catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException("유효하지 않은 데이터셋 ID 형식입니다: " + e.getMessage());
 		}
@@ -143,7 +143,7 @@ public class ModelingService {
 		} else {
 			// 히스토리가 있는 경우 가장 최근 전처리 단계의 etag 사용
 			PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory()
-				.get(pipelineDocument.getHistory().size() - 1);
+					.get(pipelineDocument.getHistory().size() - 1);
 
 			List<PipelineDocument.PreprocessingStep> steps = latestHistoryItem.getPreprocessingSteps();
 
@@ -169,24 +169,24 @@ public class ModelingService {
 
 		// 모델 문서 기본 정보 설정 (모델링 시작 전에 알 수 있는 정보들)
 		ModelDocument modelDocument = ModelDocument.builder()
-			.pipelineId(command.getPipelineId())
-			.projectId(pipelineDocument.getProjectId())
-			.memberId(command.getMemberId())
-			.modelTitle(generateDefaultModelTitle(modelingInfo.getAlgorithm(), modelingInfo.getModelType().toString()))
-			.modelDescription("설명이 없습니다.") // 기본 설명
-			.modelType(modelingInfo.getModelType().toString())
-			.algorithm(modelingInfo.getAlgorithm())
-			.registeredAt(LocalDateTime.now())
-			.build();
+				.pipelineId(command.getPipelineId())
+				.projectId(pipelineDocument.getProjectId())
+				.memberId(command.getMemberId())
+				.modelTitle(generateDefaultModelTitle(modelingInfo.getAlgorithm(), modelingInfo.getModelType().toString()))
+				.modelDescription("설명이 없습니다.") // 기본 설명
+				.modelType(modelingInfo.getModelType().toString())
+				.algorithm(modelingInfo.getAlgorithm())
+				.registeredAt(LocalDateTime.now())
+				.build();
 
 		// 파라미터 삽입
 		modelDocument.setParameters(modelParameter);
 
 		// TrainInfo 설정 (시작 시간 및 타겟 정보)
 		ModelDocument.TrainInfo trainInfo = ModelDocument.TrainInfo.builder()
-			.startTime(LocalDateTime.now())
-			.targetFeature(modelingInfo.getTargetFeature())
-			.build();
+				.startTime(LocalDateTime.now())
+				.targetFeature(modelingInfo.getTargetFeature())
+				.build();
 
 		modelDocument.setTrainInfo(trainInfo);
 
@@ -211,12 +211,12 @@ public class ModelingService {
 	 * 모델링 실행 전에 상태 저장 및 초기 모델 문서 생성
 	 */
 	private void saveModelingStatus(
-		ExecuteModelingCommand command,
-		PipelineEntity pipeline,
-		PipelineDocument pipelineDocument,
-		ModelingInfo modelingInfo,
-		ModelParameter modelParameter
-		) {
+			ExecuteModelingCommand command,
+			PipelineEntity pipeline,
+			PipelineDocument pipelineDocument,
+			ModelingInfo modelingInfo,
+			ModelParameter modelParameter
+	) {
 		// 1. MongoDB에 초기 Model 문서 생성
 		ModelDocument initialModelDocument = initializeModelDocument(command, pipelineDocument, modelParameter);
 		ObjectId modelId = modelRepository.save(initialModelDocument).getId();
@@ -228,16 +228,16 @@ public class ModelingService {
 			// 히스토리가 없는 경우 새로 생성
 			pipelineDocument.setHistory(new ArrayList<>());
 			latestHistoryItem = PipelineDocument.PipelineHistoryItem.builder()
-				.status(String.valueOf(Status.LEARNING))
-				.modelId(modelId) // 초기 모델 ID 설정
-				.build();
+					.status(String.valueOf(Status.LEARNING))
+					.modelId(modelId) // 초기 모델 ID 설정
+					.build();
 			pipelineDocument.getHistory().add(latestHistoryItem);
 		} else if (pipelineDocument.getHistory().isEmpty()) {
 			// 히스토리 리스트는 있지만 비어있는 경우
 			latestHistoryItem = PipelineDocument.PipelineHistoryItem.builder()
-				.status(String.valueOf(Status.LEARNING))
-				.modelId(modelId) // 초기 모델 ID 설정
-				.build();
+					.status(String.valueOf(Status.LEARNING))
+					.modelId(modelId) // 초기 모델 ID 설정
+					.build();
 			pipelineDocument.getHistory().add(latestHistoryItem);
 		} else {
 			// 히스토리가 있는 경우 가장 최근 아이템 업데이트
@@ -259,9 +259,23 @@ public class ModelingService {
 		pipelineRepository.save(pipeline);
 
 		log.info("파이프라인 상태를 LEARNING으로 업데이트했습니다. 파이프라인 ID: {}, 초기 모델 ID: {}",
-			pipeline.getPipelineId(), modelId);
+				pipeline.getPipelineId(), modelId);
 	}
 
+	/**
+	 * 파이프라인 ID로 최신 파이프라인 문서를 조회하는 메소드
+	 * modified_at 기준으로 가장 최신 문서를 반환
+	 */
+	private PipelineDocument getLatestPipelineDocument(String pipelineId) {
+		try {
+			// ObjectId로 변환하여 해당 ID로 정확히 찾기
+			ObjectId objectId = new ObjectId(pipelineId);
+			return pipelineMongoRepository.findTopByIdOrderByModifiedAtDesc(objectId);
+		} catch (IllegalArgumentException e) {
+			log.error("유효하지 않은 파이프라인 ID 형식입니다: {}", pipelineId, e);
+			return null;
+		}
+	}
 
 	/**
 	 * 파이프라인 ID를 받아 해당 파이프라인과 관련된 데이터셋 정보를 조회하는 메서드
@@ -276,14 +290,14 @@ public class ModelingService {
 
 		// 파이프라인 존재 여부 확인 : mysql
 		PipelineEntity pipelineEntity = pipelineRepository.findById(command.getPipelineId())
-			.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
+				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
 
 		// 파이프라인 존재 여부 확인 : mongo
 		PipelineDocument pipelineDocument;
 		try {
-			// 소유자 여부와 상관없이 파이프라인 문서 조회 (기본 findById 메서드 사용)
+			// 기존 코드를 그대로 사용
 			pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
-				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
+					.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mongo"));
 
 			log.info("getPipelineDatasetInfo - 파이프라인 문서 조회 성공 (소유자 여부 무시)");
 		} catch (IllegalArgumentException e) {
@@ -294,7 +308,7 @@ public class ModelingService {
 		log.info("getPipelineDatasetInfo - 파이프라인 ID: {}", command.getPipelineId());
 		log.info("getPipelineDatasetInfo - 원본 데이터셋 ID: {}", pipelineDocument.getOriginalDatasetId());
 		log.info("getPipelineDatasetInfo - 히스토리 존재 여부: {}",
-			pipelineDocument.getHistory() != null && !pipelineDocument.getHistory().isEmpty() ? "있음" : "없음");
+				pipelineDocument.getHistory() != null && !pipelineDocument.getHistory().isEmpty() ? "있음" : "없음");
 
 		// 프로젝트 정보 조회
 		ProjectEntity projectEntity = pipelineEntity.getProjectEntity();
@@ -353,7 +367,7 @@ public class ModelingService {
 		}
 
 		PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory()
-			.get(pipelineDocument.getHistory().size() - 1);
+				.get(pipelineDocument.getHistory().size() - 1);
 
 		log.info("getLatestDatasetId - 히스토리 항목 찾음: {}", latestHistoryItem != null ? "있음" : "없음");
 
@@ -388,24 +402,24 @@ public class ModelingService {
 	 * @return 파이프라인 데이터셋 정보 응답
 	 */
 	private GetPipelineDatasetInfoResponse buildResponse(
-		PipelineEntity pipelineEntity,
-		PipelineDocument pipelineDocument,
-		ProjectEntity projectEntity,
-		DatasetDocument datasetDocument,
-		Integer memberId
+			PipelineEntity pipelineEntity,
+			PipelineDocument pipelineDocument,
+			ProjectEntity projectEntity,
+			DatasetDocument datasetDocument,
+			Integer memberId
 	) {
 		// 프로젝트 정보 구성
 		boolean isActualOwner = projectEntity.getMemberEntity().getMemberId().equals(memberId);
 
 		ProjectInfoResponse projectInfo = ProjectInfoResponse.builder()
-			.title(projectEntity.getTitle())
-			.category(projectEntity.getCategory().name())
-			.domain(projectEntity.getDomain().name())
+				.title(projectEntity.getTitle())
+				.category(projectEntity.getCategory().name())
+				.domain(projectEntity.getDomain().name())
 				.version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : null)
-			.projectPublicYn(projectEntity.getPublicYn())
-			.pipelinePublicYn(pipelineEntity.getPublicYn())
-			.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
-			.build();
+				.projectPublicYn(projectEntity.getPublicYn())
+				.pipelinePublicYn(pipelineEntity.getPublicYn())
+				.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
+				.build();
 
 		// 로그 추가: 소유자 여부 확인
 		log.info("buildResponse - 실제 소유자 여부: {}, 응답에 설정된 소유자 여부: {}", isActualOwner, projectInfo.getOwnerYn());
@@ -427,13 +441,13 @@ public class ModelingService {
 
 		// 응답 구성
 		return GetPipelineDatasetInfoResponse.builder()
-			.projectInfo(projectInfo)
-			.dataset(dataset)
-			.preprocessingSteps(preprocessingSteps)
-			.dataSplit(dataSplit)
-			.distributions(distributions)
-			.correlationMatrix(correlationMatrix)
-			.build();
+				.projectInfo(projectInfo)
+				.dataset(dataset)
+				.preprocessingSteps(preprocessingSteps)
+				.dataSplit(dataSplit)
+				.distributions(distributions)
+				.correlationMatrix(correlationMatrix)
+				.build();
 	}
 
 	/**
@@ -504,7 +518,7 @@ public class ModelingService {
 		}
 
 		PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory()
-			.get(pipelineDocument.getHistory().size() - 1);
+				.get(pipelineDocument.getHistory().size() - 1);
 
 		List<PipelineDocument.PreprocessingStep> steps = latestHistoryItem.getPreprocessingSteps();
 		if (steps == null || steps.isEmpty()) {
@@ -512,13 +526,13 @@ public class ModelingService {
 		}
 
 		return steps.stream()
-			.map(step -> PreprocessingStepResponse.builder()
-				.type(step.getType())
-				.parameters(step.getParameters())
-				.order(step.getOrder())
-				.active(step.isActive())
-				.build())
-			.collect(Collectors.toList());
+				.map(step -> PreprocessingStepResponse.builder()
+						.type(step.getType())
+						.parameters(step.getParameters())
+						.order(step.getOrder())
+						.active(step.isActive())
+						.build())
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -529,33 +543,33 @@ public class ModelingService {
 	private DataSplitResponse buildDataSplitDTO(PipelineDocument pipelineDocument) {
 		if (pipelineDocument.getHistory() == null || pipelineDocument.getHistory().isEmpty()) {
 			return DataSplitResponse.builder()
-				.method("RANDOM")
-				.trainRatio(0.8)
-				.testRatio(0.2)
-				.validationRatio(0.0)
-				.build();
+					.method("RANDOM")
+					.trainRatio(0.8)
+					.testRatio(0.2)
+					.validationRatio(0.0)
+					.build();
 		}
 
 		PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory()
-			.get(pipelineDocument.getHistory().size() - 1);
+				.get(pipelineDocument.getHistory().size() - 1);
 
 		PipelineDocument.ModelingInfo modelingInfo = latestHistoryItem.getModelingInfo();
 		if (modelingInfo == null || modelingInfo.getDataSplit() == null) {
 			return DataSplitResponse.builder()
-				.method("RANDOM")
-				.trainRatio(0.8)
-				.testRatio(0.2)
-				.validationRatio(0.0)
-				.build();
+					.method("RANDOM")
+					.trainRatio(0.8)
+					.testRatio(0.2)
+					.validationRatio(0.0)
+					.build();
 		}
 
 		PipelineDocument.DataSplit dataSplit = modelingInfo.getDataSplit();
 		return DataSplitResponse.builder()
-			.method("RANDOM") // 현재 구현에서는 항상 RANDOM
-			.trainRatio(dataSplit.getTrainRatio())
-			.testRatio(dataSplit.getTestRatio())
-			.validationRatio(dataSplit.getValidationRatio())
-			.build();
+				.method("RANDOM") // 현재 구현에서는 항상 RANDOM
+				.trainRatio(dataSplit.getTrainRatio())
+				.testRatio(dataSplit.getTestRatio())
+				.validationRatio(dataSplit.getValidationRatio())
+				.build();
 	}
 
 	/**
@@ -565,8 +579,8 @@ public class ModelingService {
 	 */
 	private List<DistributionResponse> buildDistributionsDTO(DatasetDocument datasetDocument) {
 		if (datasetDocument.getMetadata() == null ||
-			datasetDocument.getMetadata().getStatistics() == null ||
-			datasetDocument.getMetadata().getStatistics().getNumericFeatures() == null) {
+				datasetDocument.getMetadata().getStatistics() == null ||
+				datasetDocument.getMetadata().getStatistics().getNumericFeatures() == null) {
 			return new ArrayList<>();
 		}
 
@@ -574,40 +588,48 @@ public class ModelingService {
 
 		// 최대 4개의 주요 변수만 선택
 		return numericFeatures.entrySet().stream()
-			.limit(4)
-			.map(entry -> {
-				String featureName = entry.getKey();
-				NumericFeature feature = entry.getValue();
+				.limit(4)
+				.map(entry -> {
+					String featureName = entry.getKey();
+					NumericFeature feature = entry.getValue();
 
-				// 히스토그램 데이터가 없는 경우 빈 리스트 사용
-				List<Integer> histogram = feature.getHistogram() != null ? feature.getHistogram() : new ArrayList<>();
+					// 이 부분이 중요: 히스토그램 데이터와 min/max 값이 모두 있는 경우에만 축 데이터 생성
+					if (feature.getHistogram() != null && !feature.getHistogram().isEmpty() &&
+							feature.getMin() != null && feature.getMax() != null) {
 
-				// x축 값 생성 (min부터 max까지 균등하게 나눔)
-				List<Object> xValues = new ArrayList<>();
-				if (feature.getMin() != null && feature.getMax() != null && !histogram.isEmpty()) {
-					double min = feature.getMin();
-					double max = feature.getMax();
-					double step = (max - min) / (histogram.size() - 1);
+						List<Integer> histogram = feature.getHistogram();
 
-					for (int i = 0; i < histogram.size(); i++) {
-						xValues.add(min + i * step);
+						// x축 값 생성 (min부터 max까지 균등하게 나눔)
+						List<Object> xValues = new ArrayList<>();
+						double min = feature.getMin();
+						double max = feature.getMax();
+						double step = (max - min) / (histogram.size() - 1);
+
+						for (int i = 0; i < histogram.size(); i++) {
+							xValues.add(min + i * step);
+						}
+
+						return DistributionResponse.builder()
+								.name(featureName)
+								.type("histogram")
+								.xAxis(DistributionResponse.AxisDTO.builder()
+										.label(featureName)
+										.values(xValues)
+										.build())
+								.yAxis(DistributionResponse.AxisDTO.builder()
+										.label("Count")
+										.values(new ArrayList<>(histogram))
+										.build())
+								.build();
+					} else {
+						// 필요한 데이터가 없는 경우 축 정보를 포함하지 않음
+						return DistributionResponse.builder()
+								.name(featureName)
+								.type("histogram")
+								.build();
 					}
-				}
-
-				return DistributionResponse.builder()
-					.name(featureName)
-					.type("histogram")
-					.xAxis(DistributionResponse.AxisDTO.builder()
-						.label(featureName)
-						.values(xValues)
-						.build())
-					.yAxis(DistributionResponse.AxisDTO.builder()
-						.label("Count")
-						.values(new ArrayList<>(histogram))
-						.build())
-					.build();
-			})
-			.collect(Collectors.toList());
+				})
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -617,25 +639,31 @@ public class ModelingService {
 	 */
 	private CorrelationMatrixResponse buildCorrelationMatrixDTO(DatasetDocument datasetDocument) {
 		if (datasetDocument.getMetadata() == null ||
-			datasetDocument.getMetadata().getStatistics() == null ||
-			datasetDocument.getMetadata().getStatistics().getCorrelationMatrix() == null) {
+				datasetDocument.getMetadata().getStatistics() == null ||
+				datasetDocument.getMetadata().getStatistics().getCorrelationMatrix() == null ||
+				datasetDocument.getMetadata().getStatistics().getNumericFeatures() == null) {
 			return CorrelationMatrixResponse.builder()
-				.featureNames(new ArrayList<>())
-				.matrix(new ArrayList<>())
-				.build();
+					.featureNames(new ArrayList<>())
+					.matrix(new ArrayList<>())
+					.build();
 		}
 
 		// 상관 관계 매트릭스 데이터
 		List<List<Double>> correlationMatrix = datasetDocument.getMetadata().getStatistics().getCorrelationMatrix();
 
-		// 특성 이름 목록 (데이터셋에서 추출)
-		List<String> featureNames = new ArrayList<>(datasetDocument.getMetadata().getDataTypes().keySet());
+		// 숫자형 특성의 이름만 추출 (상관 행렬은 숫자형 특성 간의 관계만 담고 있음)
+		List<String> numericFeatureNames = new ArrayList<>(
+				datasetDocument.getMetadata().getStatistics().getNumericFeatures().keySet()
+		);
 
-		// 매트릭스 크기와 특성 이름 목록 크기가 다른 경우 조정
-		if (correlationMatrix.size() != featureNames.size()) {
-			// 간단한 구현을 위해 더 작은 크기로 맞춤
-			int size = Math.min(correlationMatrix.size(), featureNames.size());
-			featureNames = featureNames.subList(0, size);
+		// 행렬의 크기와 숫자형 특성 목록 크기가 일치하는지 확인
+		if (correlationMatrix.size() != numericFeatureNames.size()) {
+			log.warn("Correlation matrix size ({}) does not match the number of numeric features ({})",
+					correlationMatrix.size(), numericFeatureNames.size());
+
+			// 크기가 다른 경우 조정
+			int size = Math.min(correlationMatrix.size(), numericFeatureNames.size());
+			numericFeatureNames = numericFeatureNames.subList(0, size);
 
 			List<List<Double>> adjustedMatrix = new ArrayList<>();
 			for (int i = 0; i < size; i++) {
@@ -650,8 +678,9 @@ public class ModelingService {
 		}
 
 		return CorrelationMatrixResponse.builder()
-			.featureNames(featureNames)
-			.matrix(correlationMatrix)
-			.build();
+				.featureNames(numericFeatureNames)
+				.matrix(correlationMatrix)
+				.build();
 	}
 }
+
