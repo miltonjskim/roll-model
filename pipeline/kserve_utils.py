@@ -2,6 +2,7 @@ import os
 import yaml
 import subprocess
 import tempfile
+import json
 from jinja2 import Environment, FileSystemLoader
 from config import (
     MINIO_ENDPOINT,
@@ -9,6 +10,7 @@ from config import (
     MINIO_ENDPOINT_G4DN,
     MINIO_ENDPOINT_G4DN_KUBE
 )
+from mongo_utils import get_mongo_client, update_model_by_pipeline_id
 
 
 def sanitize_k8s_name(name):
@@ -214,5 +216,25 @@ def deploy_model_with_virtual_service(model_name, model_path, namespace="default
         print(f"[WARN] 임시 파일 정리 중 오류 발생: {e}")
 
     # 7. 접근 URL 정보 제공
-    endpoint_url = f"/v1/models/{service_name}"
+    endpoint_url = f"/v1/models/{service_name}:predict"
+
+    # 8. MongoDB에 엔드포인트 정보 직접 저장 (MLflow 의존성 제거)
+    try:
+        # 모델 이름에서 파이프라인 ID 추출 (모델 이름이 파이프라인 ID인 경우)
+        pipeline_id = model_name
+
+        if pipeline_id:
+            # MongoDB에 배포 정보 업데이트
+            deployment_info = {
+                "deployment_status": "deployed",
+                "api_endpoint": endpoint_url,
+                "service_name": service_name,
+                "deployment_timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
+            }
+            update_model_by_pipeline_id(pipeline_id, deployment_info)
+            print(f"[INFO] MongoDB에 배포 정보가 업데이트되었습니다: {json.dumps(deployment_info)}")
+    except Exception as e:
+        print(f"[WARN] MongoDB 업데이트 중 오류 발생: {e}")
+
     return True, f"모델 '{model_name}'이(가) 성공적으로 배포되었습니다. 엔드포인트: {endpoint_url}", service_name, endpoint_url
+

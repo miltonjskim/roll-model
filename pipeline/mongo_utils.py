@@ -94,7 +94,7 @@ def save_to_mongodb(model_metadata):
             client.close()
 
 def update_model_by_pipeline_id(pipeline_id, update_data):
-    """파이프라인 ID로 모델을 찾아 지정된 필드를 업데이트합니다.
+    """파이프라인 ID로 모델을 찾아 업데이트 데이터의 모든 필드를 업데이트합니다.
     이미 존재하는 모델이 있으면 업데이트하고, 없으면 새로 삽입합니다.
 
     Args:
@@ -136,24 +136,14 @@ def update_model_by_pipeline_id(pipeline_id, update_data):
             # 기존 문서 업데이트
             print(f"[MongoDB] 파이프라인 ID '{pipeline_id}'에 대한 기존 모델을 업데이트합니다.")
 
-            # 업데이트할 필드 지정
-            update_fields = {
-                "algorithm": update_data.get("algorithm"),
-                "parameters": update_data.get("parameters"),
-                "train_info": update_data.get("train_info"),
-                "performance": update_data.get("performance"),
-                "feature_importance": update_data.get("feature_importance"),
-                "learning_duration": float(update_data.get("learning_duration", 0)),  # 실수로 변환
-                "model_file_path": update_data.get("model_file_path"),
-                "registered_at": update_data.get("registered_at")
-            }
-
-            # None 값을 가진 필드 제거
-            update_fields = {k: v for k, v in update_fields.items() if v is not None}
+            # update_data의 모든 필드를 그대로 업데이트에 사용
+            # 특수 처리가 필요한 필드는 여기서 처리
+            if "learning_duration" in update_data and update_data["learning_duration"] is not None:
+                update_data["learning_duration"] = float(update_data["learning_duration"])
 
             result = collection.update_one(
                 {"pipeline_id": pipeline_id},
-                {"$set": update_fields}
+                {"$set": update_data}
             )
 
             print(f"[MongoDB] 모델 업데이트 완료: {result.modified_count} 문서 수정됨")
