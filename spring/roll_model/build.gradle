@@ -47,6 +47,9 @@ dependencies {
 	// AI 관련
 	implementation 'org.springframework.ai:spring-ai-openai:1.0.0-M6'
 
+	// MinIO 관련
+	implementation("io.minio:minio:8.5.17")
+
 	// 개발 도구
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
