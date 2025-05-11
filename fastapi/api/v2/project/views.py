@@ -21,22 +21,24 @@ from fastapi.encoders import jsonable_encoder
 import logging
 import json
 
+from core.exception import CustomAPIException
 from core.security import verify_token
 from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
-from models.project.dataset_models import DatasetColumnsResponse, DatasetPageResponse
+from models.project.dataset_models import DatasetPageResponse
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_service import PipelineService, get_pipeline_service
-from service.pipeline_fork_service import create_new_pipeline_model, save_new_pipeline, prepare_response_data
+from service.pipeline_fork_service import save_new_pipeline, prepare_response_data
 
 from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
     create_new_pipeline_model
 from utils.snake_to_camel import convert_dict_to_camel_case
 
 router = APIRouter()
+pipeline_router = APIRouter()
 logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
@@ -538,14 +540,12 @@ async def fork_pipeline_total(
         )
 
 
-@router.get("/pipelines/{pipeline_id}/dataset", response_class=ApiResponse)
+@pipeline_router.get("/dataset", response_class=ApiResponse)
 async def get_dataset_page(
         pipeline_id: str = Path(..., description="파이프라인 ID"),
         page: int = Query(1, description="페이지 번호 (1부터 시작)"),
         size: int = Query(10, description="페이지 크기"),
         filter_condition: Optional[str] = Query(None, description="필터링 조건 (SQL WHERE 절)"),
-        sort_by: Optional[str] = Query(None, description="정렬 컬럼"),
-        sort_order: str = Query("ASC", description="정렬 순서 (ASC 또는 DESC)"),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
         minio_client: MinioClient = Depends(get_minio_client)
 ):
@@ -560,11 +560,19 @@ async def get_dataset_page(
                 status_code=404,
                 message=f"파이프라인 ID {pipeline_id}를 찾을 수 없습니다."
             )
-
-        # 파이프라인에서 데이터셋 정보 추출
-        # 실제 구현에서는 파이프라인 모델에 따라 정확한 필드명 및 구조가 다를 수 있음
+        
         bucket_name = "datasets"
-        object_name = pipeline.original_dataset_object_name
+        object_name = None
+        if pipeline.history is None or len(pipeline.history) == 0:
+            raise CustomAPIException(
+                status_code=404,
+                message=f"전처리된 데이터셋을 찾을 수 없습니다."
+            )
+        if pipeline.history[-1].preprocessing_steps is None or len(pipeline.history[-1].preprocessing_steps) == 0:
+            object_name = pipeline.original_dataset_object_name
+        else:
+            object_name = pipeline.history[-1].preprocessing_steps[-1].preprocessed_dataset_object_name
+        bucket_name = "datasets"
 
         if not bucket_name or not object_name:
             return ApiResponse(
@@ -579,10 +587,7 @@ async def get_dataset_page(
             page=page,
             page_size=size,
             filter_condition=filter_condition,
-            sort_by=sort_by,
-            sort_order=sort_order
         )
-
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",

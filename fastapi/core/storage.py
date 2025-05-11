@@ -203,8 +203,6 @@ class MinioClient:
             page_size: int = 10,
             last_idx: int = None,  # 이전 페이지의 마지막 idx 값
             filter_condition: str = None,
-            sort_by: str = None,
-            sort_order: str = "ASC"
     ) -> Dict[str, Any]:
         """
         CSV 파일에 페이징 쿼리 실행
@@ -217,8 +215,6 @@ class MinioClient:
             page_size: 페이지 크기
             last_idx: 이전 페이지의 마지막 idx 값 (다음 페이지 조회 시 사용)
             filter_condition: SQL WHERE 절 조건 (예: "age > 30")
-            sort_by: 정렬할 컬럼 이름
-            sort_order: 정렬 순서 ('ASC' 또는 'DESC')
 
         Returns:
             Dictionary containing:
@@ -232,12 +228,13 @@ class MinioClient:
         try:
             # 먼저 CSV 컬럼 확인
             columns = await self.get_csv_columns(bucket_name, object_name)
+            logger.info(f"CSV 컬럼: {columns}")
             has_idx_column = 'idx' in columns
-
+            logger.info(f"page: {page}, page_size: {page_size}, last_idx: {last_idx}, filter_condition: {filter_condition}")
             # CSV 입력/출력 직렬화 설정
             csv_input = CSVInputSerialization(
                 compression_type="NONE",
-                file_header_info="NONE",
+                file_header_info="USE",
                 record_delimiter="\n",
                 field_delimiter=",",
                 quote_character='"',
@@ -284,12 +281,8 @@ class MinioClient:
 
             if has_idx_column:
                 # idx 컬럼이 있는 경우
-                if page > 1 and last_idx is not None:
-                    # 다음 페이지 조회: 이전 페이지의 마지막 idx 이후부터
-                    if sort_order.upper() == "ASC":
-                        where_conditions.append(f"idx > {last_idx}")
-                    else:
-                        where_conditions.append(f"idx < {last_idx}")
+                # 다음 페이지 조회: 이전 페이지의 마지막 idx 이후부터
+                where_conditions.append(f"idx > {page_size * (page - 1)}")
 
                 # 추가 필터 조건이 있으면 추가
                 if filter_condition:
@@ -298,13 +291,6 @@ class MinioClient:
                 # WHERE 절 추가
                 if where_conditions:
                     sql_query += " WHERE " + " AND ".join(where_conditions)
-
-                # 정렬 조건 추가
-                if sort_by:
-                    sql_query += f" ORDER BY {sort_by} {sort_order}"
-                else:
-                    # idx 컬럼이 있으면 기본적으로 idx로 정렬
-                    sql_query += f" ORDER BY idx {sort_order}"
 
                 # 페이지 크기만큼 제한
                 sql_query += f" LIMIT {page_size}"
@@ -315,9 +301,6 @@ class MinioClient:
                 # idx 컬럼이 없는 경우, 전체 데이터 반환
                 if filter_condition:
                     sql_query += f" WHERE {filter_condition}"
-
-                if sort_by:
-                    sql_query += f" ORDER BY {sort_by} {sort_order}"
 
                 total_pages = 1
                 current_page = 1
@@ -345,15 +328,13 @@ class MinioClient:
             new_last_idx = last_idx
 
             if data:
-                df = pd.read_csv(BytesIO(data), encoding='utf-8')
-                response.stream().close()
-
+                df = pd.read_csv(BytesIO(data), encoding='utf-8', header=None)
+                # 컬럼명을 수동으로 설정
+                df.columns = columns
+                logger.info(f"CSV 데이터 조회 성공: {df}")
                 if not df.empty and has_idx_column:
                     # 현재 페이지의 마지막 idx 값 저장
-                    if sort_order.upper() == "ASC":
-                        new_last_idx = df['idx'].max()
-                    else:
-                        new_last_idx = df['idx'].min()
+                    new_last_idx = df['idx'].max()
 
                 records = df.to_dict('records')
 

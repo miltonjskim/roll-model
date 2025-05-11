@@ -65,10 +65,8 @@ Optional[PipelineModel]:
         logger.info(f"파이프라인 쿼리 (추가 필터 포함): {query}")
         # MongoDB에서 파이프라인 조회
         pipeline_data = await pipeline_collection.find_one(query)
-        logger.info(f"파이프라인 조회 결과: {pipeline_data}")
         # 조회 결과가 있으면 PipelineModel로 변환하여 반환
         if pipeline_data:
-            logger.info(f"파이프라인 데이터 변환: {pipeline_data}")
             return PipelineModel.model_validate(pipeline_data)
 
         # 조회 결과가 없으면 None 반환
