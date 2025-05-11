@@ -52,3 +52,8 @@ export interface UploadDatasetResponse {
   // 원본 데이터셋 정보
   originalDatasets: OriginalDatasetType;
 }
+
+export interface CompleteDatasetResponse {
+  pipelinId: string;
+  columns: ColumnConfig[];
+}
