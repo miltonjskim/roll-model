@@ -87,6 +87,7 @@ class PreprocessingStep(BaseModel):
     parameters: Dict[str, Any]
     order: int
     active: bool = True
+    result: Optional[Dict[str, Any]] = None
     preprocessed_dataset_id: Optional[str] = ""
     preprocessed_dataset_etag: Optional[str] = ""
     preprocessed_dataset_object_name: Optional[str] = ""

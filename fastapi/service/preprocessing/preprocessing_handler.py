@@ -8,6 +8,7 @@ import io
 from fastapi.encoders import jsonable_encoder
 from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
+from utils.snake_to_camel import convert_dict_to_camel_case
 
 
 class PreprocessingHandler:
@@ -82,7 +83,7 @@ class PreprocessingHandler:
         object_name, etag = await self._save_to_minio(pipeline_id, df)
 
         # 6. 파이프라인 히스토리 업데이트
-        await self._update_pipeline_history(pipeline, preprocessing_type, request, etag, object_name)
+        await self._update_pipeline_history(pipeline, preprocessing_type, request, result, etag, object_name)
 
         # 7. 응답 생성
         response = self._create_response(pipeline_id, result, df.to_dict(orient="records"))
@@ -125,7 +126,11 @@ class PreprocessingHandler:
         object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
 
         buffer = io.BytesIO()
-        df.to_csv(buffer, index=True, index_label='idx')
+        if df.columns[0] != "idx":
+            df.to_csv(buffer, index=True, index_label='idx')
+        else:
+            df.to_csv(buffer, index=False)
+            
         buffer.seek(0)
 
         try:
@@ -143,7 +148,7 @@ class PreprocessingHandler:
             self.logger.error(f"MinIO 저장 실패: {str(e)}")
             raise CustomAPIException(status_code=500, message=f"데이터 저장 실패: {str(e)}")
 
-    async def _update_pipeline_history(self, pipeline, preprocessing_type, request, etag, object_name):
+    async def _update_pipeline_history(self, pipeline, preprocessing_type, request, result, etag, object_name):
         """파이프라인 히스토리 업데이트"""
         # 파라미터 준비
         parameters = {k: getattr(request, k) for k in request.__fields__.keys() if hasattr(request, k)}
@@ -155,6 +160,7 @@ class PreprocessingHandler:
                 parameters=parameters,
                 order=1,
                 active=True,
+                result=result,
                 preprocessed_dataset_etag=etag,
                 preprocessed_dataset_object_name=object_name
             )
@@ -167,6 +173,7 @@ class PreprocessingHandler:
                 parameters=parameters,
                 order=len(new_steps) + 1,
                 active=True,
+                result=result,
                 preprocessed_dataset_etag=etag,
                 preprocessed_dataset_object_name=object_name
             )
@@ -181,11 +188,9 @@ class PreprocessingHandler:
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         # 기본 응답 구조
         response = {
-            "status": 200,
-            "message": "Success",
             "data": {
                 "pipelineId": pipeline_id,
-                "result": result,  # result 구조에 따라 조정
+                "result": convert_dict_to_camel_case(result),  # result 구조에 따라 조정
                 "dataset": dataset  # 전처리된 데이터셋을 여기에 추가
             }
         }

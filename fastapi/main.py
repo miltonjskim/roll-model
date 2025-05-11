@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from api.v2.preprocessing.routers import api_router as preprocessing_router
 from api.v2.project.routers import api_router as project_router
 from core.api_response import ApiResponse
+import signal
 
 from core.exception import (
     startlette_http_exception_handler,
@@ -95,6 +96,12 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     logger.info(f"Response status code: {response}")
     return response
+
+def signal_handler(sig, frame):
+    print('\n프로그램을 종료합니다...')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     import uvicorn
