@@ -389,7 +389,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             "member_id": member_id,
             "model_type": model_category,
             "algorithm": algorithm,
-            "parameters": model_params,
+            "parameters": model_params, # 빼야 할지도
             "train_info": {
                 "start_time": start_time_iso,
                 "end_time": end_time_iso,
@@ -457,49 +457,49 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 memory_limit="512Mi"
             )
 
-            if deployment_success:
-                # 배포 정보 기록
-                deployment_info = {
-                    "status": "deployed",
-                    "service_name": service_name,
-                    "url": service_url,
-                    "deployment_time": pd.Timestamp.now().isoformat()
-                }
-            else:
-                deployment_info = {
-                    "status": "failed",
-                    "error": deployment_message,
-                    "deployment_time": pd.Timestamp.now().isoformat()
-                }
-        else:
-            deployment_info = {
-                "status": "skipped",
-                "reason": "MLflow 모델 등록 실패"
-            }
+        #     if deployment_success:
+        #         # 배포 정보 기록
+        #         deployment_info = {
+        #             "status": "deployed",
+        #             "service_name": service_name,
+        #             "url": service_url,
+        #             "deployment_time": pd.Timestamp.now().isoformat()
+        #         }
+        #     else:
+        #         deployment_info = {
+        #             "status": "failed",
+        #             "error": deployment_message,
+        #             "deployment_time": pd.Timestamp.now().isoformat()
+        #         }
+        # else:
+        #     deployment_info = {
+        #         "status": "skipped",
+        #         "reason": "MLflow 모델 등록 실패"
+        #     }
+        #
+        # # 결과 반환에 MLflow 및 배포 정보 추가
+        # result = {
+        #     "status": "success",
+        #     "model_type": model_type,
+        #     "s3_model_path": s3_model_path,
+        #     "model_metadata": model_metadata,
+        #     "mlflow_info": mlflow_info,
+        #     "deployment_info": deployment_info
+        # }
+        #
+        # if pipeline_id:
+        #     result["pipeline_id"] = pipeline_id
+        #
+        #     # MongoDB에 배포 상태 업데이트
+        #     if deployment_info["status"] == "deployed":
+        #         update_data = {
+        #             "deployment_status": "deployed",
+        #             "api_endpoint": deployment_info["url"],
+        #             "deployment_timestamp": deployment_info["deployment_time"]
+        #         }
+        #         update_model_by_pipeline_id(pipeline_id, update_data)
 
-        # 결과 반환에 MLflow 및 배포 정보 추가
-        result = {
-            "status": "success",
-            "model_type": model_type,
-            "s3_model_path": s3_model_path,
-            "model_metadata": model_metadata,
-            "mlflow_info": mlflow_info,
-            "deployment_info": deployment_info
-        }
-
-        if pipeline_id:
-            result["pipeline_id"] = pipeline_id
-
-            # MongoDB에 배포 상태 업데이트
-            if deployment_info["status"] == "deployed":
-                update_data = {
-                    "deployment_status": "deployed",
-                    "api_endpoint": deployment_info["url"],
-                    "deployment_timestamp": deployment_info["deployment_time"]
-                }
-                update_model_by_pipeline_id(pipeline_id, update_data)
-
-        return result
+        # return result
 
     except Exception as e:
         error_result = {"status": "error", "error": str(e)}
