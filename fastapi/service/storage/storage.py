@@ -17,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from core.storage import get_minio_client
 from schemas.mysql.schemas import ProjectDataset
+import io
+import csv
 
 logger = logging.getLogger()
 
@@ -49,14 +51,20 @@ async def upload_dataset_and_save_etag(
         # 객체 이름 생성 (프로젝트 ID 기반)
         object_name = f"project_{project_id}/{file_name}"
 
+        # 파일 데이터가 CSV인 경우 인덱스 추가
+        indexed_data = file_data
+        if file_name.lower().endswith('.csv'):
+            # CSV에 인덱스 추가
+            indexed_data = add_index_to_csv(file_data)
+
         # 파일 업로드
         upload_success = minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
-            file_data=file_data,
+            file_data=indexed_data,
             content_type=content_type
         )
-
+        
         if not upload_success:
             logger.error(f"파일 {object_name} 업로드 실패")
             raise HTTPException(status_code=500, detail="파일 업로드 실패")
@@ -124,7 +132,7 @@ async def get_dataset_by_project_id(
         minio_client = get_minio_client()
         bucket_name = "datasets"
         object_name = f"project_{project_id}/dataset"  # 실제 파일명은 저장 패턴에 따라 달라질 수 있음
-
+        
         # 파일 URL 생성
         file_url = minio_client.get_file_url(bucket_name, object_name)
 
@@ -192,3 +200,44 @@ async def delete_dataset(
         logger.error(f"데이터셋 삭제 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"데이터셋 삭제 중 오류 발생: {str(e)}")
     
+def add_index_to_csv(file_data: BinaryIO) -> BinaryIO:
+    """
+    CSV 파일에 인덱스 열 추가 (idx 컬럼이 없는 경우에만)
+    
+    Args:
+        file_data: 원본 CSV 파일 데이터
+        
+    Returns:
+        BinaryIO: 인덱스가 추가된 CSV 데이터 또는 원본 데이터
+    """
+    # BinaryIO를 텍스트로 변환
+    text_data = file_data.read().decode('utf-8')
+    file_data.seek(0)  # 원본 파일 포인터 리셋
+    
+    # CSV 리더 생성
+    reader = csv.reader(io.StringIO(text_data))
+    
+    # 헤더 확인
+    header = next(reader)
+    
+    # idx 컬럼이 이미 있는지 확인
+    if 'idx' in header:
+        # 이미 idx가 있으면 원본 파일 그대로 반환
+        file_data.seek(0)  # 파일 포인터를 다시 처음으로
+        return file_data
+    
+    # idx가 없는 경우에만 추가
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # 헤더에 idx 추가
+    writer.writerow(['idx'] + header)
+    
+    # 데이터 행에 인덱스 추가
+    for idx, row in enumerate(reader, start=1):
+        writer.writerow([idx] + row)
+    
+    # StringIO를 BytesIO로 변환
+    csv_bytes = io.BytesIO(output.getvalue().encode('utf-8'))
+    
+    return csv_bytes

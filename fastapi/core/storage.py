@@ -95,7 +95,7 @@ class MinioClient:
                 length=file_size,
                 content_type=content_type
             )
-
+            file_data.close()
             # 디버깅: 업로드 결과 출력 - result 변수 삭제 또는 수정
             print(f"디버깅: 업로드 성공")
             print(f"디버깅: 업로드된 파일 정보 - 버킷: {bucket_name}, 객체명: {object_name}")
