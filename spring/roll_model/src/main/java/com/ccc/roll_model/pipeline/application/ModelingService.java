@@ -317,7 +317,7 @@ public class ModelingService {
 			throw new EntityNotFoundException("프로젝트를 찾을 수 없습니다.");
 		}
 
-		// 여기서 수정 시작: 전처리된 데이터셋을 우선적으로 조회
+		// 전처리된 데이터셋을 우선적으로 조회
 		DatasetDocument datasetDocument;
 
 		// 1. 먼저 프로젝트 ID와 is_preprocessed=true 조건으로 전처리된 데이터셋 조회
@@ -422,7 +422,7 @@ public class ModelingService {
 				.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
 				.build();
 
-		// 로그 추가: 소유자 여부 확인
+		// 소유자 여부 확인
 		log.info("buildResponse - 실제 소유자 여부: {}, 응답에 설정된 소유자 여부: {}", isActualOwner, projectInfo.getOwnerYn());
 
 		// 데이터셋 정보 구성
@@ -566,7 +566,7 @@ public class ModelingService {
 
 		PipelineDocument.DataSplit dataSplit = modelingInfo.getDataSplit();
 		return DataSplitResponse.builder()
-				.method("RANDOM") // 현재 구현에서는 항상 RANDOM
+				.method("RANDOM")
 				.trainRatio(dataSplit.getTrainRatio())
 				.testRatio(dataSplit.getTestRatio())
 				.validationRatio(dataSplit.getValidationRatio())
@@ -594,7 +594,7 @@ public class ModelingService {
 					String featureName = entry.getKey();
 					NumericFeature feature = entry.getValue();
 
-					// 이 부분이 중요: 히스토그램 데이터와 min/max 값이 모두 있는 경우에만 축 데이터 생성
+					// 히스토그램 데이터와 min/max 값이 모두 있는 경우에만 축 데이터 생성
 					if (feature.getHistogram() != null && !feature.getHistogram().isEmpty() &&
 							feature.getMin() != null && feature.getMax() != null) {
 
@@ -623,7 +623,7 @@ public class ModelingService {
 										.build())
 								.build();
 					} else {
-						// 필요한 데이터가 없는 경우 축 정보를 포함하지 않음
+						// 필요한 데이터가 없는 경우 축 정보 포함 x
 						return DistributionResponse.builder()
 								.name(featureName)
 								.type("histogram")

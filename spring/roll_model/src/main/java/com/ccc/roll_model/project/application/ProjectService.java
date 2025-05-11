@@ -179,8 +179,8 @@ public class ProjectService {
                                 .accuracy(model != null && model.getPerformance() != null && model.getPerformance().getClassification() != null
                                         ? model.getPerformance().getClassification().getAccuracy()
                                         : null)
-                                .rmse(model != null && model.getPerformance() != null && model.getPerformance().getRegression() != null
-                                        ? model.getPerformance().getRegression().getRmse()
+                                .rSquared(model != null && model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                        ? model.getPerformance().getRegression().getRSquared()
                                         : null)
                                 .runningDuration(model != null && model.getLearningDuration() != null ? model.getLearningDuration() : 0)
                                 .target(targetFeature)
@@ -357,8 +357,8 @@ public class ProjectService {
                             .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
                                     ? model.getPerformance().getClassification().getAccuracy()
                                     : null)
-                            .rmse(model.getPerformance() != null && model.getPerformance().getRegression() != null
-                                    ? model.getPerformance().getRegression().getRmse()
+                            .rSquared(model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                    ? model.getPerformance().getRegression().getRSquared()
                                     : null)
                             .target(targetFeature) // 수정된 부분
                             .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
