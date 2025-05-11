@@ -78,4 +78,8 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
             this.likeCount -= 1;
         }
     }
+
+    public void updateTargetFeature(String targetFeature) {
+        this.targetFeature = targetFeature;
+    }
 }
