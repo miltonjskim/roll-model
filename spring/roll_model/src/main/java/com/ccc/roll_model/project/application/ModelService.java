@@ -8,49 +8,68 @@ import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.ui.response.ModelExportResponse;
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MinioClient;
-import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
+import io.minio.*;
+import io.minio.errors.ErrorResponseException;
+import io.minio.messages.Item;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ModelService {
 
     private final ModelRepository modelRepository;
-
-    // 모델 전용 MinIO 클라이언트 주입
-    @Qualifier("modelMinioClient")
     private final MinioClient minioClient;
-
-    @Value("${spring.model-minio.bucket-name}")
-    private String bucketName;
-
+    private final String bucketName = "ml-models";
     private final PipelineRepository pipelineRepository;
+
+    public ModelService(
+            ModelRepository modelRepository,
+            @Qualifier("modelMinioClient") MinioClient minioClient,
+            PipelineRepository pipelineRepository) {
+        this.modelRepository = modelRepository;
+        this.minioClient = minioClient;
+        this.pipelineRepository = pipelineRepository;
+    }
 
     @Transactional
     public ModelExportResponse exportModel(ExportModelCommand command) {
-        // 파이프라인 ID로 모델 검색
+        log.info("파이프라인 ID: {}에 대한 모델 내보내기 시작", command.getPipelineId());
+
         ModelDocument modelDocument = modelRepository.findByPipelineId(command.getPipelineId());
         if (modelDocument == null) {
             throw new ApiException(ErrorCode.MODEL_NOT_FOUND);
         }
 
         try {
-            // model_file_path에서 객체 이름 추출
-            // ex) s3://roll-model/models/random_forest_regressor_681dbc5ddf4eb1c452358c6a_20250509.pkl
             String modelFilePath = modelDocument.getModelFilePath();
             String objectName = extractObjectName(modelFilePath);
 
-            // MinIO에서 객체 정보 조회
+            // 객체가 실제로 존재하는지 확인
+            boolean objectExists = checkObjectExists(bucketName, objectName);
+
+            if (!objectExists) {
+                String fileId = getFileIdFromPath(objectName);
+                if (fileId != null && !fileId.isEmpty()) {
+                    String folderPrefix = objectName.substring(0, objectName.lastIndexOf('/') + 1);
+                    String alternativeObject = findAlternativeObject(bucketName, folderPrefix, fileId);
+
+                    if (alternativeObject != null) {
+                        objectName = alternativeObject;
+                    } else {
+                        throw new ApiException(ErrorCode.MODEL_NOT_FOUND);
+                    }
+                } else {
+                    throw new ApiException(ErrorCode.MODEL_NOT_FOUND);
+                }
+            }
+
+            // 객체 정보 조회
             StatObjectResponse objectStat = minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
@@ -58,39 +77,106 @@ public class ModelService {
                             .build()
             );
 
-            // 파일 다운로드 URL 생성 (minio 기본 만료 시간은 7일)
-            String downloadUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .method(Method.GET)
-                            // .expiry(7, TimeUnit.DAYS) // 무한으로 하려면 3650 이렇게 하면 됨
-                            .build()
-            );
+            // 다운로드 URL 생성
+            GetPresignedObjectUrlArgs urlArgs = GetPresignedObjectUrlArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .method(Method.GET)
+                    .expiry(60 * 60) // 1시간 유효
+                    .build();
 
-            // 파일 이름 추출
+            String downloadUrl = minioClient.getPresignedObjectUrl(urlArgs);
             String fileName = objectName.substring(objectName.lastIndexOf("/") + 1);
 
-            // 파이프라인 다운로드 카운트 증가
+            // 다운로드 횟수 업데이트
             PipelineEntity pipeline = pipelineRepository.findById(command.getPipelineId())
                     .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
             pipeline.incrementDownloadCount();
             pipelineRepository.save(pipeline);
 
             return new ModelExportResponse(downloadUrl, fileName, objectStat.size());
-
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("모델 내보내기 중 오류 발생", e);
+            log.error("모델 내보내기 실패: {}", e.getMessage(), e);
             throw new ApiException(ErrorCode.MODEL_EXPORT_FAILED);
         }
     }
 
-    // S3 형식 URL에서 객체 이름 추출
+    private boolean checkObjectExists(String bucket, String objectName) {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectName)
+                            .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            if (e.getMessage().contains("Object does not exist")) {
+                return false;
+            }
+            throw new RuntimeException("MinIO 객체 조회 중 오류 발생", e);
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO 객체 조회 중 오류 발생", e);
+        }
+    }
+
+    private String getFileIdFromPath(String objectPath) {
+        if (objectPath == null || objectPath.isEmpty()) {
+            return null;
+        }
+
+        // 파일명 추출 (마지막 / 이후 문자열)
+        String fileName = objectPath.substring(objectPath.lastIndexOf('/') + 1);
+
+        // 확장자 제거
+        int extIndex = fileName.lastIndexOf('.');
+        if (extIndex > 0) {
+            return fileName.substring(0, extIndex);
+        }
+
+        return fileName;
+    }
+
+    private String findAlternativeObject(String bucket, String prefix, String fileId) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucket)
+                            .prefix(prefix)
+                            .recursive(false)
+                            .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                String objName = item.objectName();
+
+                // 객체명에 파일 ID가 포함되어 있는지 확인
+                String fileName = objName.substring(objName.lastIndexOf('/') + 1);
+                if (fileName.contains(fileId)) {
+                    return objName;
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("대체 객체 검색 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
     private String extractObjectName(String modelFilePath) {
         if (modelFilePath.startsWith("s3://")) {
-            String[] parts = modelFilePath.substring(5).split("/", 2);
+            // s3://ml-models/project5/681dc05b94fed8acc6f1dc6d.pkl 형식에서
+            // ml-models는 버킷 이름이고, project5/681dc05b94fed8acc6f1dc6d.pkl는 객체 이름
+            String withoutPrefix = modelFilePath.substring(5);
+
+            // MinIO 버킷 이름 추출
+            String[] parts = withoutPrefix.split("/", 2);
             if (parts.length > 1) {
-                return parts[1];
+                return parts[1]; // 객체 이름만 반환
             }
         }
         return modelFilePath;

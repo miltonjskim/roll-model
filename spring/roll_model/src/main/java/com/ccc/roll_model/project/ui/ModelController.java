@@ -23,10 +23,7 @@ public class ModelController {
     @GetMapping("/{pipelineId}/export")
     public ResponseEntity<ApiUtils.ApiResponse<ModelExportResponse>> exportModel(
             @PathVariable String pipelineId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        // 사용자 ID 추출 (JWT에서 추출된 사용자 정보)
-        Integer memberId = Integer.valueOf(userDetails.getUsername());
+            @AuthenticationPrincipal Integer memberId) {
 
         // 모델 내보내기 명령 생성
         ExportModelCommand command = new ExportModelCommand(pipelineId, memberId);
