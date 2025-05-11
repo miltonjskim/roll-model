@@ -2,8 +2,10 @@ import io
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi.params import Query
 from sqlalchemy.orm import Session
 
+from core.api_response import ApiResponse
 from core.security import verify_token, verify_pipeline_ownership
 from core.storage import get_minio_client
 from db.mysql_config import get_mysql_db
@@ -17,13 +19,14 @@ from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
-from typing import Dict
+from typing import Dict, Optional
 import pandas as pd
 import logging
 
 from service.preprocessing.outlier_handler import OutlierHandler
 from service.preprocessing.preprocessing_handler import PreprocessingHandler, get_preprocessing_handler
 from service.preprocessing.transform_handler import TransformationHandler
+from utils.snake_to_camel import convert_dict_to_camel_case
 
 logger = logging.getLogger()
 router = APIRouter()
@@ -249,6 +252,50 @@ async def balance_class(
         handler_method="balance_class"
     )
 
+@router.post('/delete', response_class=ApiResponse)
+async def delete_preprocessing(
+    pipeline_id: str = Path(..., description="파이프라인 ID"),
+    step_index: Optional[int] = Query(
+        None, 
+        description="되돌아갈 스텝 인덱스. None이면 마지막 스텝 제거, -1이면 모든 스텝 제거",
+        ge=-1
+    ),
+    member_id: int = Depends(verify_pipeline_ownership),
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
+):
+    """
+    전처리 스텝 삭제 API
+    
+    파이프라인의 전처리 스텝을 제거합니다.
+    - step_index가 None인 경우: 가장 최근 스텝 하나를 제거
+    - step_index가 -1인 경우: 모든 전처리 스텝을 제거
+    - step_index가 0 이상인 경우: 해당 인덱스까지의 스텝만 유지 (이후 스텝들은 제거)
+    """
+    try:
+        # 전처리 스텝 되돌리기/제거
+        result = await pipeline_service.revert_to_preprocessing_step(
+            pipeline_id=pipeline_id,
+            step_index=step_index,
+            member_id=member_id,
+            add_to_history=True
+        )
+        
+        if result is None:
+            raise HTTPException(
+                status_code=404, 
+                detail="파이프라인을 찾을 수 없거나 처리할 수 없습니다."
+            )
+        
+        return ApiResponse(
+            status_code=200,
+            message="삭제 성공",
+            data=convert_dict_to_camel_case(result)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail="스텝 제거에 실패했습니다."
+        )
 
 @router.post('/complete')
 async def complete_preprocessing(

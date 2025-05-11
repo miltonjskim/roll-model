@@ -34,6 +34,8 @@ from service.pipeline_fork_service import create_new_pipeline_model, save_new_pi
 
 from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
     create_new_pipeline_model
+from utils.snake_to_camel import convert_dict_to_camel_case
+
 router = APIRouter()
 logger = logging.getLogger()
 
@@ -232,7 +234,7 @@ async def reload_recent_workspace(
         return ApiResponse(
             status_code =200,
             message="최근 워크스페이스를 불러왔습니다.",
-            data=workspace_data
+            data=convert_dict_to_camel_case(workspace_data)
         )
     
     except Exception as e:
@@ -325,7 +327,7 @@ async def reload_workspace_by_pipeline_version(
         return ApiResponse(
             status_code=200,
             message="워크스페이스를 불러왔습니다.",
-            data=workspace_data
+            data=convert_dict_to_camel_case(workspace_data)
         )
     
     except Exception as e:
@@ -458,7 +460,7 @@ async def fork_pipeline_preprocess(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=response_data
+            data=convert_dict_to_camel_case(response_data)
         )
 
     except Exception as e:
@@ -524,7 +526,7 @@ async def fork_pipeline_total(
         return ApiResponse(
             status_code=200,
             message="파이프라인이 성공적으로 복제되었습니다.",
-            data=response_data
+            data=convert_dict_to_camel_case(response_data)
         )
 
     except Exception as e:

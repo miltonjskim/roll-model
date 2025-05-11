@@ -8,6 +8,7 @@ import io
 from fastapi.encoders import jsonable_encoder
 from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
+from utils.snake_to_camel import convert_dict_to_camel_case
 
 
 class PreprocessingHandler:
@@ -187,11 +188,9 @@ class PreprocessingHandler:
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         # 기본 응답 구조
         response = {
-            "status": 200,
-            "message": "Success",
             "data": {
                 "pipelineId": pipeline_id,
-                "result": result,  # result 구조에 따라 조정
+                "result": convert_dict_to_camel_case(result),  # result 구조에 따라 조정
                 "dataset": dataset  # 전처리된 데이터셋을 여기에 추가
             }
         }
