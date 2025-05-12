@@ -12,6 +12,8 @@ const checkApiStatus = async (endpoint: Endpoint, inputSchema: InputSchema) => {
     {} as Record<string, any>,
   );
   try {
+    console.log('이건 실행됨?');
+
     await axios.get(endpoint.url, { params: queryParams });
     const responseTime = Date.now() - startTime;
     return {

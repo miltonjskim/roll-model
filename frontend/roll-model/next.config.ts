@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/model/:path*',
+        destination: 'http://54.180.212.247:31228/v1/models/:path*',
+      },
+    ];
+  },
   webpack: (config) => {
     config.module.rules.push({
       test: /\.svg$/,

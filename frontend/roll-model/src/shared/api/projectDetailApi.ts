@@ -92,11 +92,11 @@ export const toggePublicPipeline = async (pipelineId: string, publicYn: boolean)
 export const fetchProjectDetailApi = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`)
-    // return response.data
+    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`);
+    return response.data;
 
     // mock data
-    return projectDetailApiMock as ProjectDetailApiResponse;
+    // return projectDetailApiMock as ProjectDetailApiResponse;
   } catch (error) {
     console.error('상세 api섹션 호출 실패', error);
     throw error;
