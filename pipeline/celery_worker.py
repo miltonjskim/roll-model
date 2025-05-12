@@ -385,11 +385,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
         # 업데이트할 모델 메타데이터 구성 - 지정된 필드만 포함
         model_metadata = {
             "pipeline_id": pipeline_id,
-            "project_id": project_id,
-            "member_id": member_id,
-            "model_type": model_category,
             "algorithm": algorithm,
-            "parameters": model_params, # 빼야 할지도
             "train_info": {
                 "start_time": start_time_iso,
                 "end_time": end_time_iso,
@@ -445,16 +441,54 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 모델 경로 설정 (MinIO 버킷 내부) -> MinIO 저장 경로와 동일
             model_path = s3_object_name
 
+            # 현재 배포된 모델 수 확인하여 리소스 할당 결정
+            import subprocess
+            import yaml
+            import json
+
+            # 현재 사용 중인 GPU 리소스 확인
+            try:
+                gpu_cmd = "kubectl get inferenceservices -n default -o json | jq '.items[].spec.predictor.sklearn.resources.limits[\"nvidia.com/gpu\"] | select(. != null)' | jq -s 'add'"
+                gpu_result = subprocess.run(gpu_cmd, shell=True, check=True, stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
+                current_gpu_usage = float(gpu_result.stdout.decode().strip() or "0")
+            except Exception as e:
+                current_gpu_usage = 0.0
+                print(f"Warning: Could not check GPU usage: {e}")
+
+            # 사용 가능한 GPU 리소스 계산 (총 40%에서 이미 사용 중인 리소스 차감)
+            available_gpu = max(0.0, 0.4 - current_gpu_usage)
+
+            # GPU 할당 결정
+            gpu_fraction = 0.0
+            gpu_mem_limit = None
+            if available_gpu >= 0.01:  # 최소 1% 이상 사용 가능할 때
+                gpu_fraction = min(0.03, available_gpu)  # 최대 3% 할당 (30개 모델 고려)
+                gpu_mem_limit = "256"  # 256MB 제한 (필요시 조정)
+
+            # CPU와 메모리 리소스 설정 - GPU 사용 가능 여부에 따라 다르게 설정
+            if gpu_fraction > 0:
+                cpu_request = "100m"
+                cpu_limit = "300m"
+                memory_request = "256Mi"
+                memory_limit = "512Mi"
+            else:
+                # GPU 없을 경우 CPU 리소스 증가
+                cpu_request = "300m"
+                cpu_limit = "500m"
+                memory_request = "512Mi"
+                memory_limit = "1Gi"
+
             # InferenceService와 VirtualService 모두 배포
             deployment_success, deployment_message, service_name, service_url = deploy_model_with_virtual_service(
                 model_name=pipeline_id,
                 model_path=model_path,
                 namespace="default",
-                gpu_fraction=0,  # GPU 사용량 설정 (필요시 수정)
-                cpu_request="100m",
-                cpu_limit="300m",
-                memory_request="256Mi",
-                memory_limit="512Mi"
+                gpu_fraction=gpu_fraction,
+                cpu_request=cpu_request,
+                cpu_limit=cpu_limit,
+                memory_request=memory_request,
+                memory_limit=memory_limit
             )
 
         #     if deployment_success:
@@ -500,6 +534,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
         #         update_model_by_pipeline_id(pipeline_id, update_data)
 
         # return result
+        return model_metadata
 
     except Exception as e:
         error_result = {"status": "error", "error": str(e)}
