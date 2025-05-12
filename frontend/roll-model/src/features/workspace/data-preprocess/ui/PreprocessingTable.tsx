@@ -14,7 +14,7 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
   const dataset: OriginalDatasetType | null = uploaded?.originalDatasets ?? null;
 
   console.log('changedCells:', changedCells);
-  console.log('dataset:', dataset);
+  // console.log('dataset:', dataset);
 
   if (!dataset || dataset.columns.length === 0 || dataset.data.length === 0) {
     return <p className="mt-2 text-sm text-gray-500">표시할 데이터가 없습니다.</p>;
@@ -22,16 +22,18 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
 
   const dynamicColumns = Array.from(new Set(dataset.data.flatMap((row) => Object.keys(row).filter((key) => key !== 'idx'))));
 
-  console.log('dynamicColumns:', dynamicColumns);
+  // console.log('dynamicColumns:', dynamicColumns);
 
   return (
-    <div className="relative mt-4 max-h-80 overflow-x-auto overflow-y-auto rounded-md border">
+    <div className="mt-4 max-h-80 overflow-x-auto overflow-y-auto rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow className="bg-[theme(primary-white)] sticky top-0 z-10">
-            <TableHead>행</TableHead>
+          <TableRow>
+            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10">행</TableHead>
             {dynamicColumns.map((col) => (
-              <TableHead key={col}>{col}</TableHead>
+              <TableHead className="text-bold bg-[theme(color-gray-04)] sticky top-0 z-10" key={col}>
+                {col}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -58,8 +60,6 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
           })}
         </TableBody>
       </Table>
-
-      <p className="mt-2 text-xs text-gray-400">총 {dataset.data.length.toLocaleString()}개 행을 표시 중</p>
     </div>
   );
 };
