@@ -100,8 +100,12 @@ const PreprocessDataPage = () => {
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/delete`);
 
+      setSteps((prev) => prev.slice(0, -1));
       console.log('response:', response);
     } catch (error: unknown) {
+      const apiArror = error as ApiError;
+      showErrorToast(apiArror.message);
+      console.error(apiArror);
     } finally {
       setIsLoading(false);
     }
