@@ -4,6 +4,7 @@ import ParameterSectionWidget from '@/widgets/workspace/modeling-section/Paramet
 import ModelSelectionWidget from '@/widgets/workspace/modeling-section/ModelSelectionWidget';
 import { TARGET_VARIABLES } from '@/shared/api/mocks/modeling/modelingData';
 import { useModeling } from './model/useModeling';
+import FcmGetToken from '@/app/workspace/modeling-section/test-for-fcm/FcmGetToken';
 
 export default function ModelingPage() {
   const {
@@ -58,9 +59,9 @@ export default function ModelingPage() {
           {isLoading ? '학습 시작 중...' : '학습 시작하기'}
         </button>
       </div>
-      <div>
-        
-      </div>
+      {/* <div>
+        <FcmGetToken />
+      </div> */}
     </div>
   );
 }
