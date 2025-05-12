@@ -7,6 +7,7 @@ import { userAtom, isLoggedInAtom, userToken, UserInfo } from '@/features/auth/m
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiResponse } from '@/shared/model/types/apiResponse';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { requestFCMToken } from '@/shared/lib/firebase/fcm';
 
 const CallbackPage = () => {
   const router = useRouter();
@@ -22,6 +23,7 @@ const CallbackPage = () => {
 
     const fetchUser = async () => {
       try {
+        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
         const accessToken = getCookieValue('access_token');
         if (!accessToken) throw new Error('access_token 없음');
 
@@ -29,6 +31,14 @@ const CallbackPage = () => {
         setUserToken(accessToken);
 
         const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
+
+        if (!vapidKey) {
+          showErrorToast('vapidKey가 없습니다.');
+          return;
+        }
+
+        const fcmToken = await requestFCMToken(vapidKey, true);
+        console.log('fcmToken:', fcmToken);
 
         setUser(apiResponse.data);
         setIsLoggedIn(true);
