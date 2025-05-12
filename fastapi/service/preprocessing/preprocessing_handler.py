@@ -58,11 +58,11 @@ class PreprocessingHandler:
         dataset_object_name = self._get_dataset_object_name(pipeline)
 
         # 3. MinIO에서 데이터 가져오기
-        minio_output = await self._get_data_from_minio(dataset_object_name)
-
+        minio_output, encoding = await self._get_data_from_minio(dataset_object_name)
+        print(f"encoding 뭐?? : {encoding}")
         # 4. 전처리 작업 수행
         data_io = io.BytesIO(minio_output)
-        handler = handler_class(data_io)
+        handler = handler_class(data_io, encoding=encoding)
 
         # request 객체에서 필요한 인자 추출
         method_args = {k: getattr(request, k) for k in request.__fields__.keys() if hasattr(request, k)}
@@ -80,7 +80,7 @@ class PreprocessingHandler:
         if df is None:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
 
-        object_name, etag = await self._save_to_minio(pipeline_id, df)
+        object_name, etag = await self._save_to_minio(pipeline_id, df, encoding)
 
         # 6. 파이프라인 히스토리 업데이트
         await self._update_pipeline_history(pipeline, preprocessing_type, request, result, etag, object_name)
@@ -114,13 +114,15 @@ class PreprocessingHandler:
         """MinIO에서 데이터 가져오기"""
         try:
             minio_output = self.minio_client.get_file(self.bucket_name, object_name)
+            minio_metadata = self.minio_client.get_metadata(self.bucket_name, object_name)
+            encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
             self.logger.info(f"MinIO 데이터 조회 성공: {len(minio_output)} bytes")
-            return minio_output
+            return minio_output, encoding
         except Exception as e:
             self.logger.error(f"MinIO 데이터 조회 실패: {str(e)}")
             raise CustomAPIException(status_code=500, message=f"데이터 조회 실패: {str(e)}")
 
-    async def _save_to_minio(self, pipeline_id, df):
+    async def _save_to_minio(self, pipeline_id, df, encoding):
         """처리된 데이터를 MinIO에 저장"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
@@ -138,7 +140,8 @@ class PreprocessingHandler:
                 bucket_name=self.bucket_name,
                 object_name=object_name,
                 data=buffer,
-                content_type="text/csv"
+                content_type="text/csv",
+                encoding=encoding
             )
             buffer.close()
             self.logger.info(f"MinIO 저장 성공: {object_name}, etag: {etag}")

@@ -5,7 +5,7 @@ from core.exception import CustomAPIException
 import io
 
 class MissingValueHandler:
-    def __init__(self, data_path=None, df=None):
+    def __init__(self, data_path=None, df=None, encoding="utf-8"):
         """
         결측치 처리 클래스 초기화
 
@@ -20,9 +20,9 @@ class MissingValueHandler:
             self.df = df.copy()
         elif data_path is not None:
             if isinstance(data_path, io.BytesIO):
-                self.df = pd.read_csv(data_path)
+                self.df = pd.read_csv(data_path, encoding=encoding)
             else:
-                self.df = pd.read_csv(data_path)
+                self.df = pd.read_csv(data_path, encoding=encoding)
         else:
             raise CustomAPIException(
                 status_code=400,

@@ -333,6 +333,8 @@ async def complete_preprocessing(
         # 3. 최종 데이터셋 데이터 가져오기
         logger.info(f"required object name : {final_dataset_object_name}")
         minio_output = minio_client.get_file(bucket_name, final_dataset_object_name)
+        minio_metadata = minio_client.get_metadata(bucket_name, final_dataset_object_name)
+        encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
         if not minio_output:
             raise HTTPException(status_code=404, detail="최종 데이터셋을 찾을 수 없습니다")
 
@@ -346,7 +348,7 @@ async def complete_preprocessing(
         buffer.seek(0)               # 파일 처음으로 다시 이동
 
         # 타입 추론
-        df = pd.read_csv(buffer)
+        df = pd.read_csv(buffer, encoding=encoding)
         columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
         logger.info(df.head)
 
@@ -400,17 +402,15 @@ async def complete_preprocessing(
             "hasHeader": True,
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }
-        logger.info(config)
+
         project = db.query(Project).filter(Project.project_id == pipeline.project_id).first()
-        logger.info(project)
 
         # 버퍼 위치를 처음으로 되돌림
         buffer.seek(0)
         
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
         dataset_analysis = await analyze_dataset(buffer, config)
-        
-        logger.info(dataset_analysis)
+
         # MongoDB에 전처리된 데이터셋 저장
         dataset_id: str = await store_dataset_to_mongodb(
             project_id=pipeline.project_id,

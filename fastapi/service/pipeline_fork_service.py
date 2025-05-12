@@ -428,19 +428,27 @@ async def prepare_response_data(new_pipeline_id, target_project_id, pipeline_id,
         "isOriginalProject": target_project_id == original_project_id,
     }
 
+    # 데이터셋 관련 필드 제외
+    dataset_fields_to_exclude = {
+        'preprocessed_dataset_id',
+        'preprocessed_dataset_etag',
+        'preprocessed_dataset_object_name'
+    }
+
     # 히스토리 정보 추가
     if include_all_history and new_pipeline.history:
-        # 전체 복제의 경우 마지막 히스토리 항목 사용
         latest_history = new_pipeline.history[-1]
-        response_data["preprocessingSteps"] = [step.model_dump() for step in
-                                             latest_history.preprocessing_steps] if latest_history.preprocessing_steps else []
-        response_data[
-            "modelingInfo"] = latest_history.modeling_info.model_dump() if latest_history.modeling_info else None
+        response_data["preprocessingSteps"] = [
+            step.model_dump(exclude=dataset_fields_to_exclude)
+            for step in latest_history.preprocessing_steps
+        ] if latest_history.preprocessing_steps else []
         response_data["status"] = latest_history.status
+        # modelingInfo는 포함하지 않음
     elif new_pipeline.history:
-        # 전처리만 복제의 경우 첫 번째 히스토리 항목 사용
         new_history_item = new_pipeline.history[0]
-        response_data["preprocessingSteps"] = [step.model_dump() for step in
-                                             new_history_item.preprocessing_steps] if new_history_item.preprocessing_steps else []
+        response_data["preprocessingSteps"] = [
+            step.model_dump(exclude=dataset_fields_to_exclude)
+            for step in new_history_item.preprocessing_steps
+        ] if new_history_item.preprocessing_steps else []
 
     return response_data

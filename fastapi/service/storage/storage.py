@@ -28,7 +28,8 @@ async def upload_dataset_and_save_etag(
         project_id: int,
         file_data: BinaryIO,
         file_name: str,
-        content_type: Optional[str] = None
+        content_type: Optional[str] = None,
+        encoding: Optional[str] = 'utf-8'
 ) -> Dict[str, Any]:
     """
     데이터셋 파일을 MinIO에 업로드하고 etag를 데이터베이스에 저장
@@ -62,7 +63,8 @@ async def upload_dataset_and_save_etag(
             bucket_name=bucket_name,
             object_name=object_name,
             file_data=indexed_data,
-            content_type=content_type
+            content_type=content_type,
+            encoding=encoding
         )
         
         if not upload_success:

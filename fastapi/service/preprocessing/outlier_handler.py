@@ -7,7 +7,7 @@ from core.exception import CustomAPIException
 
 
 class OutlierHandler:
-    def __init__(self, data_path=None, df=None):
+    def __init__(self, data_path=None, df=None, encoding="utf-8"):
         """
         이상치 탐지 및 처리 클래스 초기화
         
@@ -21,7 +21,7 @@ class OutlierHandler:
         if df is not None:
             self.df = df.copy()
         elif data_path is not None:
-            self.df = pd.read_csv(data_path)
+            self.df = pd.read_csv(data_path, encoding=encoding)
         else:
             raise ValueError("데이터 파일 경로 또는 데이터프레임을 제공해야 합니다.")
             
