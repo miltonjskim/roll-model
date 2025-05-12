@@ -1,5 +1,6 @@
 package com.ccc.roll_model.fcm.application;
 
+import com.ccc.roll_model.fcm.application.command.SaveFCMTokenCommand;
 import com.ccc.roll_model.fcm.infrastructure.entity.FCMTokenEntity;
 import com.ccc.roll_model.fcm.infrastructure.repository.mysql.FCMTokenRepository;
 import com.google.firebase.FirebaseApp;
@@ -27,19 +28,20 @@ public class FCMService {
 
     // 토큰 저장
     @Transactional
-    public void saveToken(Long memberId, String token, String deviceInfo) {
-        Optional<FCMTokenEntity> tokenEntity = fcmTokenRepository.findByMemberIdAndToken(memberId, token);
+    public void saveToken(SaveFCMTokenCommand command) {
+        Optional<FCMTokenEntity> tokenEntity = fcmTokenRepository.findByMemberIdAndToken(
+                command.getMemberId(), command.getToken());
 
         if (tokenEntity.isPresent()) {
             // 기존 토큰이 있으면 활성화 상태로 업데이트
             FCMTokenEntity existingToken = tokenEntity.get();
-            existingToken.updateToken(token);
+            existingToken.updateToken(command.getToken());
         } else {
             // 새 토큰 생성
             FCMTokenEntity newToken = FCMTokenEntity.builder()
-                    .memberId(memberId)
-                    .token(token)
-                    .deviceInfo(deviceInfo)
+                    .memberId(command.getMemberId())
+                    .token(command.getToken())
+                    .deviceInfo(command.getDeviceInfo())
                     .isActive(true)
                     .build();
             fcmTokenRepository.save(newToken);
