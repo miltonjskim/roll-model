@@ -62,6 +62,7 @@ const PreprocessDataPage = () => {
   const requestAISuggestion = async () => {
     setIsLoading(true);
     try {
+      // TODO: AI 요청 url 변경
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/recommendation`);
       setRecommendedSteps(response.data.data.preprocessingSteps);
       console.log(response.data);
@@ -208,7 +209,7 @@ const PreprocessDataPage = () => {
           </div>
 
           {/* 전처리 종료 버튼 */}
-          <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing}>
+          <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
             전처리 결과 확인
           </Button>
         </div>
