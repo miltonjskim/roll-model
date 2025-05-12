@@ -128,7 +128,7 @@ class PreprocessingHandler:
     async def _save_to_minio(self, pipeline_id, df, encoding):
         """처리된 데이터를 MinIO에 저장"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        object_name = f"pipeline_{pipeline_id}_{timestamp}/dataset.csv"
+        object_name = f"pipeline_{pipeline_id}/dataset_{timestamp}.csv"
 
         buffer = io.BytesIO()
         if df.columns[0] != "idx":
