@@ -20,13 +20,17 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
     return <p className="mt-2 text-sm text-gray-500">표시할 데이터가 없습니다.</p>;
   }
 
+  const dynamicColumns = Array.from(new Set(dataset.data.flatMap((row) => Object.keys(row).filter((key) => key !== 'idx'))));
+
+  console.log('dynamicColumns:', dynamicColumns);
+
   return (
     <div className="relative mt-4 max-h-80 overflow-x-auto overflow-y-auto rounded-md border">
       <Table>
         <TableHeader>
           <TableRow className="bg-[theme(primary-white)] sticky top-0 z-10">
             <TableHead>행</TableHead>
-            {dataset.columns.map((col) => (
+            {dynamicColumns.map((col) => (
               <TableHead key={col}>{col}</TableHead>
             ))}
           </TableRow>
@@ -38,13 +42,13 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
             return (
               <TableRow key={String(rowKey)}>
                 <TableCell className="text-xs text-gray-500">{rowKey}</TableCell>
-                {dataset.columns.map((col) => {
+                {dynamicColumns.map((col) => {
                   const cellKey = `${rowKey}:${col}`;
                   const isChanged = changedCells?.[cellKey];
                   const value = row[col];
 
                   return (
-                    <TableCell key={col} className={isChanged ? 'bg-yellow-100 font-medium' : ''}>
+                    <TableCell key={col} className={`${isChanged ? 'bg-yellow-100 font-medium' : ''} `}>
                       {value !== null && value !== undefined ? String(value) : <span className="text-gray-400">null</span>}
                     </TableCell>
                   );
