@@ -220,12 +220,11 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
           active: true,
         });
       }
-
-      setSelected((prev) => ({ ...prev, [categoryId]: option.id }));
     } catch (error) {
       console.error('전처리 요청 실패:', error);
     } finally {
       setLoading(false);
+      setSelected({});
     }
   };
 
