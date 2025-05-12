@@ -5,6 +5,119 @@ interface PreprocessingPipelineCardProps {
   steps: PreprocessingStep[];
 }
 
+// 전처리 타입별 정보 객체
+// 전처리 타입별 정보 객체
+const preprocessingConfig: Record<string, { icon: string; name: string; ariaLabel: string }> = {
+  ORIGINAL_DATA: {
+    icon: '📄',
+    name: '원본 데이터',
+    ariaLabel: '원본 데이터',
+  },
+  MISSING_VALUE_IMPUTATION: {
+    icon: '🧩',
+    name: '결측치 대체',
+    ariaLabel: '결측치 대체',
+  },
+  MISSING_VALUE_REMOVE: {
+    icon: '🗑️',
+    name: '결측치 제거',
+    ariaLabel: '결측치 제거',
+  },
+  OUTLIER_DETECTION: {
+    icon: '🔍',
+    name: '이상치 탐지',
+    ariaLabel: '이상치 탐지',
+  },
+  OUTLIER_IMPUTATION: {
+    icon: '🔄',
+    name: '이상치 대체',
+    ariaLabel: '이상치 대체',
+  },
+  OUTLIER_REMOVE: {
+    icon: '✂️',
+    name: '이상치 제거',
+    ariaLabel: '이상치 제거',
+  },
+  ZSCORE_SCALING: {
+    icon: '📏',
+    name: 'Z-SCORE 스케일링',
+    ariaLabel: 'Z-SCORE 스케일링',
+  },
+  MINMAX_SCALING: {
+    icon: '📐',
+    name: 'MIN-MAX 스케일링',
+    ariaLabel: 'MIN-MAX 스케일링',
+  },
+  LOG_TRANSFORM: {
+    icon: '📉',
+    name: '로그 변환',
+    ariaLabel: '로그 변환',
+  },
+  SQRT_TRANSFORM: {
+    icon: '√',
+    name: '제곱근 변환',
+    ariaLabel: '제곱근 변환',
+  },
+  ONEHOT_ENCODING: {
+    icon: '🔢',
+    name: '원-핫 인코딩',
+    ariaLabel: '원-핫 인코딩',
+  },
+  TARGET_ENCODING: {
+    icon: '🎯',
+    name: '타겟 인코딩',
+    ariaLabel: '타겟 인코딩',
+  },
+  LABEL_ENCODING: {
+    icon: '🏷️',
+    name: '레이블 인코딩',
+    ariaLabel: '레이블 인코딩',
+  },
+  CLASS_BALANCING: {
+    icon: '⚖️',
+    name: '클래스 불균형',
+    ariaLabel: '클래스 불균형',
+  },
+  // 기존 코드에 있던 항목들도 유지
+  MISSING_VALUE: {
+    icon: '🧹',
+    name: '결측치 처리',
+    ariaLabel: '결측치 처리',
+  },
+  IMPUTATION: {
+    icon: '🔋',
+    name: '결측치 대체',
+    ariaLabel: '결측치 대체',
+  },
+  NORMALIZATION: {
+    icon: '📊',
+    name: '표준화',
+    ariaLabel: '표준화',
+  },
+  ENCODING: {
+    icon: '🔣',
+    name: '인코딩',
+    ariaLabel: '인코딩',
+  },
+  FEATURE_ENGINEERING: {
+    icon: '🛠️',
+    name: '특성 공학',
+    ariaLabel: '특성 공학',
+  },
+  PREPROCESSING_COMPLETE: {
+    icon: '✅',
+    name: '전처리 완료',
+    ariaLabel: '전처리 완료',
+  },
+};
+
+// 기본값 정의
+const defaultConfig = {
+  icon: '⚙️',
+  name: '전처리 단계',
+  ariaLabel: '전처리 단계',
+};
+
 export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardProps) => {
   // 전처리 단계에 원본 데이터(시작)와 전처리 완료(끝) 항목 추가
   const fullPipeline = [
@@ -25,128 +138,25 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
 
       <div className="w-full overflow-x-auto py-6">
         <div className="flex items-center justify-between">
-          {fullPipeline.map((step, index) => (
-            <div key={index} className="relative mx-2 flex flex-col items-center">
-              {/* 아이콘 */}
-              <div className="bg-[theme(color-gray-05)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2">{getPreprocessingIcon(step.type)}</div>
-              {/* 이름 */}
-              <div className="text-center text-sm font-medium">{getPreprocessingStepName(step.type)}</div>
-              {/* 설명 */}
-              <div className="text-[theme(color-muted-foreground)] text-center text-xs">{getPreprocessingDescription(step)}</div>
-            </div>
-          ))}
+          {fullPipeline.map((step, index) => {
+            // 해당 타입의 설정 가져오기 (없으면 기본값 사용)
+            const config = preprocessingConfig[step.type] || defaultConfig;
+
+            return (
+              <div key={index} className="relative mx-2 flex flex-col items-center">
+                {/* 아이콘 */}
+                <div className="bg-[theme(color-gray-05)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2">
+                  <span role="img" aria-label={config.ariaLabel} className="font-tossface text-3xl">
+                    {config.icon}
+                  </span>
+                </div>
+                {/* 이름 */}
+                <div className="text-center text-sm font-medium">{config.name}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
-};
-
-// 전처리 단계 아이콘
-const getPreprocessingIcon = (type: string): React.ReactNode => {
-  switch (type) {
-    case 'ORIGINAL_DATA':
-      return (
-        <span role="img" aria-label="원본 데이터" className="font-tossface text-3xl">
-          📄
-        </span>
-      );
-    case 'MISSING_VALUE':
-      return (
-        <span role="img" aria-label="결측치 처리" className="font-tossface text-3xl">
-          🧹
-        </span>
-      );
-    case 'IMPUTATION':
-      return (
-        <span role="img" aria-label="결측치 대체" className="font-tossface text-3xl">
-          🧹
-        </span>
-      );
-    case 'OUTLIER_DETECTION':
-      return (
-        <span role="img" aria-label="이상치 탐지" className="font-tossface text-3xl">
-          🧪
-        </span>
-      );
-    case 'NORMALIZATION':
-      return (
-        <span role="img" aria-label="표준화" className="font-tossface text-3xl">
-          📏
-        </span>
-      );
-    case 'ENCODING':
-      return (
-        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
-          🔄
-        </span>
-      );
-    case 'ONE_HOT_ENCODING':
-      return (
-        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
-          🔥
-        </span>
-      );
-    case 'FEATURE_ENGINEERING':
-      return (
-        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
-          🔄
-        </span>
-      );
-    case 'PREPROCESSING_COMPLETE':
-      return (
-        <span role="img" aria-label="전처리 완료" className="font-tossface text-3xl">
-          ✅
-        </span>
-      );
-    default:
-      return (
-        <span role="img" aria-label="전처리 단계" className="font-tossface text-3xl">
-          ⚙️
-        </span>
-      );
-  }
-};
-
-// 전처리 단계 이름 변환 함수
-const getPreprocessingStepName = (type: string): string => {
-  const typeMap: Record<string, string> = {
-    ORIGINAL_DATA: '원본 데이터',
-    MISSING_VALUE: '결측치 처리',
-    IMPUTATION: '결측치 대체',
-    ONE_HOT_ENCODING: '원-핫 인코딩',
-    OUTLIER_DETECTION: '이상치 처리',
-    NORMALIZATION: '표준화',
-    ENCODING: '인코딩',
-    FEATURE_ENGINEERING: '인코딩',
-    PREPROCESSING_COMPLETE: '전처리 완료',
-    // 다른 전처리 타입 추가
-  };
-
-  return typeMap[type] || type;
-};
-
-// 전처리 설명 생성 함수
-// PreprocessingParameter 타입이 string | number | boolean | undefined
-// null처리 + String 처리
-const getPreprocessingDescription = (step: PreprocessingStep): string => {
-  const { type, parameters } = step;
-
-  switch (type) {
-    case 'ORIGINAL_DATA':
-      return '';
-    case 'MISSING_VALUE':
-      const imputationMethod = parameters.imputationMethod ?? '';
-      return String(imputationMethod) === 'MEAN' ? '평균값 대체' : String(imputationMethod);
-    case 'OUTLIER_DETECTION':
-      const outlierMethod = parameters.outlierMethod ?? '';
-      return String(outlierMethod) === 'Z_SCORE' ? 'Z-점수' : String(outlierMethod);
-    case 'NORMALIZATION':
-      return 'Z-점수';
-    case 'ENCODING':
-      return '원-핫 인코딩';
-    case 'PREPROCESSING_COMPLETE':
-      return '';
-    default:
-      return '';
-  }
 };

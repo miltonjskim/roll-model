@@ -33,8 +33,8 @@ export const fetchProjectDetailData = async (pipelineId: string) => {
 export const fetchProjectDetailVersion = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/versions`)
-    // return response.data
+    // const response = await axiosInstance.get(`/api/v1/projects/${pipelineId}/versions`);
+    // return response.data;
 
     // mock data
     // 시간차 어택 제거
@@ -132,16 +132,16 @@ export const downloadYourModel = async (pipelineId: string) => {
 };
 
 // 개요 섹션
-export const fetchProjectDetailOverview = async (pipelineId: string) => {
-  try {
-    // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/projects/{projectId}/overview`)
-    // return response.data
+// export const fetchProjectDetailOverview = async (pipelineId: string) => {
+//   try {
+//     // 나중에 api 완성 후에 활성화
+//     // const response = await axiosInstance.get(`/api/v1/projects/{projectId}/overview`)
+//     // return response.data
 
-    // mock data
-    return projectDetailOverviewMock as ProjectDetailOverviewResponse;
-  } catch (error) {
-    console.error('상세 api섹션 호출 실패', error);
-    throw error;
-  }
-};
+//     // mock data
+//     return projectDetailOverviewMock as ProjectDetailOverviewResponse;
+//   } catch (error) {
+//     console.error('상세 api섹션 호출 실패', error);
+//     throw error;
+//   }
+// };

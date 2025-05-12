@@ -54,6 +54,6 @@ export interface UploadDatasetResponse {
 }
 
 export interface CompleteDatasetResponse {
-  pipelinId: string;
+  pipelineId: string;
   columns: ColumnConfig[];
 }
