@@ -389,7 +389,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             "member_id": member_id,
             "model_type": model_category,
             "algorithm": algorithm,
-            "parameters": model_params, # 빼야 할지도
             "train_info": {
                 "start_time": start_time_iso,
                 "end_time": end_time_iso,
