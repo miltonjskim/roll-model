@@ -59,8 +59,8 @@ const PreprocessDataPage = () => {
     }
   };
 
-  const mergeChangedCells = (newCells: Record<string, boolean>) => {
-    setChangedCells((prev) => ({ ...prev, ...newCells }));
+  const handleChangeCells = (newCells: Record<string, boolean>) => {
+    setChangedCells(newCells);
   };
 
   const handleCompletePreprocessing = async () => {
@@ -119,7 +119,7 @@ const PreprocessDataPage = () => {
             <div className="">
               {/* 전처리 기능 목록 섹션 */}
               <div className="${ highlight ? 'shadow-accent' : '' mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
-                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={mergeChangedCells} />
+                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={handleChangeCells} />
               </div>
 
               {/* AI 추천 버튼 */}
