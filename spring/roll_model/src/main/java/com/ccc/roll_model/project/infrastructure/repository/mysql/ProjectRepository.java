@@ -19,35 +19,74 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, Integer>
     @Query("SELECT p FROM ProjectEntity p JOIN FETCH p.memberEntity WHERE p.memberEntity.memberId = :memberId")
     List<ProjectEntity> findAllByMemberEntityMemberId(@Param("memberId") Integer memberId);
 
-    // 공개된 프로젝트 조회 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false")
-    Page<ProjectEntity> findAllPublicProjects(Pageable pageable);
+    // 새로운 메소드: 공개 프로젝트 중 완료된 공개 파이프라인이 있는 프로젝트만 조회 (기본)
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED'")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelines(Pageable pageable);
 
-    // 키워드로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.title LIKE %:keyword%")
-    Page<ProjectEntity> findAllPublicProjectsByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    // 키워드 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.title LIKE %:keyword%")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByKeyword(
+            @Param("keyword") String keyword, Pageable pageable);
 
-    // 카테고리로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.category = :category")
-    Page<ProjectEntity> findAllPublicProjectsByCategory(@Param("category") Category category, Pageable pageable);
+    // 카테고리 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.category = :category")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByCategory(
+            @Param("category") Category category, Pageable pageable);
 
-    // 도메인으로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.domain = :domain")
-    Page<ProjectEntity> findAllPublicProjectsByDomain(@Param("domain") Domain domain, Pageable pageable);
+    // 도메인 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.domain = :domain")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByDomain(
+            @Param("domain") Domain domain, Pageable pageable);
 
-    // 키워드와 카테고리로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.title LIKE %:keyword% AND p.category = :category")
-    Page<ProjectEntity> findAllPublicProjectsByKeywordAndCategory(@Param("keyword") String keyword, @Param("category") Category category, Pageable pageable);
+    // 키워드와 카테고리 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.title LIKE %:keyword% AND p.category = :category")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategory(
+            @Param("keyword") String keyword, @Param("category") Category category, Pageable pageable);
 
-    // 키워드와 도메인으로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.title LIKE %:keyword% AND p.domain = :domain")
-    Page<ProjectEntity> findAllPublicProjectsByKeywordAndDomain(@Param("keyword") String keyword, @Param("domain") Domain domain, Pageable pageable);
+    // 키워드와 도메인 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.title LIKE %:keyword% AND p.domain = :domain")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndDomain(
+            @Param("keyword") String keyword, @Param("domain") Domain domain, Pageable pageable);
 
-    // 카테고리와 도메인으로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.category = :category AND p.domain = :domain")
-    Page<ProjectEntity> findAllPublicProjectsByCategoryAndDomain(@Param("category") Category category, @Param("domain") Domain domain, Pageable pageable);
+    // 카테고리와 도메인 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.category = :category AND p.domain = :domain")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByCategoryAndDomain(
+            @Param("category") Category category, @Param("domain") Domain domain, Pageable pageable);
 
-    // 키워드, 카테고리, 도메인으로 공개된 프로젝트 검색 (페이징)
-    @Query("SELECT p FROM ProjectEntity p WHERE p.publicYn = true AND p.deletedYn = false AND p.title LIKE %:keyword% AND p.category = :category AND p.domain = :domain")
-    Page<ProjectEntity> findAllPublicProjectsByKeywordAndCategoryAndDomain(@Param("keyword") String keyword, @Param("category") Category category, @Param("domain") Domain domain, Pageable pageable);
+    // 키워드, 카테고리, 도메인 검색
+    @Query("SELECT DISTINCT p FROM ProjectEntity p " +
+            "JOIN PipelineEntity pl ON pl.projectEntity.projectId = p.projectId " +
+            "WHERE p.publicYn = true AND p.deletedYn = false " +
+            "AND pl.publicYn = true AND pl.deletedYn = false AND pl.status = 'COMPLETED' " +
+            "AND p.title LIKE %:keyword% AND p.category = :category AND p.domain = :domain")
+    Page<ProjectEntity> findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategoryAndDomain(
+            @Param("keyword") String keyword, @Param("category") Category category,
+            @Param("domain") Domain domain, Pageable pageable);
 }
