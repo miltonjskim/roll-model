@@ -92,11 +92,11 @@ export const toggePublicPipeline = async (pipelineId: string, publicYn: boolean)
 export const fetchProjectDetailApi = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`)
-    // return response.data
+    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`);
+    return response.data;
 
     // mock data
-    return projectDetailApiMock as ProjectDetailApiResponse;
+    // return projectDetailApiMock as ProjectDetailApiResponse;
   } catch (error) {
     console.error('상세 api섹션 호출 실패', error);
     throw error;
@@ -107,23 +107,23 @@ export const fetchProjectDetailApi = async (pipelineId: string) => {
 export const downloadYourModel = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/models/${pipelineId}/export`);
-    // return response.data;
+    const response = await axiosInstance.get(`/api/v1/models/${pipelineId}/export`);
+    return response.data;
 
     // mock data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // 파이썬 설치 파일 (중간 크기) 테스트
-    const testUrl = 'https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe';
-    const fileName = 'python-3.9.13-amd64.exe';
-    const fileSize = 27005824; // 약 25MB
-    return {
-      success: true,
-      message: '모델 다운로드 URL이 생성되었습니다.',
-      data: {
-        downloadUrl: testUrl,
-        fileName: fileName,
-        fileSize: fileSize,
-      },
-    };
+    // const testUrl = 'https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe';
+    // const fileName = 'python-3.9.13-amd64.exe';
+    // const fileSize = 27005824; // 약 25MB
+    // return {
+    //   success: true,
+    //   message: '모델 다운로드 URL이 생성되었습니다.',
+    //   data: {
+    //     downloadUrl: testUrl,
+    //     fileName: fileName,
+    //     fileSize: fileSize,
+    //   },
+    // };
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   } catch (error) {
     console.error('모델 다운로드 api 호출 실패', error);

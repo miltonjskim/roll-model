@@ -1,11 +1,20 @@
 import { ApiStatus } from '@/entities/project-detail/model/ApiTypes';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 
 interface ApiStatusCardProps {
   apiStatus: ApiStatus;
   endpoint?: string;
   inputSchema?: any;
+}
+
+interface Feature {
+  name: string;
+  type: string;
+  required: boolean;
+  example: number | string | boolean;
+  options: string[] | null;
 }
 
 export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiStatusCardProps) {
@@ -28,18 +37,20 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
     const startTime = Date.now();
 
     try {
-      // inputSchema에서 예시 값을 쿼리 파라미터로 변환
-      const queryParams = inputSchema.features.reduce((params: any, feature: any) => {
-        params[feature.name] = feature.example;
-        return params;
-      }, {});
+      // inputSchema에서 예시 값만 추출하여 배열로 만들기
+      const modelId = endpoint.split('/').pop(); // 'model-681dc05b94fed8acc6f1dc6d' 추출
+      const apiEndpoint = `/api/model/${modelId}${endpoint.endsWith(':predict') ? '' : ':predict'}`;
+      const exampleValues = inputSchema.features.map((feature: Feature) => feature.example);
 
-      // 쿼리 파라미터를 URL에 추가
-      const queryString = new URLSearchParams(queryParams).toString();
-      const requestUrl = `${endpoint}${queryString ? `?${queryString}` : ''}`;
+      // 요청 본문 생성
+      const requestBody = {
+        inputs: [exampleValues],
+      };
 
-      // API 요청 보내기
-      const response = await axiosInstance.get(requestUrl);
+      // POST 요청 보내기
+      console.log('요청 가보자', apiEndpoint, '그리고', requestBody);
+
+      const response = await axios.post(apiEndpoint, requestBody);
 
       // 응답 시간 계산
       const responseTime = Date.now() - startTime;
