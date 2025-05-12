@@ -48,44 +48,53 @@ public class PipelineApiService {
         String pipelineId = command.getPipelineId();
         Integer memberId = command.getMemberId();
 
-        // 1. MySQL에서 파이프라인 entity 조회
-        PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
-                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
-
-        // 2. MySQL에서 프로젝트 entity 조회
-        ProjectEntity projectEntity = projectRepository.findById(pipelineEntity.getProjectId())
-                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
-
-        // 3. MongoDB에서 파이프라인 document 조회
+        // 1. MongoDB에서 파이프라인 document 직접 조회 (MySQL 조회 없이)
         PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+
+        Integer projectId = pipelineDocument.getProjectId();
+
+        // 2. 프로젝트 정보가 필요하므로 MySQL에서 프로젝트 entity 조회
+        ProjectEntity projectEntity = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(ErrorCode.PROJECT_NOT_FOUND));
+
+        // 3. MySQL에서 파이프라인 entity 조회 (필요한 메타데이터 때문에)
+        PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
+                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_METADATA_NOT_FOUND));
 
         // 4. 파이프라인의 최신 히스토리 가져오기
         PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory().stream()
                 .filter(item -> item.getModelId() != null)
                 .findFirst()
-                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.NO_MODEL_HISTORY_FOUND));
 
         // 5. MongoDB에서 모델 document 조회
         ModelDocument modelDocument = modelRepository.findById(latestHistoryItem.getModelId())
-                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+                .orElseThrow(() -> new ApiException(ErrorCode.MODEL_NOT_FOUND));
 
-        // 6. 전처리된 데이터셋 찾기
-        String preprocessedDatasetId = null;
-        if (latestHistoryItem.getPreprocessingSteps() != null && !latestHistoryItem.getPreprocessingSteps().isEmpty()) {
-            preprocessedDatasetId = latestHistoryItem.getPreprocessingSteps().stream()
-                    .filter(step -> step.getPreprocessedDatasetId() != null)
-                    .map(PipelineDocument.PreprocessingStep::getPreprocessedDatasetId)
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        DatasetDocument preprocessedDataset = null;
-        if (preprocessedDatasetId != null) {
-            preprocessedDataset = datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
-        }
+        // 6. 전처리된 데이터셋 찾기 (선택적)
+        DatasetDocument preprocessedDataset = findPreprocessedDataset(latestHistoryItem);
 
         return buildApiResponse(projectEntity, pipelineEntity, modelDocument, preprocessedDataset, memberId);
+    }
+
+    // 전처리된 데이터셋을 찾는 별도 메소드
+    private DatasetDocument findPreprocessedDataset(PipelineDocument.PipelineHistoryItem historyItem) {
+        if (historyItem.getPreprocessingSteps() == null || historyItem.getPreprocessingSteps().isEmpty()) {
+            return null;
+        }
+
+        String preprocessedDatasetId = historyItem.getPreprocessingSteps().stream()
+                .filter(step -> step.getPreprocessedDatasetId() != null)
+                .map(PipelineDocument.PreprocessingStep::getPreprocessedDatasetId)
+                .findFirst()
+                .orElse(null);
+
+        if (preprocessedDatasetId == null) {
+            return null;
+        }
+
+        return datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
     }
 
     private GetPipelineApiResponse buildApiResponse(
@@ -136,7 +145,8 @@ public class PipelineApiService {
                 .build();
 
         // TODO: Endpoint 구성 (API 키는 하드코딩)
-        String url = "https://api.yourdomain.com/models/proj-" + pipelineEntity.getPipelineId().substring(0, 5) + "/predict";
+        String baseUrl = "https://roll-model.store";
+        String url = baseUrl + "/v1/models/model-" + pipelineEntity.getPipelineId();
         String apiKey = "sk_12345abcdef67890";
 
         GetPipelineApiResponse.Endpoint endpoint = GetPipelineApiResponse.Endpoint.builder()
