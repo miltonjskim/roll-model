@@ -385,9 +385,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
         # 업데이트할 모델 메타데이터 구성 - 지정된 필드만 포함
         model_metadata = {
             "pipeline_id": pipeline_id,
-            "project_id": project_id,
-            "member_id": member_id,
-            "model_type": model_category,
             "algorithm": algorithm,
             "train_info": {
                 "start_time": start_time_iso,
