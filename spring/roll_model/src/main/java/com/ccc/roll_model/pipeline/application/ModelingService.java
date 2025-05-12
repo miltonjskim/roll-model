@@ -18,6 +18,7 @@ import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 
+import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,7 @@ public class ModelingService {
 	private final ModelRepository modelRepository;
 	private final MessagePublisher messagePublisher;
 	private final ModelingInfoMapper modelingInfoMapper;
+	private final ProjectRepository projectRepository;
 
 	public void executeModeling(ExecuteModelingCommand command) {
 		// 커맨드 유효성 검사
@@ -684,6 +686,124 @@ public class ModelingService {
 				.featureNames(numericFeatureNames)
 				.matrix(correlationMatrix)
 				.build();
+	}
+	/**
+	 * 모델 학습 완료 처리
+	 */
+	@Transactional
+	public void completeModelTraining(String modelId, ModelDocument modelResult) {
+		// ObjectId로 변환
+		ObjectId objectModelId = new ObjectId(modelId);
+
+		// 모델 조회
+		ModelDocument modelDocument = modelRepository.findById(objectModelId)
+				.orElseThrow(() -> new EntityNotFoundException("모델을 찾을 수 없습니다: " + modelId));
+
+		// 모델 정보 업데이트
+		modelDocument.getTrainInfo().setEndTime(LocalDateTime.now());
+		modelDocument.setFeatureImportance(modelResult.getFeatureImportance());
+		modelDocument.setPerformance(modelResult.getPerformance());
+		modelDocument.setLearningDuration(modelResult.getLearningDuration());
+		modelDocument.setModelFilePath(modelResult.getModelFilePath());
+
+		// 저장
+		modelRepository.save(modelDocument);
+
+		// 파이프라인 상태 업데이트
+		updatePipelineStatus(modelDocument.getPipelineId(), "COMPLETED");
+
+		// 프로젝트 타이틀 조회
+		String projectTitle = getProjectTitle(modelDocument.getProjectId());
+
+		// FCM 알림 이벤트 발행
+		messagePublisher.publishModelTrainingStatus(
+				modelId,
+				modelDocument.getMemberId(),
+				projectTitle, // 모델명 대신 프로젝트 타이틀 사용
+				"COMPLETED");
+
+		log.info("모델 학습 완료 처리: 모델 ID = {}, 상태 = COMPLETED", modelId);
+	}
+
+	/**
+	 * 모델 학습 실패 처리
+	 */
+	@Transactional
+	public void failModelTraining(String modelId, String errorMessage) {
+		// ObjectId로 변환
+		ObjectId objectModelId = new ObjectId(modelId);
+
+		// 모델 조회
+		ModelDocument modelDocument = modelRepository.findById(objectModelId)
+				.orElseThrow(() -> new EntityNotFoundException("모델을 찾을 수 없습니다: " + modelId));
+
+		// 모델 정보 업데이트
+		modelDocument.getTrainInfo().setEndTime(LocalDateTime.now());
+		modelDocument.setErrorMessage(errorMessage);
+
+		// 저장
+		modelRepository.save(modelDocument);
+
+		// 파이프라인 상태 업데이트
+		updatePipelineStatus(modelDocument.getPipelineId(), "FAILED");
+
+		// 프로젝트 타이틀 조회
+		String projectTitle = getProjectTitle(modelDocument.getProjectId());
+
+		// FCM 알림 이벤트 발행
+		messagePublisher.publishModelTrainingStatus(
+				modelId,
+				modelDocument.getMemberId(),
+				projectTitle, // 모델명 대신 프로젝트 타이틀 사용
+				"FAILED");
+
+		log.info("모델 학습 실패 처리: 모델 ID = {}, 상태 = FAILED, 에러 메시지 = {}", modelId, errorMessage);
+	}
+
+	/**
+	 * 프로젝트 ID로 프로젝트 타이틀 조회
+	 */
+	private String getProjectTitle(Integer projectId) {
+		try {
+			// ProjectRepository를 주입받아야 함
+			ProjectEntity projectEntity = projectRepository.findById(projectId)
+					.orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
+			return projectEntity.getTitle();
+		} catch (Exception e) {
+			log.error("프로젝트 타이틀 조회 실패: {}", e.getMessage(), e);
+			return "알 수 없는 프로젝트"; // 기본값
+		}
+	}
+
+	/**
+	 * 파이프라인 상태 업데이트
+	 */
+	private void updatePipelineStatus(String pipelineId, String status) {
+		try {
+			// MySQL 파이프라인 상태 업데이트
+			PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
+					.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다: " + pipelineId));
+
+			// 상태 업데이트
+			pipelineEntity.updateStatus(Status.valueOf(status));
+			pipelineRepository.save(pipelineEntity);
+
+			// MongoDB 파이프라인 문서 상태 업데이트
+			PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
+					.orElseThrow(() -> new EntityNotFoundException("파이프라인 문서를 찾을 수 없습니다: " + pipelineId));
+
+			// 히스토리 상태 업데이트
+			if (pipelineDocument.getHistory() != null && !pipelineDocument.getHistory().isEmpty()) {
+				PipelineDocument.PipelineHistoryItem latestHistory = pipelineDocument.getHistory()
+						.get(pipelineDocument.getHistory().size() - 1);
+				latestHistory.setStatus(status);
+				pipelineMongoRepository.save(pipelineDocument);
+			}
+
+			log.info("파이프라인 상태 업데이트: 파이프라인 ID = {}, 상태 = {}", pipelineId, status);
+		} catch (Exception e) {
+			log.error("파이프라인 상태 업데이트 실패: {}", e.getMessage(), e);
+		}
 	}
 }
 

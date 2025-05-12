@@ -58,6 +58,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	// Firebase Admin SDK
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
+
 	//kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
