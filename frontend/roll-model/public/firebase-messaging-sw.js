@@ -1,6 +1,6 @@
 // Service Worker에서 Firebase 기능 사용을 위한 라이브러리 임포트
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.7.1/firebase-messaging-compat.js');
 
 // Firebase 초기화 (service worker에서는 .env 접근 불가능하므로 직접 값 입력)
 // 보안상 공개해도되는 정보
@@ -20,18 +20,38 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-  const notificationTitle = payload.notification.title || 'Roll Model 알림';
+  // Firebase 콘솔에서 보낸 메시지(notification 포함)인지 확인
+  const hasFirebaseNotification = payload.notification !== undefined;
+
+  // 실제 메시지 형식에 맞게 제목과 내용 추출
+  const notificationTitle =
+    payload.notification?.title ||
+    payload.data?.title ||
+    payload.fcmOptions?.title ||
+    payload.google?.c?.a?.c_l || // 실제 수신된 형식
+    'Roll Model 알림';
+
+  const notificationBody = payload.notification?.body || payload.data?.body || payload.fcmOptions?.body || payload.data?.message || '새로운 알림이 도착했습니다.';
+
   const notificationOptions = {
-    body: payload.notification.body || '새로운 알림이 도착했습니다.',
-    icon: '/fcmlogo.png', // 앱 아이콘 경로 (큰화면)
-    badge: '/fcmlogo.png', // 알림 뱃지 아이콘(선택사항 : 작은화면 (모바일알림))
-    data: payload.data,
-    // 알림 클릭 시 이동할 URL 설정 가능
-    // 클릭 액션은 클라이언트 측에서 처리됨
+    body: notificationBody,
+    icon: '/fcmlogo.png',
+    badge: '/fcmlogo.png',
+    data: {
+      ...payload.data,
+      // 중요: Firebase 콘솔에서 온 경우에도 state 정보 보존
+      state: payload.data?.state || 'UNKNOWN',
+      // 추가적인 데이터 보존
+      firebaseNotification: hasFirebaseNotification,
+    },
+    tag: 'rollmodel-notification', // 알림 중복 방지
   };
 
+  console.log('[firebase-messaging-sw.js] Showing notification with title: ', notificationTitle);
+  console.log('[firebase-messaging-sw.js] Notification options: ', notificationOptions);
+
   // 실제 시스템 알림 표시
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // 알림 클릭 이벤트 핸들러
@@ -39,22 +59,35 @@ self.addEventListener('notificationclick', (event) => {
   console.log('[firebase-messaging-sw.js] Notification click');
   event.notification.close();
 
-  // 알림 클릭 시 원하는 URL로 이동
-  // 사용자가 특정 모델 결과 페이지로 이동하도록 설정 가능
-  // 데이터 페이로드에서 동적으로 URL을 가져올 수 있음
+  // 데이터에서 상태 정보 추출
+  const newState = event.notification.data?.state;
   const urlToOpen = event.notification.data?.url || '/dashboard'; // 기본 URL
 
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((windowClients) => {
-      // 이미 열린 창이 있는지 확인
+      let clientFocused = false;
+
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
+
+        // 모든 열린 클라이언트에 상태 업데이트 메시지 전송
+        if (newState) {
+          client.postMessage({
+            type: 'UPDATE_MODEL_STATUS',
+            state: newState,
+          });
+        }
+
+        // 해당 URL이 포함된 창이 있으면 포커스
         if (client.url.includes(urlToOpen) && 'focus' in client) {
-          return client.focus();
+          clientFocused = true;
+          client.focus();
+          break;
         }
       }
-      // 열린 창이 없으면 새 창 열기
-      if (clients.openWindow) {
+
+      // 포커스된 창이 없으면 새 창 열기
+      if (!clientFocused && clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
     }),

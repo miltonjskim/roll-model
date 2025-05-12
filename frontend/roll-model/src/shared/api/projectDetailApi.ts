@@ -122,7 +122,6 @@ export const downloadYourModel = async (pipelineId: string) => {
         downloadUrl: testUrl,
         fileName: fileName,
         fileSize: fileSize,
-        expiresIn: 3600,
       },
     };
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

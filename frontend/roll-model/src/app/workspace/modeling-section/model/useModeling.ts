@@ -61,7 +61,6 @@ export const useModeling = () => {
     try {
       setIsLoading(true);
 
-      // 트레인 비율 계산 (dataSplit은 원래 훈련 데이터 비율을 나타냄)
       // 트레인 비율 계산 (소수점 한 자리로 제한)
       const trainRatio = parseFloat((dataSplit / 100).toFixed(1));
       const testRatio = parseFloat((1 - trainRatio).toFixed(1));
@@ -86,6 +85,7 @@ export const useModeling = () => {
       // API 호출 - pipelineId를 별도로 전달
       const response = await startModelTraining(PIPELINE_ID, requestData);
       console.log('학습 시작 응답:', response);
+      localStorage.setItem(`modelTrainingStatus`, 'LEARNING');
 
       // 성공 알림
       alert('모델 학습이 시작되었습니다!');

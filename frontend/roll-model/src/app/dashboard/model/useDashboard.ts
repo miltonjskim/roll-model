@@ -16,6 +16,8 @@ export function useDashboard() {
     try {
       setIsLoading(true);
       const response = await fetchDashboardData();
+      console.log('대시보드 가져오기');
+
       setDashboardData(response.data);
       setError(null);
     } catch (err) {
@@ -26,9 +28,36 @@ export function useDashboard() {
     }
   }, []);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 및 이벤트 리스너 설정
   useEffect(() => {
+    // 초기 데이터 로드
     loadDashboardData();
+
+    // FCM 메시지로 인한 modelStatusUpdate 이벤트 리스너 추가
+    const handleModelStatusUpdate = () => {
+      console.log('Dashboard: 모델 상태 업데이트 감지, 데이터 새로고침');
+      loadDashboardData();
+    };
+
+    // 이벤트 리스너 등록
+    window.addEventListener('modelStatusUpdate', handleModelStatusUpdate);
+
+    // localStorage 변경 감지 (다른 탭/창에서 업데이트 된 경우)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'modelTrainingStatus') {
+        console.log('Dashboard: 다른 탭에서 모델 상태 변경 감지, 데이터 새로고침');
+        loadDashboardData();
+      }
+    };
+
+    // storage 이벤트 리스너 등록
+    window.addEventListener('storage', handleStorageChange);
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      window.removeEventListener('modelStatusUpdate', handleModelStatusUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [loadDashboardData]);
 
   const handleCategoryChange = useCallback((category: 'all' | ProjectType) => {
