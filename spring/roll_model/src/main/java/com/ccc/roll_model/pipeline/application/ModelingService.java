@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.ccc.roll_model.global.exception.ApiException;
+import com.ccc.roll_model.global.exception.ErrorCode;
 import com.ccc.roll_model.pipeline.application.command.GetPipelineDatasetInfoCommand;
 import com.ccc.roll_model.pipeline.domain.model.client.MessagePublisher;
 import com.ccc.roll_model.pipeline.domain.model.vo.ModelingData;
@@ -79,8 +81,11 @@ public class ModelingService {
 		);
 
 		log.info("params validate: {}", modelParameter.validateParameters());
+		if (!modelParameter.validateParameters()) {
+			throw new ApiException(ErrorCode.INVALID_MODEL_PARAMETER);
+		}
 
-		log.info("params: {}", modelParameter.toString());
+		log.info("params: {}", modelParameter);
 
 		// 상태 저장
 		saveModelingStatus(
@@ -173,7 +178,7 @@ public class ModelingService {
 				.pipelineId(command.getPipelineId())
 				.projectId(pipelineDocument.getProjectId())
 				.memberId(command.getMemberId())
-				.modelTitle(generateDefaultModelTitle(modelingInfo.getAlgorithm(), modelingInfo.getModelType().toString()))
+				.modelTitle(generateDefaultModelTitle(modelingInfo.getModelType().getCategory().toString(), modelingInfo.getModelType().toString()))
 				.modelDescription("설명이 없습니다.") // 기본 설명
 				.modelType(modelingInfo.getModelType().toString())
 				.algorithm(modelingInfo.getAlgorithm())
@@ -200,12 +205,12 @@ public class ModelingService {
 	/**
 	 * 기본 모델 제목 생성
 	 */
-	private String generateDefaultModelTitle(String algorithm, String modelType) {
+	private String generateDefaultModelTitle(String category, String algorithm) {
 		LocalDateTime now = LocalDateTime.now();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 		String timestamp = now.format(formatter);
 
-		return algorithm + "_" + modelType + "_" + timestamp;
+		return category + "_" + algorithm + "_" + timestamp;
 	}
 
 	/**
