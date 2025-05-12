@@ -1,10 +1,7 @@
 package com.ccc.roll_model.fcm.ui;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ccc.roll_model.fcm.application.FCMService;
 import com.ccc.roll_model.fcm.application.command.SaveFCMTokenCommand;
@@ -72,6 +69,23 @@ public class FCMController {
         } catch (Exception e) {
             log.error("Unexpected exception while saving FCM token: {}", e.getMessage(), e);
             return ResponseEntity.status(ErrorCode.INVALID_INPUT_PARAMETER.getStatus())
+                    .body(ApiUtils.error(ErrorCode.INVALID_INPUT_PARAMETER));
+        }
+    }
+    @PostMapping("/test-notification/{memberId}")
+    public ResponseEntity<?> testNotification(
+            @PathVariable Integer memberId,
+            @RequestParam(defaultValue = "테스트 모델") String modelName,
+            @RequestParam(defaultValue = "COMPLETED") String status) {
+
+        log.info("FCM 알림 테스트: memberId={}, status={}, modelName={}", memberId, status, modelName);
+
+        try {
+            fcmService.sendModelTrainingStatusNotification(memberId, status, modelName);
+            return ResponseEntity.ok(ApiUtils.success("알림 전송 성공"));
+        } catch (Exception e) {
+            log.error("알림 전송 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
                     .body(ApiUtils.error(ErrorCode.INVALID_INPUT_PARAMETER));
         }
     }
