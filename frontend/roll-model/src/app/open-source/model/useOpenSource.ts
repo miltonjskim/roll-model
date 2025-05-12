@@ -19,7 +19,7 @@ export function useOpenSource() {
 
   // hhhhhhhhhhhhhhhhhhhhhhh하드코딩
   const page = 1;
-  const size = 6;
+  const size = 100;
 
   // 데이터 로드 함수를 useCallback으로 메모이제이션
   const loadOpenSourceData = useCallback(async () => {

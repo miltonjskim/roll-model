@@ -18,7 +18,8 @@ export interface Pipeline {
   publicYn: boolean;
   deletedYn: boolean;
   parent: string;
-  accuracy: number;
+  accuracy: number | null;
+  rSquared: number | null;
   dataCount: number;
   target: string;
   runnungDuration: number;

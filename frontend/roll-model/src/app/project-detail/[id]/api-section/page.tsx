@@ -14,7 +14,7 @@ export default function ApiSectionPage() {
   const { projectDetailApi, isLoading, isError } = useProjectDetailApi(pipelineId);
 
   // projectDetailApi가 로드된 후 API 상태 체크 실행
-  const { apiStatus, isStatusLoading, refreshStatus } = useApiStatusCheck(pipelineId, projectDetailApi?.endpoint, projectDetailApi?.inputSchema);
+  // const { apiStatus, isStatusLoading, refreshStatus } = useApiStatusCheck(pipelineId, projectDetailApi?.endpoint, projectDetailApi?.inputSchema);
 
   if (isLoading) {
     return (
@@ -30,15 +30,15 @@ export default function ApiSectionPage() {
 
   const { apiStatus: apiStatusInfo, endpoint, inputSchema } = projectDetailApi;
   // API 상태 정보를 포함한 확장된 apiStatus 객체 생성
-  const enhancedApiStatus = {
-    ...apiStatusInfo,
-    isActive: apiStatus?.isActive || false,
-    performance: apiStatus?.responseTime || 0,
-  };
+  // const enhancedApiStatus = {
+  //   ...apiStatusInfo,
+  //   isActive: apiStatus?.isActive || false,
+  //   performance: apiStatus?.responseTime || 0,
+  // };
 
   return (
     <>
-      <ApiDownloadCard></ApiDownloadCard>
+      <ApiDownloadCard pipelineId={pipelineId}></ApiDownloadCard>
       <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} />
       <ApiEndpointCard endpoint={endpoint}></ApiEndpointCard>
       <ApiExamplesCard inputSchema={inputSchema} endpoint={endpoint} projectCategory={projectDetailApi.projectInfo.category}></ApiExamplesCard>

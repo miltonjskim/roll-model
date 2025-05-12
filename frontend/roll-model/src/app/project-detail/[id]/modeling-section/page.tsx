@@ -8,6 +8,8 @@ import ModelOverview from '@/entities/project-detail/ui/model-section/ModelOverv
 import ClassificationEvaluation from '@/entities/project-detail/ui/model-section/ClassificationEvaluation';
 import RegressionEvaluation from '@/entities/project-detail/ui/model-section/RegressionEvaluation';
 import FeatureImportanceChart from '@/entities/project-detail/ui/model-section/FeatureImportanceChart';
+import ModelInfoCard from '@/entities/project-detail/ui/model-section/ModelInfoCard';
+import PerformanceMetricsCard from '@/entities/project-detail/ui/model-section/PerformanceMetricsCard';
 
 export default function ModelSectionPage() {
   const { id } = useParams();
@@ -33,16 +35,19 @@ export default function ModelSectionPage() {
 
   return (
     <div className="space-y-8 p-4">
-      <ModelOverview
+      <ModelInfoCard
         category={projectDetailModel.projectInfo.category}
         algorithmName={algorithmName}
         koreanModelName={koreanModelName}
         modelParameters={projectDetailModel.modelParameters}
         targetInfo={projectDetailModel.targetInfo}
-        performanceMetrics={projectDetailModel.performanceMetrics}
       />
 
-      {isClassification && <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />}
+      <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} />
+
+      {isClassification && (projectDetailModel as ClassificationModelData).confusionMatrix && (
+  <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />
+)}
 
       {isRegression && (
         <RegressionEvaluation actualVsPredicted={(projectDetailModel as RegressionModelData).actualVsPredicted} residualPlot={(projectDetailModel as RegressionModelData).residualPlot} />

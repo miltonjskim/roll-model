@@ -14,7 +14,7 @@
     "apiStatus": {
       "expiresAt": "2025-08-08T23:59:59Z",
       "accuracy": 0.92, 
-      "rmse": null
+      "rSquared": null
     },
 
     "endpoint": {

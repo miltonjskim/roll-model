@@ -3,6 +3,8 @@ import './globals.css';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { Toaster } from 'sonner';
 import Navbar from '@/widgets/navbar/Navbar';
+import ClientFCMInitializer from '@/app/providers/ClientFCMInitializer';
+import FcmCatStatus from '@/widgets/fcmCat/FcmCatStatus';
 
 export const metadata: Metadata = {
   title: 'Roll model',
@@ -23,8 +25,10 @@ export default function RootLayout({
       </head>
       <body className="bg-[theme(color-background)]">
         <AppProvider>
+          <ClientFCMInitializer />
           <Navbar />
           <div className="mx-auto w-[90vw] rounded-md p-4">{children}</div>
+          <FcmCatStatus />
           <Toaster richColors position="top-center" />
         </AppProvider>
       </body>

@@ -4,6 +4,7 @@ import projectDetailDataMock from '@/shared/api/mocks/project-detail/projectDeta
 //version
 import { ProjectDetailVersionResponse } from '@/entities/project-detail/model/versionTypes';
 import projectDetailVersionMock from '@/shared/api/mocks/project-detail/projectDetailVersion.json';
+import projectDetailOverviewMock from '@/shared/api/mocks/project-detail/projectDetailOverview.json';
 import projectDetailApiMock from '@/shared/api/mocks/project-detail/projectDetailApi.json';
 import projectDetailModelClassification from '@/shared/api/mocks/project-detail/projectDetailModelClassification.json'; // 분류 mock data
 import projectDetailModelClassificationTest from '@/shared/api/mocks/project-detail/projectDetailModelClassificationTest.json'; // 분류 mock data 테스트버전
@@ -12,6 +13,7 @@ import projectDetailModelRegressionTest from '@/shared/api/mocks/project-detail/
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ProjectDetailModelResponse } from '@/entities/project-detail/model/ModelTypes';
 import { ProjectDetailApiResponse } from '@/entities/project-detail/model/ApiTypes';
+import { ProjectDetailOverviewResponse } from '@/entities/project-detail/model/overviewTypes';
 
 // 데이터섹션
 export const fetchProjectDetailData = async (pipelineId: string) => {
@@ -76,9 +78,9 @@ export const deletePipeline = async (pipelineId: string) => {
 };
 
 // 파이프라인 공개여부 변경
-export const toggePublicPipeline = async (pipelineId: string) => {
+export const toggePublicPipeline = async (pipelineId: string, publicYn: boolean) => {
   try {
-    const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/visibility`);
+    const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/visibility`, { publicYn: publicYn });
     return response.data;
   } catch (error) {
     console.error('파이프라인 공개여부 변경 실패', error);
@@ -90,11 +92,11 @@ export const toggePublicPipeline = async (pipelineId: string) => {
 export const fetchProjectDetailApi = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`)
-    // return response.data
+    const response = await axiosInstance.get(`/api/v1/pipelines/${pipelineId}/api`);
+    return response.data;
 
     // mock data
-    return projectDetailApiMock as ProjectDetailApiResponse;
+    // return projectDetailApiMock as ProjectDetailApiResponse;
   } catch (error) {
     console.error('상세 api섹션 호출 실패', error);
     throw error;
@@ -107,8 +109,39 @@ export const downloadYourModel = async (pipelineId: string) => {
     // 나중에 api 완성 후에 활성화
     const response = await axiosInstance.get(`/api/v1/models/${pipelineId}/export`);
     return response.data;
+
+    // mock data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // 파이썬 설치 파일 (중간 크기) 테스트
+    // const testUrl = 'https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe';
+    // const fileName = 'python-3.9.13-amd64.exe';
+    // const fileSize = 27005824; // 약 25MB
+    // return {
+    //   success: true,
+    //   message: '모델 다운로드 URL이 생성되었습니다.',
+    //   data: {
+    //     downloadUrl: testUrl,
+    //     fileName: fileName,
+    //     fileSize: fileSize,
+    //   },
+    // };
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   } catch (error) {
     console.error('모델 다운로드 api 호출 실패', error);
+    throw error;
+  }
+};
+
+// 개요 섹션
+export const fetchProjectDetailOverview = async (pipelineId: string) => {
+  try {
+    // 나중에 api 완성 후에 활성화
+    // const response = await axiosInstance.get(`/api/v1/projects/{projectId}/overview`)
+    // return response.data
+
+    // mock data
+    return projectDetailOverviewMock as ProjectDetailOverviewResponse;
+  } catch (error) {
+    console.error('상세 api섹션 호출 실패', error);
     throw error;
   }
 };

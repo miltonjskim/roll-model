@@ -38,7 +38,7 @@ describe('useOpenSource', () => {
             domain: 'FINANCE', // 프로젝트 도메인 (원본값)
             displayDomain: '금융', // 표시용 도메인 (한글)
             accuracy: 0.95, // 정확도 (분류 모델의 성능 지표)
-            rmse: null, // RMSE(Root Mean Square Error, 회귀 모델에서 사용하는 오차 지표)
+            rSquared: null, // rSquared(Root Mean Square Error, 회귀 모델에서 사용하는 오차 지표)
             target: '신용등급', // 목표 변수
             dataCount: 1000, // 데이터 수
             runnungDuration: 120, // 실행 시간(초)
@@ -57,8 +57,8 @@ describe('useOpenSource', () => {
             writerNickname: 'developer',
             domain: 'HEALTHCARE',
             displayDomain: '의료',
-            accuracy: null, // 회귀 모델은 accuracy 대신 rmse를 사용
-            rmse: 0.05, // 회귀 모델의 성능 지표 (낮을수록 좋음)
+            accuracy: null, // 회귀 모델은 accuracy 대신 rSquared 사용
+            rSquared: 0.05, // 회귀 모델의 성능 지표 (낮을수록 좋음)
             target: '혈압',
             dataCount: 2000,
             runnungDuration: 180,

@@ -42,7 +42,7 @@ export default function ProjectDetailHeader() {
     });
     try {
       // API 호출
-      await toggePublicPipeline(projectDetail.id);
+      await toggePublicPipeline(projectDetail.id , newPipelinePublicYn );
       // 성공 시 알림 (선택사항)
       alert('공개 여부가 변경되었습니다.');
     } catch (e) {

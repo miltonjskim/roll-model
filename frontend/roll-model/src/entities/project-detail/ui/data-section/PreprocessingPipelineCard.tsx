@@ -20,8 +20,8 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
 
   return (
     <div className="bg-[theme(primary-white)] mb-4 rounded-lg p-4 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold">전처리 파이프라인</h2>
-      <p className="text-[theme(color-muted-foreground)] mb-4 text-sm">데이터에 적용된 전처리 과정과 세부 파라미터입니다</p>
+      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">전처리 파이프라인</h2>
+      <p className="text-[theme(color-muted-foreground)] mb-2 text-sm">데이터에 적용된 전처리 과정과 세부 파라미터입니다</p>
 
       <div className="w-full overflow-x-auto py-6">
         <div className="flex items-center justify-between">
@@ -46,43 +46,61 @@ const getPreprocessingIcon = (type: string): React.ReactNode => {
   switch (type) {
     case 'ORIGINAL_DATA':
       return (
-        <span role="img" aria-label="원본 데이터" className="text-3xl">
+        <span role="img" aria-label="원본 데이터" className="font-tossface text-3xl">
           📄
         </span>
       );
     case 'MISSING_VALUE':
       return (
-        <span role="img" aria-label="결측치 처리" className="text-3xl">
+        <span role="img" aria-label="결측치 처리" className="font-tossface text-3xl">
+          🧹
+        </span>
+      );
+    case 'IMPUTATION':
+      return (
+        <span role="img" aria-label="결측치 대체" className="font-tossface text-3xl">
           🧹
         </span>
       );
     case 'OUTLIER_DETECTION':
       return (
-        <span role="img" aria-label="이상치 탐지" className="text-3xl">
+        <span role="img" aria-label="이상치 탐지" className="font-tossface text-3xl">
           🧪
         </span>
       );
     case 'NORMALIZATION':
       return (
-        <span role="img" aria-label="표준화" className="text-3xl">
+        <span role="img" aria-label="표준화" className="font-tossface text-3xl">
           📏
         </span>
       );
     case 'ENCODING':
       return (
-        <span role="img" aria-label="인코딩" className="text-3xl">
+        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
+          🔄
+        </span>
+      );
+    case 'ONE_HOT_ENCODING':
+      return (
+        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
+          🔥
+        </span>
+      );
+    case 'FEATURE_ENGINEERING':
+      return (
+        <span role="img" aria-label="인코딩" className="font-tossface text-3xl">
           🔄
         </span>
       );
     case 'PREPROCESSING_COMPLETE':
       return (
-        <span role="img" aria-label="전처리 완료" className="text-3xl">
+        <span role="img" aria-label="전처리 완료" className="font-tossface text-3xl">
           ✅
         </span>
       );
     default:
       return (
-        <span role="img" aria-label="전처리 단계" className="text-3xl">
+        <span role="img" aria-label="전처리 단계" className="font-tossface text-3xl">
           ⚙️
         </span>
       );
@@ -94,9 +112,12 @@ const getPreprocessingStepName = (type: string): string => {
   const typeMap: Record<string, string> = {
     ORIGINAL_DATA: '원본 데이터',
     MISSING_VALUE: '결측치 처리',
+    IMPUTATION: '결측치 대체',
+    ONE_HOT_ENCODING: '원-핫 인코딩',
     OUTLIER_DETECTION: '이상치 처리',
     NORMALIZATION: '표준화',
     ENCODING: '인코딩',
+    FEATURE_ENGINEERING: '인코딩',
     PREPROCESSING_COMPLETE: '전처리 완료',
     // 다른 전처리 타입 추가
   };

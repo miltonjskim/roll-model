@@ -33,7 +33,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     const newLiked = !preLiked;
     setIsLiked(newLiked);
     try {
-      await likeThisPipeline(project.id);
+      await likeThisPipeline(project.id, newLiked);
       alert('좋아요 성공.');
     } catch (e) {
       setIsLiked(preLiked);
@@ -63,7 +63,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
         {project.category === 'CLASSIFICATION' ? (
           <p>정확도: {project.accuracy ? `${(project.accuracy * 100).toFixed(2)}%` : '학습대기중'}</p>
         ) : (
-          <p>RMSE: {project.rmse ? project.rmse.toFixed(4) : '학습대기중'}</p>
+          <p>R²: {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}</p>
         )}
         {/* <p>{formatDate(project.updatedAt, 'yyyy-MM-dd')} 수정됨</p> */}
         <p>{getRelativeTime(project.updatedAt)} 수정됨</p>

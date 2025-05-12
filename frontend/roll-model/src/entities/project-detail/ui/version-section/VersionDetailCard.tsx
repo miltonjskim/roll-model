@@ -40,15 +40,15 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
       <div className="mb-6 grid grid-cols-1 gap-6">
         <div className="flex items-center justify-start rounded-lg bg-blue-50 p-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-blue-500">
-            <span className="text-xl font-semibold">v{pipeline.version}</span>
+            <p className="text-xl font-semibold">v{pipeline.version}</p>
           </div>
           <div className="ml-4">
             {/* {!pipeline.deletedYn && pipeline.publicYn ? projectDetail.title : ''} */}
             <h3 className="text-sm text-gray-500">업데이트 일자</h3>
             <p className="font-medium">{formatUpdatedDate(pipeline.updatedAt)}</p>
             <div className="mt-1 flex items-center text-sm">
-              <span className="mr-3">❤️ {pipeline.likeCount}</span>
-              <span>⬇️ {pipeline.downloadCount}</span>
+              <p className="mr-3">❤️ {pipeline.likeCount}</p>
+              <p>⬇️ {pipeline.downloadCount}</p>
             </div>
           </div>
         </div>
@@ -56,7 +56,8 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg bg-gray-50 p-3">
               <h3 className="mb-1 text-sm text-gray-500">정확도(R² 계수)</h3>
-              <p className="text-2xl font-bold">{pipeline.accuracy}%</p>
+              {pipeline.accuracy && <p className="text-2xl font-bold">{(pipeline.accuracy * 100).toFixed(2)}%</p>}
+              {pipeline.rSquared && <p className="text-2xl font-bold">{(pipeline.rSquared * 100).toFixed(2)}%</p>}
             </div>
             <div className="rounded-lg bg-gray-50 p-3">
               <h3 className="mb-1 text-sm text-gray-500">데이터수</h3>

@@ -13,7 +13,7 @@ export interface OpenSourceProject {
   domain: ApiProjectDomain; // 의료 금융 등
   displayDomain?: string; // 화면 표시용 한글 도메인
   accuracy: number | null; // 정확도
-  rmse: number | null; // 회귀일때의 정확도
+  rSquared: number | null; // 회귀일때의 정확도
   target: string; // 목표변수
   dataCount: number; // 데이터수
   runnungDuration: number; // 학습시간
