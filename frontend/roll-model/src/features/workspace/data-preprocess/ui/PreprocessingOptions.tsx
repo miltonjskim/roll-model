@@ -9,6 +9,7 @@ import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceA
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
+import { Button } from '@/components/ui/button';
 
 interface PreprocessingOption {
   id: string;
@@ -118,7 +119,7 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
     setExpanded((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
   };
 
-  const handleSelect = async (categoryId: string, option: PreprocessingOption) => {
+  const handleApply = async (categoryId: string, option: PreprocessingOption) => {
     setLoading(true);
 
     try {
@@ -148,18 +149,20 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
           break;
 
         case 'data-transformation':
-          if (option.apiEndpoint.includes('/log')) {
+          if (option.id === 'log') {
             body.offset = offset;
           }
           break;
 
-        case 'categorical-encoding':
-          if (option.apiEndpoint.includes('/target')) {
+        case 'encoding':
+          console.log('option id:', option.id);
+
+          if (option.id === 'target') {
             body.targetColumn = targetColumn;
           }
           break;
 
-        case 'class-imbalance':
+        case 'class-balancing':
           body.column = column;
           body.method = option.method || 'OVER';
           body.samplingRatio = samplingRatio;
@@ -167,38 +170,40 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
       }
 
       const response = await axiosInstance.post(url, body);
-      const result = response.data.data.result;
+      const result = response.data.data.data.result;
+      const updatedDataset = response.data.data.data.dataset;
 
-      const updatedCells: Record<string, boolean> = {};
+      console.log('response:', response);
 
-      if (result.imputedRows) {
-        result.imputedRows.forEach((row: ImputedRow) => {
-          updatedCells[`${row.id}:${result.column}`] = true;
-        });
-      } else if (result.removedRows) {
-        result.removedRows.forEach((row: ImputedRow) => {
-          updatedCells[`${row.id}:${result.column}`] = true;
-        });
-      }
+      console.log('result:', result);
 
-      if (onChangeCells) onChangeCells(updatedCells);
+      const changed: Record<string, boolean> = {};
 
-      if (result.imputedRows && uploadedDataset) {
-        const newData = [...uploadedDataset.originalDatasets.data];
-        result.imputedRows.forEach((row: ImputedRow) => {
-          const index = newData.findIndex((r) => r.id === row.id);
-          if (index !== -1) {
-            newData[index] = { ...newData[index], ...row };
+      if (result.originalRows && result.imputedRows) {
+        result.imputedRows.forEach((newRow: ImputedRow, i: number) => {
+          const oldRow = result.originalRows[i];
+          if (!oldRow) return;
+          const rowIdx = newRow.idx ?? i;
+          for (const key in newRow) {
+            if (key !== 'idx' && String(newRow[key]) !== String(oldRow[key])) {
+              changed[`${rowIdx}:${key}`] = true;
+            }
           }
         });
-        setUploadedDataset({
-          ...uploadedDataset,
-          originalDatasets: {
-            ...uploadedDataset.originalDatasets,
-            data: newData,
-          },
-        });
       }
+      onChangeCells?.(changed);
+
+      setUploadedDataset((prev) =>
+        prev
+          ? {
+              ...prev,
+              originalDatasets: {
+                ...prev.originalDatasets,
+                data: updatedDataset,
+              },
+            }
+          : prev,
+      );
 
       if (onAddStep && column) {
         const parameters: Record<string, any> = { columnId: column };
@@ -226,31 +231,6 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
 
   return (
     <div className="flex max-h-[34rem] flex-col space-y-2 overflow-y-auto pr-2">
-      <div className="grid grid-cols-3 gap-4 p-2">
-        <div>
-          <label className="block text-sm font-medium">타겟 컬럼</label>
-          <Select value={targetColumn} onValueChange={setTargetColumn}>
-            <SelectTrigger>
-              <SelectValue placeholder="선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {columnNames.map((col) => (
-                <SelectItem key={col} value={col}>
-                  {col}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Offset</label>
-          <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Sampling Ratio (%)</label>
-          <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} />
-        </div>
-      </div>
       {preprocessingCategories.map((cat) => {
         const isOpen = expanded.includes(cat.id);
         return (
@@ -273,20 +253,77 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
             )}
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} border-t border-[var(--color-gray-04)]`}>
-              {cat.options.map((opt) => (
-                <div
-                  key={opt.id}
-                  onClick={() => handleSelect(cat.id, opt)}
-                  className={`flex items-center justify-between p-3 pl-4 text-sm transition-colors duration-200 ${selected[cat.id] === opt.id ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{opt.name}</p>
-                    <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
-                  </div>
+              {cat.options.map((opt) => {
+                const isSelected = selected[cat.id] === opt.id;
+                const needsTargetColumn = opt.apiEndpoint.includes('/target');
+                const needsOffset = opt.apiEndpoint.includes('/log');
+                const needsSampling = cat.id === 'class-balancing';
 
-                  {selected[cat.id] === opt.id && <Check size={16} className="text-blue-500" />}
-                </div>
-              ))}
+                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
+
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))}
+                    className={`flex items-center justify-between p-3 pl-4 text-sm transition-colors duration-200 ${selected[cat.id] === opt.id ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
+                  >
+                    <div className="cursor-pointer" onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))}>
+                      <div className="mb-2">
+                        <p className="text-sm font-semibold">{opt.name}</p>
+                        <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
+                      </div>
+
+                      {isSelected && (
+                        <div className="">
+                          {needsTargetColumn && (
+                            <div>
+                              <label className="block text-sm font-medium">타겟 컬럼</label>
+                              <Select value={targetColumn} onValueChange={setTargetColumn}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="선택하세요" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {columnNames.map((col) => (
+                                    <SelectItem key={col} value={col}>
+                                      {col}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                          {needsOffset && (
+                            <div>
+                              <label className="block text-sm font-medium">Offset</label>
+                              <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} />
+                            </div>
+                          )}
+                          {needsSampling && (
+                            <div>
+                              <label className="block text-sm font-medium">Sampling Ratio (%)</label>
+                              <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {isSelected && (
+                      <div className="mt-2">
+                        <Button
+                          variant="black"
+                          size="sm"
+                          disabled={!isValid || loading}
+                          onClick={() => handleApply(cat.id, opt)}
+                          className={`ml-2 rounded-sm ${!isValid || loading ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-800'}`}
+                        >
+                          적용
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

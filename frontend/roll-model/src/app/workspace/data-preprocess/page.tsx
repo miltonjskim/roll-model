@@ -137,7 +137,7 @@ const PreprocessDataPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-1/3 shrink-0 basis-[35rem] flex-col gap-4 text-left">
+        <div className="flex max-w-[90%] flex-1/3 shrink-0 basis-[35rem] flex-col gap-4 text-left">
           <div className="flex gap-4">
             {/* 내 데이터 요약 섹션 */}
             <div className="bg-[theme(primary-white)] flex-1/3 basis-[23rem] rounded-md p-4">
