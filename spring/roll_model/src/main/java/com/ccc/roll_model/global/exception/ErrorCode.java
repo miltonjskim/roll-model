@@ -20,6 +20,8 @@ public enum ErrorCode {
 
 	// 파이프라인 관련
 	PIPELINE_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "파이프라인을 찾을 수 없습니다."),
+	PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P002", "프로젝트를 찾을 수 없습니다."),
+	PIPELINE_DATA_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "파이프라인 데이터를 찾을 수 없습니다."),
 
 	// 모델 관련
 	MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "모델을 찾을 수 없습니다."),
