@@ -48,55 +48,53 @@ public class PipelineApiService {
         String pipelineId = command.getPipelineId();
         Integer memberId = command.getMemberId();
 
-        // 1. MySQL에서 파이프라인 entity 조회
-        PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
+        // 1. MongoDB에서 파이프라인 document 직접 조회 (MySQL 조회 없이)
+        PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
 
-        // 2. MySQL에서 프로젝트 entity 조회
-        ProjectEntity projectEntity = projectRepository.findById(pipelineEntity.getProjectId())
+        Integer projectId = pipelineDocument.getProjectId();
+
+        // 2. 프로젝트 정보가 필요하므로 MySQL에서 프로젝트 entity 조회
+        ProjectEntity projectEntity = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.PROJECT_NOT_FOUND));
 
-        // 3. MongoDB에서 파이프라인 document 조회
-        PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
-                .orElse(null); // 존재하지 않을 경우 null 처리
-
-        // MongoDB 데이터가 없는 경우 처리
-        if (pipelineDocument == null) {
-            // 핵심 데이터가 없는 경우 에러 반환 또는 제한된 정보만 반환
-            throw new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND);
-        }
+        // 3. MySQL에서 파이프라인 entity 조회 (필요한 메타데이터 때문에)
+        PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
+                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_METADATA_NOT_FOUND));
 
         // 4. 파이프라인의 최신 히스토리 가져오기
         PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory().stream()
                 .filter(item -> item.getModelId() != null)
                 .findFirst()
-                .orElse(null); // 모델 ID가 없는 경우 null 처리
-
-        // 모델 ID가 없는 경우 처리
-        if (latestHistoryItem == null || latestHistoryItem.getModelId() == null) {
-            throw new ApiException(ErrorCode.MODEL_NOT_FOUND);
-        }
+                .orElseThrow(() -> new ApiException(ErrorCode.NO_MODEL_HISTORY_FOUND));
 
         // 5. MongoDB에서 모델 document 조회
         ModelDocument modelDocument = modelRepository.findById(latestHistoryItem.getModelId())
                 .orElseThrow(() -> new ApiException(ErrorCode.MODEL_NOT_FOUND));
 
-        // 6. 전처리된 데이터셋 찾기 (필요한 경우에만 조회)
-        DatasetDocument preprocessedDataset = null;
-        if (latestHistoryItem.getPreprocessingSteps() != null && !latestHistoryItem.getPreprocessingSteps().isEmpty()) {
-            String preprocessedDatasetId = latestHistoryItem.getPreprocessingSteps().stream()
-                    .filter(step -> step.getPreprocessedDatasetId() != null)
-                    .map(PipelineDocument.PreprocessingStep::getPreprocessedDatasetId)
-                    .findFirst()
-                    .orElse(null);
-
-            if (preprocessedDatasetId != null) {
-                preprocessedDataset = datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
-                // 데이터셋이 없어도 오류는 발생시키지 않음 (선택적 정보)
-            }
-        }
+        // 6. 전처리된 데이터셋 찾기 (선택적)
+        DatasetDocument preprocessedDataset = findPreprocessedDataset(latestHistoryItem);
 
         return buildApiResponse(projectEntity, pipelineEntity, modelDocument, preprocessedDataset, memberId);
+    }
+
+    // 전처리된 데이터셋을 찾는 별도 메소드
+    private DatasetDocument findPreprocessedDataset(PipelineDocument.PipelineHistoryItem historyItem) {
+        if (historyItem.getPreprocessingSteps() == null || historyItem.getPreprocessingSteps().isEmpty()) {
+            return null;
+        }
+
+        String preprocessedDatasetId = historyItem.getPreprocessingSteps().stream()
+                .filter(step -> step.getPreprocessedDatasetId() != null)
+                .map(PipelineDocument.PreprocessingStep::getPreprocessedDatasetId)
+                .findFirst()
+                .orElse(null);
+
+        if (preprocessedDatasetId == null) {
+            return null;
+        }
+
+        return datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
     }
 
     private GetPipelineApiResponse buildApiResponse(
