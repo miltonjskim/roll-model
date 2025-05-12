@@ -117,7 +117,7 @@ const ConfigDataPage = () => {
     }
 
     if (!isNaN(Date.parse(trimmed))) {
-      return 'date';
+      return 'datetime';
     }
 
     return 'string';
@@ -242,7 +242,7 @@ const ConfigDataPage = () => {
                         <SelectItem value="integer">integer</SelectItem>
                         <SelectItem value="double">double</SelectItem>
                         <SelectItem value="boolean">boolean</SelectItem>
-                        <SelectItem value="date">date</SelectItem>
+                        <SelectItem value="datetime">datetime</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
