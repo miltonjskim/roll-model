@@ -419,9 +419,8 @@ async def get_pipeline_versions(
             data=None
         )
 
-@router.post("/pipelines/{pipeline_id}/fork/preprocess", response_class=ApiResponse)
+@pipeline_router.post("/fork/preprocess", response_class=ApiResponse)
 async def fork_pipeline_preprocess(
-        project_id: int = Path(..., description="프로젝트 ID"),
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
@@ -437,7 +436,7 @@ async def fork_pipeline_preprocess(
     try:
         # 1. 원본 파이프라인 조회
         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_service
+            db, pipeline_id, pipeline_service
         )
         if error_response:
             return error_response
@@ -446,7 +445,7 @@ async def fork_pipeline_preprocess(
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
         # 3. 타겟 프로젝트 결정
         target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
@@ -490,9 +489,8 @@ async def fork_pipeline_preprocess(
         )
 
 
-@router.post("/pipelines/{pipeline_id}/fork/total", response_class=ApiResponse)
+@pipeline_router.post("/fork/total", response_class=ApiResponse)
 async def fork_pipeline_total(
-        project_id: int = Path(..., description="프로젝트 ID"),
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
@@ -508,7 +506,7 @@ async def fork_pipeline_total(
     try:
         # 1. 원본 파이프라인 조회
         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_service
+            db, pipeline_id, pipeline_service
         )
         if error_response:
             return error_response
@@ -518,7 +516,7 @@ async def fork_pipeline_total(
 
         # 3. 타겟 프로젝트 결정
         target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
 
         # 4. 새로운 파이프라인 모델 생성

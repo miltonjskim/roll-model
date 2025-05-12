@@ -12,14 +12,13 @@ from service.db.pipeline_service import PipelineService
 
 logger = logging.getLogger()
 
-async def get_source_pipeline(db, pipeline_id, project_id, pipeline_service:PipelineService):
+async def get_source_pipeline(db, pipeline_id, pipeline_service:PipelineService):
     """
     원본 파이프라인과 상세 정보를 조회합니다.
     """
     # MySQL에서 기본 파이프라인 정보 조회
     source_pipeline = db.query(Pipeline) \
         .filter(Pipeline.pipeline_id == pipeline_id) \
-        .filter(Pipeline.project_id == project_id) \
         .filter(Pipeline.deleted_yn == False) \
         .first()
 
@@ -425,6 +424,7 @@ async def prepare_response_data(new_pipeline_id, target_project_id, pipeline_id,
         "pipelineId": new_pipeline_id,
         "projectId": target_project_id,
         "version": new_version,
+        "category" : new_pipeline.category,
         "isOriginalProject": target_project_id == original_project_id,
     }
 

@@ -465,6 +465,7 @@ async def complete_preprocessing(
             "message": "전처리 완료",
             "data": {
                 "pipelineId": pipeline_id,
+                "category": updated_pipeline.category,
                 "columns": inferred_columns,
             }
         }
