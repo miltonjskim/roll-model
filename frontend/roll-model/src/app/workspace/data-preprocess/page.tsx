@@ -29,14 +29,23 @@ const PreprocessDataPage = () => {
   const [recommendedSteps, setRecommendedSteps] = useState<Step[]>([]);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
+  const [steps, setSteps] = useState<Step[]>([]);
 
   useEffect(() => {
     if (!uploadedData) {
+      showErrorToast(
+        <>
+          데이터셋 정보가 존재하지 않습니다.
+          <br />
+          프로젝트 생성 페이지로 이동합니다.
+        </>,
+      );
+      router.push('/workspace');
       return;
     } else {
       console.log('원본 데이터셋 업로드 응답값:', uploadedData);
     }
-  }, [uploadedData]);
+  }, [uploadedData, router]);
 
   const handleAddClick = () => {
     if (optionRef.current) {
@@ -44,6 +53,10 @@ const PreprocessDataPage = () => {
       setHighlight(true);
       setTimeout(() => setHighlight(false), 1000);
     }
+  };
+
+  const handleAddStep = (newStep: Step) => {
+    setSteps((prev) => [...prev, newStep]);
   };
 
   const requestAISuggestion = async () => {
@@ -67,13 +80,28 @@ const PreprocessDataPage = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/complete`);
-      setCompletedDataset(response.data.columns);
+
+      console.log('response:', response);
+
+      setCompletedDataset(response.data.data.data.columns);
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
       console.error(apiError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveStep = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/delete`);
+
+      console.log('response:', response);
+    } catch (error: unknown) {
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +115,7 @@ const PreprocessDataPage = () => {
       </div>
 
       <div className="mt-4 flex w-[100%] justify-center gap-4">
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 basis-[40rem] flex-col gap-4">
           {/* 프로젝트 이름 섹션 */}
           <div className="bg-[theme(primary-white)] rounded-md p-4">
             <h3 className="text-lg font-semibold">
@@ -119,7 +147,7 @@ const PreprocessDataPage = () => {
             <div className="">
               {/* 전처리 기능 목록 섹션 */}
               <div className="${ highlight ? 'shadow-accent' : '' mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
-                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={handleChangeCells} />
+                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
               </div>
 
               {/* AI 추천 버튼 */}
@@ -140,7 +168,7 @@ const PreprocessDataPage = () => {
         <div className="flex max-w-[90%] flex-1/3 shrink-0 basis-[35rem] flex-col gap-4 text-left">
           <div className="flex gap-4">
             {/* 내 데이터 요약 섹션 */}
-            <div className="bg-[theme(primary-white)] flex-1/3 basis-[23rem] rounded-md p-4">
+            <div className="bg-[theme(primary-white)] flex-1/5 basis-[23rem] rounded-md p-4">
               <div>
                 <h4 className="text-[1.07rem] font-semibold">내 데이터 요약</h4>
                 <p className="text-sm text-[var(--color-gray-01)]">전처리로 결측치와 이상치를 수정할 수 있습니다.</p>
@@ -150,13 +178,19 @@ const PreprocessDataPage = () => {
             </div>
 
             {/* 적용된 전처리 단계 파이프라인 섹션 */}
-            <div className="bg-[theme(primary-white)] flex-2/3 rounded-md p-4">
-              <div>
-                <h4 className="text-[1.07rem] font-semibold">적용한 전처리 단계</h4>
-                <p className="text-sm text-[var(--color-gray-01)]">현재까지 적용한 전처리 과정을 확인할 수 있습니다.</p>
-                <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">단계를 삭제하거나 추가할 수 있습니다.</p>
+            <div className="bg-[theme(primary-white)] max-w-full flex-4/5 overflow-x-auto rounded-md p-4">
+              <div className="flex items-end justify-between">
+                <div>
+                  <h4 className="text-[1.07rem] font-semibold">적용한 전처리 단계</h4>
+                  <p className="text-sm text-[var(--color-gray-01)]">현재까지 적용한 전처리 과정을 확인할 수 있습니다.</p>
+                  <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">단계를 삭제하거나 추가할 수 있습니다.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleRemoveStep}>
+                  - 최근 단계 삭제
+                </Button>
               </div>
-              <PreprocessingPipeline onAdd={handleAddClick} recommendedSteps={recommendedSteps} />
+
+              <PreprocessingPipeline steps={steps} />
             </div>
           </div>
 
@@ -164,8 +198,7 @@ const PreprocessDataPage = () => {
           <div className="bg-[theme(primary-white)] rounded-md p-4">
             <div>
               <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
-              <p className="text-sm text-[var(--color-gray-01)]">적용된 전처리 결과를 미리 확인할 수 있습니다.</p>
-              <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
+              <p className="text-sm text-[var(--color-gray-01)]">적용된 전처리 결과를 미리 확인할 수 있으며, 변경된 데이터는 하이라이트로 표시됩니다.</p>
             </div>
             <PreprocessingTable changedCells={changedCells} />
           </div>
