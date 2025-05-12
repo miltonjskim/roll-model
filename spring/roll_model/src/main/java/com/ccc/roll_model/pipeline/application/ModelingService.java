@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ccc.roll_model.pipeline.application.command.GetPipelineDatasetInfoCommand;
@@ -461,27 +462,28 @@ public class ModelingService {
 		// 결측치 비율 계산
 		String missingRate = calculateMissingRate(datasetDocument);
 
-		// 모델 문서에서 타겟 변수 가져오기
+		// MySQL의 Pipeline 테이블에서 타겟 변수 가져오기
 		String targetVariable = null;
 		try {
-			ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
-			if (modelDocument != null && modelDocument.getTrainInfo() != null) {
-				String targetFeature = modelDocument.getTrainInfo().getTargetFeature();
-				// 타겟 변수가 있고 비어있지 않은 경우에만 설정
-				if (targetFeature != null && !targetFeature.isEmpty()) {
-					targetVariable = targetFeature;
-				}
+			// PipelineRepository를 통해 파이프라인 엔티티 조회
+			Optional<PipelineEntity> pipelineEntityOptional = pipelineRepository.findById(pipelineId);
+
+			if (pipelineEntityOptional.isPresent()) {
+				PipelineEntity pipelineEntity = pipelineEntityOptional.get();
+				targetVariable = pipelineEntity.getTargetFeature();
+				log.info("buildDatasetDTO - 파이프라인 ID: {}, MySQL에서 가져온 타겟 변수: {}", pipelineId, targetVariable);
+			} else {
+				log.warn("buildDatasetDTO - 파이프라인 ID: {}에 해당하는 Pipeline 엔티티를 찾을 수 없음", pipelineId);
 			}
-			log.info("buildDatasetDTO - 파이프라인 ID: {}, 타겟 변수: {}", pipelineId, targetVariable);
 		} catch (Exception e) {
-			log.error("buildDatasetDTO - 타겟 변수 조회 중 오류 발생: {}", e.getMessage());
+			log.error("buildDatasetDTO - MySQL에서 타겟 변수 조회 중 오류 발생: {}", e.getMessage());
 		}
 
 		return DatasetResponse.builder()
 				.id(datasetDocument.getId().toString())
 				.recordCount(datasetDocument.getMetadata().getRowCount())
 				.featureCount(datasetDocument.getMetadata().getColumnCount())
-				.targetVariable(targetVariable) // 모델 문서에서 가져온 타겟 변수 (없으면 null)
+				.targetVariable(targetVariable) // MySQL의 Pipeline 테이블에서 가져온 타겟 변수 (없으면 null)
 				.missingRate(missingRate)
 				.build();
 	}
