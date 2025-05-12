@@ -17,7 +17,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
 from fastapi.params import Query
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
 import logging
 import json
 
@@ -28,7 +27,7 @@ from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
 from models.project.dataset_models import DatasetPageResponse
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
-from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
+from service.dataset_service import upload_dataset_and_save_metadata
 from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.pipeline_fork_service import save_new_pipeline, prepare_response_data
@@ -133,7 +132,7 @@ async def upload_project_dataset(
             domain = domain
         )
         # NaN, INF 수동 인코딩
-        safe_result = jsonable_encoder(replace_nan_values(result))
+        safe_result = process_response_data(result, decimal_places=2)
 
         # 응답 구성
         return ApiResponse(
@@ -591,7 +590,7 @@ async def get_dataset_page(
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",
-            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page)))
+            data=DatasetPageResponse(**process_response_data(dataset_page, decimal_places=2))
         )
 
     except Exception as e:
