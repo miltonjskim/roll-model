@@ -129,9 +129,9 @@ public class ProjectVersionService {
         // 학습 소요 시간은 ModelDocument에서 가져올게.
         Double runningDuration = null;
         if (model != null && model.getLearningDuration() != null) {
-            runningDuration = model.getLearningDuration().doubleValue();
-            // TODO: 필요하다면? 러닝 타임도 소수점 둘째 자리까지 반올림
-            // runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
+//            runningDuration = model.getLearningDuration().doubleValue();
+            // 러닝 타임도 소수점 둘째 자리까지 반올림
+             runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
         }
 
         // parent_pipeline_id에 해당하는 버전 정보
