@@ -48,7 +48,7 @@ def sanitize_k8s_name(name):
 
     return sanitized
 
-def generate_inference_service_yaml(model_name, model_path, namespace="default", gpu_fraction=0, cpu_request="100m", cpu_limit="300m", memory_request="256Mi", memory_limit="512Mi"):
+def generate_inference_service_yaml(model_name, model_path, namespace="default", gpu_fraction=0.0, cpu_request="100m", cpu_limit="300m", memory_request="256Mi", memory_limit="512Mi"):
     """
     Jinja2 템플릿을 사용하여 InferenceService YAML 파일 생성
 
@@ -154,25 +154,33 @@ def deploy_kubernetes_resource(yaml_path, resource_type="InferenceService"):
     except subprocess.CalledProcessError as e:
         return False, f"{resource_type} 배포 오류: {e.stderr}"
 
-def deploy_model_with_virtual_service(model_name, model_path, namespace="default",
-                                      gpu_fraction=0, cpu_request="100m", cpu_limit="300m",
-                                      memory_request="256Mi", memory_limit="512Mi"):
+def deploy_model_with_virtual_service(
+    model_name,
+    model_path,
+    namespace="default",
+    gpu_fraction=0.0,
+    cpu_request="100m",
+    cpu_limit="300m",
+    memory_request="256Mi",
+    memory_limit="512Mi"
+):
     """
     모델 배포를 위한 InferenceService와 VirtualService를 모두 생성하고 배포
 
     Args:
-        model_name: 모델 이름
-        model_path: MinIO 내 모델 경로
-        namespace: 쿠버네티스 네임스페이스
-        gpu_fraction: GPU 사용 비율
-        cpu_request: 요청 CPU 리소스
-        cpu_limit: 제한 CPU 리소스
-        memory_request: 요청 메모리 리소스
-        memory_limit: 제한 메모리 리소스
+        model_name: 배포할 모델 이름
+        model_path: MinIO 내부 모델 경로
+        namespace: Kubernetes 네임스페이스
+        gpu_fraction: 모델에 할당할 GPU 비율 (예: 0.1 = 10%)
+        cpu_request: CPU 요청량
+        cpu_limit: CPU 제한량
+        memory_request: 메모리 요청량
+        memory_limit: 메모리 제한량
 
     Returns:
-        성공 여부, 메시지, 서비스 이름
+        배포 성공 여부, 메시지, 서비스 이름, 서비스 URL
     """
+
     # 1. InferenceService YAML 생성
     inference_yaml_path, service_name = generate_inference_service_yaml(
         model_name,

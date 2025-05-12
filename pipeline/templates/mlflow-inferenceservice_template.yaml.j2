@@ -20,8 +20,8 @@ spec:
     maxReplicas: 3
     # 자동 스케일링을 위한 지표 설정
     scaleMetric: concurrency
-    scaleTarget: 10
-    containerConcurrency: 5
+    scaleTarget: 5
+    containerConcurrency: 3
     sklearn:
       image: "miltonjunseokkim/sklearn-server:1.6.1"
       storageUri: s3://ml-models/{{ model_path }}
@@ -38,12 +38,12 @@ spec:
           {% if gpu_fraction > 0 %}
           nvidia.com/gpu: {{ gpu_fraction }}
           {% endif %}
-      {% if gpu_fraction > 0 %}
-      env:
-        - name: NVIDIA_VISIBLE_DEVICES
-          value: "all"
-        - name: NVIDIA_DRIVER_CAPABILITIES
-          value: "compute,utility"
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0"
-      {% endif %}
+        {% if gpu_fraction > 0 %}
+        env:
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: "all"
+          - name: NVIDIA_DRIVER_CAPABILITIES
+            value: "compute,utility"
+          - name: CUDA_VISIBLE_DEVICES
+            value: "0"
+        {% endif %}
