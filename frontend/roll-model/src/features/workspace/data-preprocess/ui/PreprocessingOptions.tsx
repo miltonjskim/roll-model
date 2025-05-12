@@ -191,6 +191,15 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
           }
         });
       }
+
+      if (result.outlierCount > 0 && Array.isArray(result.outlierIndices)) {
+        result.outlierIndices.forEach((idx: number) => {
+          if (column) {
+            changed[`${idx}:${column}`] = true;
+          }
+        });
+      }
+
       onChangeCells?.(changed);
 
       setUploadedDataset((prev) =>
@@ -200,24 +209,39 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
               originalDatasets: {
                 ...prev.originalDatasets,
                 data: updatedDataset,
+                columns: Array.from(new Set(updatedDataset.flatMap((row: string) => Object.keys(row).filter((key) => key !== 'idx')))),
               },
             }
           : prev,
       );
 
       if (onAddStep && column) {
-        const parameters: Record<string, string | number> = { columnId: column };
+        const parameters: Record<string, string | number | number[]> = { columnId: column };
         if (option.method) parameters.method = option.method;
         if (option.apiEndpoint.includes('outliers')) parameters.detection = detection;
         if (option.apiEndpoint.includes('log')) parameters.offset = offset;
         if (option.apiEndpoint.includes('target')) parameters.targetColumn = targetColumn;
         if (option.apiEndpoint.includes('class-balancing')) parameters.samplingRatio = samplingRatio;
 
+        if (option.apiEndpoint.includes('detection')) {
+          parameters.minThreshold = result.minThreshold;
+          parameters.maxThreshold = result.maxThreshold;
+          parameters.outlierIndices = result.outlierIndices;
+        }
+
+        if (option.apiEndpoint.includes('missing-values')) {
+          parameters.fillValue = result.fillValue;
+        }
+
         onAddStep({
           type: categoryId.toUpperCase(),
           parameters,
           order: Date.now(),
           active: true,
+          categoryId,
+          optionId: option.id,
+          optionName: option.name,
+          optionDescription: option.description,
         });
       }
     } catch (error) {
