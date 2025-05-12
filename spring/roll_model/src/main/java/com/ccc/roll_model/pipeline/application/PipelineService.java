@@ -122,14 +122,19 @@ public class PipelineService {
 
 		log.info("파이프라인:{}", pipeline.getPipelineId());
 
-		ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
+		//ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
 
-		if (modelDocument == null) {
+		List<ModelDocument> modelDocuments =modelRepository.findAllByPipelineId(pipelineId);
+
+		if (modelDocuments == null) {
 			throw new EntityNotFoundException("모델을 찾을 수 없습니다.");
 
 		}
 
-		log.info("모델 ModelDocument:{}", modelDocument);
+		log.info("모델 ModelDocument:{}", modelDocuments.size());
+
+
+		ModelDocument modelDocument = modelDocuments.get(0);
 
 		ProjectEntity project= projectRepository.findById(pipeline.getProjectId())
 				.orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
@@ -176,12 +181,27 @@ public class PipelineService {
 					.featureImportance(featureImportance)
 					.build();
 		} else if (project.getCategory().toString().equals("REGRESSION")){
+			RegressionResponse.ResidualPlot residualPlot;
+			RegressionResponse.ActualVsPredicted actualVsPredicted;
 
-			RegressionResponse.ResidualPlot residualPlot = ModelResponseAssembler.buildResidualPlot(modelDocument.getPerformance().getRegression());
-			log.info("ResidualPlot:{}", residualPlot);
+			if(modelDocument.getPerformance() != null) {
+				residualPlot = ModelResponseAssembler.buildResidualPlot(modelDocument.getPerformance().getRegression());
+				log.info("ResidualPlot:{}", residualPlot);
 
-			RegressionResponse.ActualVsPredicted actualVsPredicted = ModelResponseAssembler.buildActualVsPredicted(modelDocument.getPerformance().getRegression());
-			log.info("ActualVsPredicted:{}", actualVsPredicted);
+				actualVsPredicted = ModelResponseAssembler.buildActualVsPredicted(modelDocument);
+				log.info("ActualVsPredicted:{}", actualVsPredicted);
+				return RegressionResponse.regressionBuilder()
+						.projectInfo(projectInfo)
+						.algorithm(modelDocument.getAlgorithm())
+						.modelParameters(modelParameters)
+						.targetInfo(targetInfo)
+						.performanceMetrics(performanceMetrics)
+						.actualVsPredicted(actualVsPredicted)
+						.residualPlot(residualPlot)
+						.featureImportance(featureImportance)
+						.build();
+			}
+
 
 			return RegressionResponse.regressionBuilder()
 					.projectInfo(projectInfo)
@@ -189,8 +209,8 @@ public class PipelineService {
 					.modelParameters(modelParameters)
 					.targetInfo(targetInfo)
 					.performanceMetrics(performanceMetrics)
-					.actualVsPredicted(actualVsPredicted)
-					.residualPlot(residualPlot)
+					.actualVsPredicted(null)
+					.residualPlot(null)
 					.featureImportance(featureImportance)
 					.build();
 		}
