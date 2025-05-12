@@ -505,9 +505,6 @@ async def calculate_and_update_statistics(
                 correlation_matrix = corr_matrix
             except Exception as e:
                 logger.warning(f"상관관계 행렬 계산 중 오류: {str(e)}")
-        logger.info(f"생성된 숫자형 통계: {list(numeric_features.keys())}")
-        logger.info(f"생성된 범주형 통계: {list(categorical_features.keys())}")
-        logger.info(f"상관관계 행렬 생성 여부: {correlation_matrix is not None}")
         # 모든 통계 정보를 담은 객체 생성
         statistics = {
             "numeric_features": numeric_features,
