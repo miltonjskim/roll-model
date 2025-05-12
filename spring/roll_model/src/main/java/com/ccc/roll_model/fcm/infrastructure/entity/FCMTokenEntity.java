@@ -9,13 +9,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "fcm_tokens")
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public class FCMTokenEntity extends BaseCreatedAndUpdatedEntity {
 
     @Id
@@ -23,7 +24,7 @@ public class FCMTokenEntity extends BaseCreatedAndUpdatedEntity {
     private Long id;
 
     @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    private Integer memberId;
 
     @Column(name = "token", nullable = false, length = 255)
     private String token;
@@ -41,5 +42,16 @@ public class FCMTokenEntity extends BaseCreatedAndUpdatedEntity {
 
     public void deactivate() {
         this.isActive = false;
+    }
+
+    @Builder
+    public static FCMTokenEntity createFCMToken(Long id, Integer memberId, String token, String deviceInfo, boolean isActive) {
+        FCMTokenEntity entity = new FCMTokenEntity();
+        entity.id = id;
+        entity.memberId = memberId;
+        entity.token = token;
+        entity.deviceInfo = deviceInfo;
+        entity.isActive = isActive;
+        return entity;
     }
 }

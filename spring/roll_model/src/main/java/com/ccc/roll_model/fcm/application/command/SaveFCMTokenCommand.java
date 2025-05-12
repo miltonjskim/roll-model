@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class SaveFCMTokenCommand {
-    private final Long memberId;
+    private final Integer memberId;
     private final String token;
     private final String deviceInfo;
 }

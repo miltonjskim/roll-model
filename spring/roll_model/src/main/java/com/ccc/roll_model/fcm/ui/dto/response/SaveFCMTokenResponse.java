@@ -1,14 +1,11 @@
 package com.ccc.roll_model.fcm.ui.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class SaveFCMTokenResponse {
-    // 필요하면 필드 추가하기
+
+    // 기본 생성자 추가 (Jackson은 직렬화할 때 기본 생성자가 필요합니다)
+    public SaveFCMTokenResponse() {
+    }
 }

@@ -50,8 +50,8 @@ public class FCMService {
 
     // 모델 학습 상태에 따른 메시지 발송
     @Transactional
-    public void sendModelTrainingStatusNotification(Long memberId, String status, String modelName) {
-        List<FCMTokenEntity> tokens = fcmTokenRepository.findByMemberIdAndIsActiveTrue(memberId);
+    public void sendModelTrainingStatusNotification(Integer memberId, String status, String modelName) {
+        List<FCMTokenEntity> tokens = fcmTokenRepository.findByMemberIdAndIsActiveTrue(memberId.intValue());
         if (tokens.isEmpty()) {
             log.info("No active FCM tokens found for member: {}", memberId);
             return; // 활성화된 토큰이 없으면 발송 불가

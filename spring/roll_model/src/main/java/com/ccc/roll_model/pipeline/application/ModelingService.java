@@ -685,5 +685,102 @@ public class ModelingService {
 				.matrix(correlationMatrix)
 				.build();
 	}
+	/**
+	 * 모델 학습 완료 처리
+	 */
+	@Transactional
+	public void completeModelTraining(String modelId, ModelDocument modelResult) {
+		// ObjectId로 변환
+		ObjectId objectModelId = new ObjectId(modelId);
+
+		// 모델 조회
+		ModelDocument modelDocument = modelRepository.findById(objectModelId)
+				.orElseThrow(() -> new EntityNotFoundException("모델을 찾을 수 없습니다: " + modelId));
+
+		// 모델 정보 업데이트
+		modelDocument.getTrainInfo().setEndTime(LocalDateTime.now());
+		modelDocument.setFeatureImportance(modelResult.getFeatureImportance());
+		modelDocument.setPerformance(modelResult.getPerformance());
+		modelDocument.setLearningDuration(modelResult.getLearningDuration());
+		modelDocument.setModelFilePath(modelResult.getModelFilePath());
+
+		// 저장
+		modelRepository.save(modelDocument);
+
+		// 파이프라인 상태 업데이트
+		updatePipelineStatus(modelDocument.getPipelineId(), "COMPLETED");
+
+		// FCM 알림 이벤트 발행
+		messagePublisher.publishModelTrainingStatus(
+				modelId,
+				modelDocument.getMemberId(),
+				modelDocument.getModelTitle(),
+				"COMPLETED");
+
+		log.info("모델 학습 완료 처리: 모델 ID = {}, 상태 = COMPLETED", modelId);
+	}
+
+	/**
+	 * 모델 학습 실패 처리
+	 */
+	@Transactional
+	public void failModelTraining(String modelId, String errorMessage) {
+		// ObjectId로 변환
+		ObjectId objectModelId = new ObjectId(modelId);
+
+		// 모델 조회
+		ModelDocument modelDocument = modelRepository.findById(objectModelId)
+				.orElseThrow(() -> new EntityNotFoundException("모델을 찾을 수 없습니다: " + modelId));
+
+		// 모델 정보 업데이트
+		modelDocument.getTrainInfo().setEndTime(LocalDateTime.now());
+		modelDocument.setErrorMessage(errorMessage);
+
+		// 저장
+		modelRepository.save(modelDocument);
+
+		// 파이프라인 상태 업데이트
+		updatePipelineStatus(modelDocument.getPipelineId(), "FAILED");
+
+		// FCM 알림 이벤트 발행
+		messagePublisher.publishModelTrainingStatus(
+				modelId,
+				modelDocument.getMemberId(),
+				modelDocument.getModelTitle(),
+				"FAILED");
+
+		log.info("모델 학습 실패 처리: 모델 ID = {}, 상태 = FAILED, 에러 메시지 = {}", modelId, errorMessage);
+	}
+
+	/**
+	 * 파이프라인 상태 업데이트
+	 */
+	private void updatePipelineStatus(String pipelineId, String status) {
+		try {
+			// MySQL 파이프라인 상태 업데이트
+			PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
+					.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다: " + pipelineId));
+
+			// 상태 업데이트
+			pipelineEntity.updateStatus(Status.valueOf(status));
+			pipelineRepository.save(pipelineEntity);
+
+			// MongoDB 파이프라인 문서 상태 업데이트
+			PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
+					.orElseThrow(() -> new EntityNotFoundException("파이프라인 문서를 찾을 수 없습니다: " + pipelineId));
+
+			// 히스토리 상태 업데이트
+			if (pipelineDocument.getHistory() != null && !pipelineDocument.getHistory().isEmpty()) {
+				PipelineDocument.PipelineHistoryItem latestHistory = pipelineDocument.getHistory()
+						.get(pipelineDocument.getHistory().size() - 1);
+				latestHistory.setStatus(status);
+				pipelineMongoRepository.save(pipelineDocument);
+			}
+
+			log.info("파이프라인 상태 업데이트: 파이프라인 ID = {}, 상태 = {}", pipelineId, status);
+		} catch (Exception e) {
+			log.error("파이프라인 상태 업데이트 실패: {}", e.getMessage(), e);
+		}
+	}
 }
 

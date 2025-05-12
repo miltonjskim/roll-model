@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.HashMap;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/fcm")
@@ -52,7 +54,7 @@ public class FCMController {
 
             // Command 객체 생성
             SaveFCMTokenCommand command = new SaveFCMTokenCommand(
-                    memberId.longValue(),
+                    memberId,
                     request.getFcmToken(),
                     request.getDeviceInfo() != null ? request.getDeviceInfo() : "unknown"
             );
@@ -61,7 +63,7 @@ public class FCMController {
             fcmService.saveToken(command);
 
             // 성공 응답 반환
-            return ResponseEntity.ok(ApiUtils.success(new SaveFCMTokenResponse()));
+            return ResponseEntity.ok(ApiUtils.success(new HashMap<>()));
 
         } catch (ApiException e) {
             log.error("API Exception while saving FCM token: {}", e.getMessage());

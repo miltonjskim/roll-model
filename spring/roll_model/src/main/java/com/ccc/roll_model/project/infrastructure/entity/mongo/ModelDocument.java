@@ -61,6 +61,9 @@ public class ModelDocument {
     @Field("registered_at")
     private LocalDateTime registeredAt; // 생성(등록) 시간
 
+    @Field("error_message")
+    private String errorMessage; // 모델 학습 실패 시 에러 메시지
+
     // ------ 중첩 클래스 정의 ------
     @Getter
     @Setter

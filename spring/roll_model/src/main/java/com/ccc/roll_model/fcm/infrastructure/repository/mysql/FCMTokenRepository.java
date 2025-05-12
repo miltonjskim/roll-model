@@ -10,11 +10,11 @@ import java.util.Optional;
 @Repository
 public interface FCMTokenRepository extends JpaRepository<FCMTokenEntity, Long> {
 
-    List<FCMTokenEntity> findByMemberIdAndIsActiveTrue(Long memberId);
+    List<FCMTokenEntity> findByMemberIdAndIsActiveTrue(Integer memberId);
 
     Optional<FCMTokenEntity> findByTokenAndIsActiveTrue(String token);
 
-    Optional<FCMTokenEntity> findByMemberIdAndToken(Long memberId, String token);
+    Optional<FCMTokenEntity> findByMemberIdAndToken(Integer memberId, String token);
 
     void deleteByToken(String token);
 }
