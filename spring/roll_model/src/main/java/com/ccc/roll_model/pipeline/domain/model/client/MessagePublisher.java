@@ -6,5 +6,5 @@ public interface MessagePublisher {
     void publishProcessingRequest(ModelingData modelingData);
 
     // 모델 학습 상태 이벤트 발행
-    void publishModelTrainingStatus(String modelId, Integer memberId, String modelName, String status);
+    void publishModelTrainingStatus(String modelId, Integer memberId, String projectTitle, String status);
 }

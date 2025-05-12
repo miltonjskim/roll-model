@@ -50,8 +50,8 @@ public class FCMService {
 
     // 모델 학습 상태에 따른 메시지 발송
     @Transactional
-    public void sendModelTrainingStatusNotification(Integer memberId, String status, String modelName) {
-        List<FCMTokenEntity> tokens = fcmTokenRepository.findByMemberIdAndIsActiveTrue(memberId.intValue());
+    public void sendModelTrainingStatusNotification(Integer memberId, String status, String projectTitle) {
+        List<FCMTokenEntity> tokens = fcmTokenRepository.findByMemberIdAndIsActiveTrue(memberId);
         if (tokens.isEmpty()) {
             log.info("No active FCM tokens found for member: {}", memberId);
             return; // 활성화된 토큰이 없으면 발송 불가
@@ -60,14 +60,24 @@ public class FCMService {
         Map<String, String> data = new HashMap<>();
 
         switch (status) {
+//            case "COMPLETED":
+//                data.put("title", "모델 학습 완료");
+//                data.put("body", projectTitle + "의 학습이 성공적으로 완료되었습니다.");
+//                data.put("state", "COMPLETED");
+//                break;
+//            case "FAILED":
+//                data.put("title", "모델 학습 실패");
+//                data.put("body", projectTitle + " 학습 중 문제가 발생했습니다.");
+//                data.put("state", "FAILED");
+//                break;
             case "COMPLETED":
-                data.put("title", "모델 학습 완료");
-                data.put("body", modelName + " 모델의 학습이 성공적으로 완료되었습니다.");
+                data.put("title", projectTitle);
+                data.put("body", "모델 학습이 성공적으로 완료되었습니다.");
                 data.put("state", "COMPLETED");
                 break;
             case "FAILED":
-                data.put("title", "모델 학습 실패");
-                data.put("body", modelName + " 모델 학습 중 문제가 발생했습니다.");
+                data.put("title", projectTitle);
+                data.put("body", "모델 학습 중 문제가 발생했습니다.");
                 data.put("state", "FAILED");
                 break;
             default:

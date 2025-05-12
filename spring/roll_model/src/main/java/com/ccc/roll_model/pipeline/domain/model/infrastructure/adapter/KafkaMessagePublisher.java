@@ -45,9 +45,9 @@ public class KafkaMessagePublisher implements MessagePublisher {
     /**
      * 모델 학습 상태 이벤트 발행
      */
-    public void publishModelTrainingStatus(String modelId, Integer memberId, String modelName, String status) {
+    public void publishModelTrainingStatus(String modelId, Integer memberId, String projectTitle, String status) {
         try {
-            ModelTrainingEvent event = new ModelTrainingEvent(modelId, memberId, modelName, status);
+            ModelTrainingEvent event = new ModelTrainingEvent(modelId, memberId, projectTitle, status);
             String jsonMessage = objectMapper.writeValueAsString(event);
 
             log.info("Model Training Status Topic: {}", modelTrainingStatusTopic);

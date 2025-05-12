@@ -23,7 +23,7 @@ public class FCMEventListener {
             fcmService.sendModelTrainingStatusNotification(
                     event.getMemberId(),
                     event.getStatus(),
-                    event.getModelName());
+                    event.getProjectTitle());
 
             log.info("FCM notification sent successfully for model: {}", event.getModelId());
         } catch (Exception e) {

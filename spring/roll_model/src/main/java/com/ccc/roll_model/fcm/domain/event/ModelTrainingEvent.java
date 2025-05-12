@@ -12,6 +12,7 @@ import lombok.ToString;
 public class ModelTrainingEvent {
     private String modelId;
     private Integer memberId;
-    private String modelName;
+//    private String modelName;
+    private String projectTitle;
     private String status;
 }
