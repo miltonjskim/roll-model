@@ -222,7 +222,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public GetOpensourceResponse getOpensourceProjects(Integer memberId, String keyword, String type,
                                                        String sort, String domain, int size, int page) {
-        logger.info("Fetching opensource projects with parameters: memberId={}, keyword={}, type={}, sort={}, domain={}, size={}, page={}", 
+        logger.info("Fetching opensource projects with parameters: memberId={}, keyword={}, type={}, sort={}, domain={}, size={}, page={}",
                 memberId, keyword, type, sort, domain, size, page);
 
         // 페이지 번호는 0부터 시작하므로 1을 빼줌
@@ -256,141 +256,152 @@ public class ProjectService {
             }
         }
 
-        // 조건에 따라 적절한 레포지토리 메소드 호출
+        // 조건에 따라 적절한 새 레포지토리 메소드 호출
         Page<ProjectEntity> projectsPage;
         String calledMethod = "";
         if (keyword != null && !keyword.isEmpty()) {
             if (category != null && domainEnum != null) {
-                calledMethod = "findAllPublicProjectsByKeywordAndCategoryAndDomain";
-                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategoryAndDomain(keyword, category, domainEnum, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategoryAndDomain";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategoryAndDomain(keyword, category, domainEnum, pageable);
             } else if (category != null) {
-                calledMethod = "findAllPublicProjectsByKeywordAndCategory";
-                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndCategory(keyword, category, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategory";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndCategory(keyword, category, pageable);
             } else if (domainEnum != null) {
-                calledMethod = "findAllPublicProjectsByKeywordAndDomain";
-                projectsPage = projectRepository.findAllPublicProjectsByKeywordAndDomain(keyword, domainEnum, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndDomain";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByKeywordAndDomain(keyword, domainEnum, pageable);
             } else {
-                calledMethod = "findAllPublicProjectsByKeyword";
-                projectsPage = projectRepository.findAllPublicProjectsByKeyword(keyword, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByKeyword";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByKeyword(keyword, pageable);
             }
         } else {
             if (category != null && domainEnum != null) {
-                calledMethod = "findAllPublicProjectsByCategoryAndDomain";
-                projectsPage = projectRepository.findAllPublicProjectsByCategoryAndDomain(category, domainEnum, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByCategoryAndDomain";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByCategoryAndDomain(category, domainEnum, pageable);
             } else if (category != null) {
-                calledMethod = "findAllPublicProjectsByCategory";
-                projectsPage = projectRepository.findAllPublicProjectsByCategory(category, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByCategory";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByCategory(category, pageable);
             } else if (domainEnum != null) {
-                calledMethod = "findAllPublicProjectsByDomain";
-                projectsPage = projectRepository.findAllPublicProjectsByDomain(domainEnum, pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelinesByDomain";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelinesByDomain(domainEnum, pageable);
             } else {
-                calledMethod = "findAllPublicProjects";
-                projectsPage = projectRepository.findAllPublicProjects(pageable);
+                calledMethod = "findAllPublicProjectsWithCompletedPublicPipelines";
+                projectsPage = projectRepository.findAllPublicProjectsWithCompletedPublicPipelines(pageable);
             }
         }
         logger.info("Called repository method: {}", calledMethod);
 
         logger.info("Fetched {} projects", projectsPage.getContent().size());
 
-        AtomicInteger elementsCount = new AtomicInteger();
-
-        // 프로젝트 상세 정보 생성
         List<GetOpensourceResponse.Project> projectDetails = projectsPage.getContent().stream()
                 .map(project -> {
-                    // 가장 최신의 공개 파이프라인 가져오기
-                    List<PipelineEntity> pipelines = pipelineRepository.findFirstCompletedPublicPipeline(project.getProjectId());
-                    PipelineEntity pipeline = pipelines.isEmpty() ? null : pipelines.get(0);
+                    try {
+                        // 가장 최신의 공개 파이프라인 가져오기
+                        List<PipelineEntity> pipelines = pipelineRepository.findFirstCompletedPublicPipeline(project.getProjectId());
+                        PipelineEntity pipeline = pipelines.isEmpty() ? null : pipelines.get(0);
 
-                    // 파이프라인이 없으면 건너뜀
-                    if (pipeline == null) {
-                        logger.info("No public pipeline found for project {}", project.getProjectId());
+                        // 파이프라인이 없다면 계속할 수 없음
+                        if (pipeline == null) {
+                            logger.warn("No public pipeline found for project {} - this should not happen with the new query", project.getProjectId());
+                            return null;
+                        }
+
+                        // MongoDB: 모델 데이터 - 옵셔널하게 처리
+                        ModelDocument model = null;
+                        try {
+                            model = modelRepository.findByPipelineId(pipeline.getPipelineId());
+                        } catch (Exception e) {
+                            logger.warn("Error fetching model for pipeline {}: {}", pipeline.getPipelineId(), e.getMessage());
+                            // 에러 발생해도 계속 진행
+                        }
+
+                        // MongoDB: 데이터셋 데이터 - 옵셔널하게 처리
+                        DatasetDocument dataset = null;
+                        try {
+                            dataset = datasetRepository.findByProjectIdAndIsPreprocessed(project.getProjectId(), true);
+                        } catch (Exception e) {
+                            logger.warn("Error fetching dataset for project {}: {}", project.getProjectId(), e.getMessage());
+                            // 에러 발생해도 계속 진행
+                        }
+
+                        // 좋아요 여부 확인
+                        boolean likeYn = false;
+                        if (memberId != null) {
+                            try {
+                                likeYn = likeRepository.existsByMemberEntityMemberIdAndPipelineEntityPipelineId(memberId, pipeline.getPipelineId());
+                            } catch (Exception e) {
+                                logger.warn("Error checking like status for member {} and pipeline {}: {}",
+                                        memberId, pipeline.getPipelineId(), e.getMessage());
+                            }
+                        }
+
+                        // 작성자 정보
+                        MemberEntity writer = project.getMemberEntity();
+
+                        // 타겟 피처 정보 가져오기 - 모델이나 파이프라인에서 가져오기
+                        String targetFeature = null;
+                        if (model != null && model.getTrainInfo() != null && model.getTrainInfo().getTargetFeature() != null) {
+                            targetFeature = model.getTrainInfo().getTargetFeature();
+                        }
+
+                        // 모델에서 타겟 정보를 찾지 못한 경우 파이프라인의 값을 사용
+                        if (targetFeature == null || targetFeature.isEmpty()) {
+                            targetFeature = pipeline.getTargetFeature();
+                        }
+
+                        // 프로젝트 상세 정보 생성 - 데이터가 없는 경우 null 또는 기본값 사용
+                        return GetOpensourceResponse.Project.builder()
+                                .id(pipeline.getPipelineId())
+                                .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : "1.0") // 기본값 제공
+                                .title(project.getTitle())
+                                .writerId(writer != null ? writer.getMemberId() : null)
+                                .writerNickname(writer != null ? writer.getNickname() : null)
+                                .category(project.getCategory() != null ? project.getCategory().name() : null)
+                                .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
+                                .domain(project.getDomain() != null ? project.getDomain().name() : null)
+                                .accuracy(model != null && model.getPerformance() != null && model.getPerformance().getClassification() != null
+                                        ? model.getPerformance().getClassification().getAccuracy()
+                                        : null)
+                                .rSquared(model != null && model.getPerformance() != null && model.getPerformance().getRegression() != null
+                                        ? model.getPerformance().getRegression().getRSquared()
+                                        : pipeline.getResult()) // 파이프라인의 결과값 사용
+                                .target(targetFeature)
+                                .dataCount(dataset != null && dataset.getMetadata() != null ?
+                                        dataset.getMetadata().getRowCount() :
+                                        pipeline.getDataCount() != null ? pipeline.getDataCount() : 0) // 파이프라인의 데이터 수 사용
+                                .runningDuration(model != null && model.getLearningDuration() != null ?
+                                        model.getLearningDuration() : 1) // 기본값 제공
+                                .likeCount(pipeline.getLikeCount())
+                                .downloadCount(pipeline.getDownloadCount())
+                                .likeYn(likeYn)
+                                .createdAt(project.getRegisteredAt() != null
+                                        ? project.getRegisteredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                        : null)
+                                .updatedAt(project.getModifiedAt() != null
+                                        ? project.getModifiedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                        : null)
+                                .build();
+                    } catch (Exception e) {
+                        logger.error("Error processing project {}: {}", project.getProjectId(), e.getMessage(), e);
                         return null;
                     }
-
-                    // MongoDB: 모델 데이터
-                    ModelDocument model = modelRepository.findByPipelineId(pipeline.getPipelineId());
-                    if (model == null) {
-                        logger.info("No model found for project {}", project.getProjectId());
-                        return null;
-                    }
-
-                    // MongoDB: 데이터셋 데이터
-                    DatasetDocument dataset = datasetRepository.findByProjectIdAndIsPreprocessed(project.getProjectId(), true);
-                    if (dataset == null) {
-                        logger.info("No dataset found for project {}", project.getProjectId());
-                        return null;
-                    }
-
-                    elementsCount.getAndIncrement();
-
-                    // 좋아요 여부 확인
-                    boolean likeYn = false;
-                    if (memberId != null) {
-                        likeYn = likeRepository.existsByMemberEntityMemberIdAndPipelineEntityPipelineId(memberId, pipeline.getPipelineId());
-                    }
-
-                    // 작성자 정보
-                    MemberEntity writer = project.getMemberEntity();
-
-                    // 타겟 피처 정보 가져오기 - 모델 문서 사용
-                    String targetFeature = null;
-                    if (model != null && model.getTrainInfo() != null && model.getTrainInfo().getTargetFeature() != null) {
-                        targetFeature = model.getTrainInfo().getTargetFeature();
-                    }
-
-                    // 모델에서 타겟 정보를 찾지 못한 경우 파이프라인의 값을 사용 (없으면 null 반환)
-                    if (targetFeature == null || targetFeature.isEmpty()) {
-                        targetFeature = pipeline.getTargetFeature();
-                    }
-
-
-                    // 프로젝트 상세 정보 생성
-                    return GetOpensourceResponse.Project.builder()
-                            .id(pipeline.getPipelineId())
-                            .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
-                            .title(project.getTitle())
-                            .writerId(writer.getMemberId())
-                            .writerNickname(writer.getNickname())
-                            .category(project.getCategory() != null ? project.getCategory().name() : null)
-                            .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)
-                            .domain(project.getDomain() != null ? project.getDomain().name() : null)
-                            .accuracy(model.getPerformance() != null && model.getPerformance().getClassification() != null
-                                    ? model.getPerformance().getClassification().getAccuracy()
-                                    : null)
-                            .rSquared(model.getPerformance() != null && model.getPerformance().getRegression() != null
-                                    ? model.getPerformance().getRegression().getRSquared()
-                                    : null)
-                            .target(targetFeature) // 수정된 부분
-                            .dataCount(dataset.getMetadata() != null ? dataset.getMetadata().getRowCount() : 0)
-                            .runningDuration(model.getLearningDuration() != null ? model.getLearningDuration() : 0)
-                            .likeCount(pipeline.getLikeCount())
-                            .downloadCount(pipeline.getDownloadCount())
-                            .likeYn(likeYn)
-                            .createdAt(project.getRegisteredAt() != null
-                                    ? project.getRegisteredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                                    : null)
-                            .updatedAt(project.getModifiedAt() != null
-                                    ? project.getModifiedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                                    : null)
-                            .build();
                 })
                 .filter(project -> project != null)
                 .collect(Collectors.toList());
 
-        // 최종 응답 생성 부분 수정
-        // 실제 표시할 프로젝트 수를 기준으로 페이지 수 계산
-        int actualTotalElements = elementsCount.get();
-        int actualTotalPages = size > 0 ? (int) Math.ceil((double) actualTotalElements / size) : 0;
+        logger.info("Successfully processed {} out of {} projects",
+                projectDetails.size(), projectsPage.getContent().size());
 
+        // 응답 생성
         GetOpensourceResponse response = GetOpensourceResponse.builder()
                 .currentPage(page)
-                .totalPages(actualTotalPages) // 수정된 부분
-                .totalElements(actualTotalElements)
-                .last(page >= actualTotalPages) // 수정된 부분
+                .totalPages(projectsPage.getTotalPages())
+                .totalElements((int) projectsPage.getTotalElements())
+                .last(page >= projectsPage.getTotalPages())
                 .projects(projectDetails)
                 .build();
 
-        logger.info("Returning response with {} projects", projectDetails.size());
+        logger.info("Returning response with {} projects, total pages: {}, total elements: {}",
+                projectDetails.size(), response.getTotalPages(), response.getTotalElements());
         return response;
     }
 }
