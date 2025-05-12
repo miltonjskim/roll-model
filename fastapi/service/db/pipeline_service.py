@@ -324,8 +324,8 @@ class PipelineService:
 
             # 전처리 스텝이 없으면 처리할 수 없음
             if not current_history.preprocessing_steps:
-                logger.info(f"Pipeline {pipeline_id} has no preprocessing steps")
-                return {"message": "No preprocessing steps to revert"}
+                logger.info(f"전처리 스텝이 없습니다.")
+                return {"message": "전처리 스텝이 없습니다."}
 
             # step_index가 None이면 마지막 스텝 제거 (현재 길이 - 1)
             if step_index is None:
@@ -333,7 +333,7 @@ class PipelineService:
 
             # 스텝 인덱스 유효성 검사
             if step_index < -1 or step_index >= len(current_history.preprocessing_steps):
-                logger.error(f"Invalid step index {step_index}")
+                logger.error(f"유효하지 않은 스텝입니다. : {step_index}")
                 return None
 
             # step_index가 -1이면 모든 스텝 제거

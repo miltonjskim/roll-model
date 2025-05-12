@@ -97,7 +97,10 @@ class PreprocessingHandler:
         # 히스토리가 있으면 가장 최근 히스토리의 데이터셋 사용
         if pipeline.history and len(pipeline.history) > 0:
             latest_history = pipeline.history[-1]
-            dataset_object_name = latest_history.preprocessing_steps[-1].preprocessed_dataset_object_name
+            if not latest_history.preprocessing_steps or len(latest_history.preprocessing_steps) == 0:
+                dataset_object_name = None
+            else:
+                dataset_object_name = latest_history.preprocessing_steps[-1].preprocessed_dataset_object_name
 
         # 히스토리에서 찾지 못했으면 원본 데이터셋 ID 사용
         if not dataset_object_name:
