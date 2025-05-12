@@ -97,11 +97,6 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Response status code: {response}")
     return response
 
-def signal_handler(sig, frame):
-    print('\n프로그램을 종료합니다...')
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     import uvicorn

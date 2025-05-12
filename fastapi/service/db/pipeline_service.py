@@ -1,13 +1,16 @@
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Coroutine
 from datetime import datetime
 from bson import ObjectId
 from fastapi import Depends
 
+from core.storage import get_minio_client, MinioClient
 from db.mongo_config import get_pipeline_collection
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 
 import logging
+import pandas as pd
+import io
 
 logger = logging.getLogger()
 async def _update_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
@@ -245,7 +248,7 @@ class PipelineService:
             else:
                 # 히스토리의 마지막 항목 상태 업데이트
                 current_history = pipeline.history[-1]
-                if preprocessed_dataset_id is not None:
+                if preprocessed_dataset_id is not None and current_history.preprocessing_steps:
                     current_history.preprocessing_steps[-1].preprocessed_dataset_id = preprocessed_dataset_id
                 # 상태가 이미 같으면 업데이트 불필요
                 if current_history.status == new_status:
@@ -290,10 +293,12 @@ class PipelineService:
 
     async def revert_to_preprocessing_step(self,
                                            pipeline_id: str,
+                                           minio_client: MinioClient,
                                            step_index: Optional[int] = None,
                                            project_id: int = None,
                                            member_id: int = None,
-                                           add_to_history: bool = True) -> Optional[Dict[str, Any]]:
+                                           add_to_history: bool = True
+                                       ) -> Optional[Dict[str, Any]]:
         """
         특정 전처리 스텝까지 되돌립니다.
 
@@ -306,6 +311,12 @@ class PipelineService:
 
         Returns:
             변경 후 현재 최신 스텝 정보 또는 None
+            :param add_to_history:
+            :param member_id:
+            :param project_id:
+            :param step_index:
+            :param pipeline_id:
+            :param minio_client:
         """
         try:
             # 현재 파이프라인 데이터 가져오기
@@ -366,22 +377,125 @@ class PipelineService:
 
             # 업데이트된 파이프라인의 최신 스텝 반환
             latest_history = updated_pipeline.history[-1]
+            dataset_sample = await self.get_latest_dataset_from_pipeline(
+                updated_pipeline,
+                minio_client,
+                n_rows=30,
+                return_full=False
+            )
+
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
                 return {
                     "latestStep": latest_step.model_dump(),
                     "totalSteps": len(latest_history.preprocessing_steps),
+                    "dataset": dataset_sample,
                 }
             else:
-                # 더 이상 전처리 스텝이 없음
                 return {
                     "latestStep": None,
                     "totalSteps": 0,
+                    "dataset": dataset_sample,
                 }
-
         except Exception as e:
             logger.error(f"Error reverting preprocessing step: {e}")
             return None
+
+    async def get_latest_dataset_from_pipeline(
+        self,
+        pipeline: PipelineModel,
+        minio_client: MinioClient,
+        n_rows: Optional[int] = 30,
+        return_full: bool = False
+    ) -> list[dict] | None:
+        """
+        파이프라인에서 가장 최근 데이터셋을 가져옵니다.
+        
+        Args:
+            pipeline: 파이프라인 모델
+            minio_client: MinIO 클라이언트
+            n_rows: 반환할 행 수 (None이면 모든 행 반환)
+            return_full: True면 전체 데이터 반환, False면 n_rows만 반환
+            
+        Returns:
+            Tuple[List[Dict], str, str]: (데이터셋, 데이터 타입, 파일명) 또는 None
+            - 데이터 타입: "preprocessed" 또는 "original"
+            - 파일명: MinIO에서의 객체 이름
+        """
+        try:
+            # 파이프라인에 히스토리가 있는지 확인
+            if not pipeline.history:
+                logger.warning(f"Pipeline has no history")
+                return None
+                
+            latest_history = pipeline.history[-1]
+            
+            # 전처리 스텝이 있는지 확인
+            if latest_history.preprocessing_steps:
+                # 가장 최근 전처리된 데이터 사용
+                latest_step = latest_history.preprocessing_steps[-1]
+                object_name = latest_step.preprocessed_dataset_object_name
+                data_type = "preprocessed"
+            else:
+                # 원본 데이터 사용
+                object_name = pipeline.original_dataset_object_name
+                data_type = "original"
+            
+            if not object_name:
+                logger.error(f"No dataset object name found")
+                return None
+                
+            # MinIO에서 파일 가져오기
+            file_data = minio_client.get_file("datasets", object_name)
+            if not file_data:
+                logger.error(f"Failed to get file {object_name} from MinIO")
+                return None
+                
+            # 파일 형식에 따라 파싱
+            df = await _parse_file_data(file_data, object_name)
+            if df is None:
+                return None
+                
+            # 행 수 제한
+            if not return_full and n_rows is not None:
+                df = df.head(n_rows)
+                
+            # Dictionary 형태로 변환
+            dataset = df.to_dict(orient="records")
+            
+            return dataset
+            
+        except Exception as e:
+            logger.error(f"Error getting latest dataset: {e}")
+            return None
+
+async def _parse_file_data(file_data: bytes, object_name: str) -> Optional[pd.DataFrame]:
+    """
+    파일 형식에 따라 데이터를 파싱합니다.
+    
+    Args:
+        file_data: 파일 데이터 (bytes)
+        object_name: 파일명 (확장자 판단용)
+        
+    Returns:
+        pandas DataFrame 또는 None
+    """
+    try:
+        # 파일 확장자에 따라 적절한 파싱 방법 선택
+        if object_name.endswith('.parquet'):
+            df = pd.read_parquet(io.BytesIO(file_data))
+        elif object_name.endswith('.json'):
+            df = pd.read_json(io.BytesIO(file_data))
+        elif object_name.endswith('.xlsx') or object_name.endswith('.xls'):
+            df = pd.read_excel(io.BytesIO(file_data))
+        else:  # CSV 또는 기타 형식은 CSV로 처리
+            df = pd.read_csv(io.BytesIO(file_data))
+            
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error parsing file {object_name}: {e}")
+        return None
 
 # FastAPI 의존성 주입 함수
 async def get_pipeline_service() -> PipelineService:

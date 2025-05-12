@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
+from pandas import DataFrame
 
 from core.exception import CustomAPIException
 from core.storage import get_minio_client
@@ -60,7 +61,7 @@ class PreprocessingHandler:
 
         # 3. MinIO에서 데이터 가져오기
         minio_output, encoding = await self._get_data_from_minio(dataset_object_name)
-        print(f"encoding 뭐?? : {encoding}")
+
         # 4. 전처리 작업 수행
         data_io = io.BytesIO(minio_output)
         handler = handler_class(data_io, encoding=encoding)
@@ -76,7 +77,7 @@ class PreprocessingHandler:
         data_io.close()
 
         # 5. 처리된 데이터 MinIO에 저장
-        df = handler.df if hasattr(handler, "df") else result.get("data")
+        df: DataFrame = handler.df if hasattr(handler, "df") else result.get("data")
         if df is None:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
         print(f"인코딩: {encoding}")
@@ -197,7 +198,7 @@ class PreprocessingHandler:
             "data": {
                 "pipelineId": pipeline_id,
                 "result": convert_dict_to_camel_case(result),  # result 구조에 따라 조정
-                "dataset": dataset  # 전처리된 데이터셋을 여기에 추가
+                "dataset": dataset[:30]  # 전처리된 데이터셋을 여기에 추가
             }
         }
         return jsonable_encoder(replace_nan_values(response, round_decimals=2))

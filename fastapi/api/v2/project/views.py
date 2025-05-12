@@ -28,6 +28,7 @@ from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
 from models.project.dataset_models import DatasetPageResponse
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
+from service.dataset_paginator import ChunkedCSVReader
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_service import PipelineService, get_pipeline_service
@@ -162,7 +163,8 @@ async def reload_recent_workspace(
     project_id: int = Path(..., title="프로젝트 ID"),                  
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
-    db: Session = Depends(get_mysql_db)
+    db: Session = Depends(get_mysql_db),
+    minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
     가장 최근에 작업한 파이프라인 워크스페이스 정보를 불러옵니다.
@@ -232,11 +234,17 @@ async def reload_recent_workspace(
                 workspace_data["modelingInfo"] = latest_history.modeling_info
 
             workspace_data["status"] = latest_history.status
-        
+        # 데이터셋 호출
+        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline_details,
+            minio_client,
+            n_rows=30,
+            return_full=False
+        )
         return ApiResponse(
             status_code =200,
             message="최근 워크스페이스를 불러왔습니다.",
-            data=convert_dict_to_camel_case(workspace_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
         )
     
     except Exception as e:
@@ -253,7 +261,8 @@ async def reload_workspace_by_pipeline_version(
     pipeline_id: str = Path(..., description="파이프라인 ID"),                   
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
-    db: Session = Depends(get_mysql_db)
+    db: Session = Depends(get_mysql_db),
+    minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
     특정 파이프라인 버전의 워크스페이스 정보를 불러옵니다.
@@ -326,10 +335,18 @@ async def reload_workspace_by_pipeline_version(
 
             workspace_data["status"] = latest_history.status
 
+        # 데이터셋 호출
+        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline_details,
+            minio_client,
+            n_rows=30,
+            return_full=False
+        )
+
         return ApiResponse(
             status_code=200,
             message="워크스페이스를 불러왔습니다.",
-            data=convert_dict_to_camel_case(workspace_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
         )
     
     except Exception as e:
@@ -403,9 +420,8 @@ async def get_pipeline_versions(
             data=None
         )
 
-@router.post("/pipelines/{pipeline_id}/fork/preprocess", response_class=ApiResponse)
+@pipeline_router.post("/fork/preprocess", response_class=ApiResponse)
 async def fork_pipeline_preprocess(
-        project_id: int = Path(..., description="프로젝트 ID"),
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
@@ -421,7 +437,7 @@ async def fork_pipeline_preprocess(
     try:
         # 1. 원본 파이프라인 조회
         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_service
+            db, pipeline_id, pipeline_service
         )
         if error_response:
             return error_response
@@ -430,7 +446,7 @@ async def fork_pipeline_preprocess(
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
         # 3. 타겟 프로젝트 결정
         target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
@@ -474,9 +490,8 @@ async def fork_pipeline_preprocess(
         )
 
 
-@router.post("/pipelines/{pipeline_id}/fork/total", response_class=ApiResponse)
+@pipeline_router.post("/fork/total", response_class=ApiResponse)
 async def fork_pipeline_total(
-        project_id: int = Path(..., description="프로젝트 ID"),
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
@@ -492,7 +507,7 @@ async def fork_pipeline_total(
     try:
         # 1. 원본 파이프라인 조회
         source_pipeline, source_pipeline_details, error_response = await get_source_pipeline(
-            db, pipeline_id, project_id, pipeline_service
+            db, pipeline_id, pipeline_service
         )
         if error_response:
             return error_response
@@ -502,7 +517,7 @@ async def fork_pipeline_total(
 
         # 3. 타겟 프로젝트 결정
         target_project_id = await determine_target_project(
-            db, project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
 
         # 4. 새로운 파이프라인 모델 생성
@@ -580,18 +595,26 @@ async def get_dataset_page(
                 message="파이프라인에 연결된 데이터셋 정보가 없습니다."
             )
 
-        # MinioClient에서 CSV 데이터 조회
-        dataset_page = await minio_client.query_csv_with_paging(
-            bucket_name=bucket_name,
-            object_name=object_name,
-            page=page,
-            page_size=size,
-            filter_condition=filter_condition,
+        # CSV 리더 생성
+        csv_reader = ChunkedCSVReader(
+            minio_client=minio_client,
+            bucket_name="datasets",
+            object_name=object_name
         )
+
+        result = await csv_reader.query_csv_with_paging(
+            page=page,
+            page_size=size
+        )
+
+        # 첫 번째 행 출력
+        if result['data']:
+            print(f"- 첫 번째 행: {result['data'][0]}")
+
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",
-            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page, round_decimals=2)))
+            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(result, round_decimals=2)))
         )
 
     except Exception as e:
