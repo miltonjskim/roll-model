@@ -5,6 +5,8 @@ import ModelSelectionWidget from '@/widgets/workspace/modeling-section/ModelSele
 import { TARGET_VARIABLES } from '@/shared/api/mocks/modeling/modelingData';
 import { useModeling } from './model/useModeling';
 import FcmGetToken from '@/app/workspace/modeling-section/test-for-fcm/FcmGetToken';
+import { useAtomValue } from 'jotai';
+import { completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 
 export default function ModelingPage() {
   const {
@@ -23,6 +25,13 @@ export default function ModelingPage() {
     handleModelSelect,
     handleStartTraining,
   } = useModeling();
+
+  // 전처리된 데이터 컬럼
+  const completedUploadset = useAtomValue(completedDatasetAtom);
+
+  // 파이프라인 아이디
+  const uploadedData = useAtomValue(uploadedDatasetAtom);
+  const pipelineId = uploadedData?.pipelineId;
 
   return (
     <div className="container mx-auto py-8">
