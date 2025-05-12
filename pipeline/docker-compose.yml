@@ -2,12 +2,15 @@
 version: '3'
 services:
   celery_worker_1:
+    network_mode: "host"
     build: .
     command: celery -A celery_worker worker --loglevel=info
     volumes:
       - ./.env:/app/.env  # .env 파일 마운트
       - ./models:/app/models  # 모델 저장 디렉토리 마운트
-      - ~/.kube:/root/.kube  # Kubernetes 설정 마운트
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:
@@ -25,12 +28,15 @@ services:
       - WORKER_ID=1
 
   celery_worker_2:
+    network_mode: "host"
     build: .
     command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker2@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:
@@ -48,12 +54,15 @@ services:
       - WORKER_ID=2
 
   celery_worker_3:
+    network_mode: "host"
     build: .
     command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker3@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:
@@ -71,12 +80,15 @@ services:
       - WORKER_ID=3
 
   celery_worker_4:
+    network_mode: "host"
     build: .
     command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker4@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:
@@ -94,12 +106,15 @@ services:
       - WORKER_ID=4
 
   celery_worker_5:
+    network_mode: "host"
     build: .
     command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker5@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:
@@ -117,12 +132,14 @@ services:
       - WORKER_ID=5
 
   kafka_consumer:
+    network_mode: "host"
     build: .
     command: python kafka_consumer.py
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
       - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
@@ -134,18 +151,28 @@ services:
 
   # GPU 모니터링 서비스 추가
   gpu_monitor:
+    network_mode: "host"
     build:
       context: .
       dockerfile: Dockerfile.monitor
     command: python gpu_monitor.py
     volumes:
       - ./.env:/app/.env
-      - ~/.kube:/root/.kube
+      - /home/ec2-user/.kube/certs:/root/.kube/certs
+      - /home/ec2-user/.kube/config.docker:/root/.kube/config
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
     deploy:
       resources:
         limits:
           cpus: '0.1'
           memory: 256M
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ utility ]  # utility 기능만 필요
     restart: always
 
   # RabbitMQ 서비스 정의
