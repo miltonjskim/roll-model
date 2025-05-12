@@ -48,3 +48,8 @@ logging:
     #    sun.rmi: ERROR
     #    jdk.internal.httpclient: ERROR
     root: INFO
+
+# application.yml
+firebase:
+  config:
+    path: classpath:firebase-service-account.json
