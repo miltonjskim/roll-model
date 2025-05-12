@@ -51,8 +51,7 @@ class PreprocessingHandler:
         """
         # 1. 파이프라인 정보 조회
         pipeline = await self.pipeline_service.get_pipeline(pipeline_id)
-        self.logger.info(f"pipeline_id: {pipeline_id} \n pipeline_content: {pipeline}")
-
+        
         if pipeline is None:
             raise CustomAPIException(status_code=404, message="파이프라인을 찾을 수 없습니다")
 
@@ -75,7 +74,6 @@ class PreprocessingHandler:
         handler_method_func = getattr(handler, handler_method)
         result = handler_method_func(**method_args)
         data_io.close()
-        self.logger.info(f"처리 결과: {result}")
 
         # 5. 처리된 데이터 MinIO에 저장
         df = handler.df if hasattr(handler, "df") else result.get("data")
