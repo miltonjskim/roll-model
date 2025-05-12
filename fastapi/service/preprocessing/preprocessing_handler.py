@@ -1,11 +1,13 @@
 from datetime import datetime
 from fastapi import Depends
+from fastapi.encoders import jsonable_encoder
+
 from core.exception import CustomAPIException
 from core.storage import get_minio_client
 from schemas.mongo.pipeline import PipelineHistoryItem, PreprocessingStep
 import logging
 import io
-from fastapi.encoders import jsonable_encoder
+
 from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from utils.snake_to_camel import convert_dict_to_camel_case
@@ -79,7 +81,7 @@ class PreprocessingHandler:
         df = handler.df if hasattr(handler, "df") else result.get("data")
         if df is None:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
-
+        print(f"인코딩: {encoding}")
         object_name, etag = await self._save_to_minio(pipeline_id, df, encoding)
 
         # 6. 파이프라인 히스토리 업데이트
@@ -129,9 +131,9 @@ class PreprocessingHandler:
 
         buffer = io.BytesIO()
         if df.columns[0] != "idx":
-            df.to_csv(buffer, index=True, index_label='idx')
+            df.to_csv(buffer, index=True, index_label='idx', encoding=encoding)
         else:
-            df.to_csv(buffer, index=False)
+            df.to_csv(buffer, index=False, encoding=encoding)
             
         buffer.seek(0)
 

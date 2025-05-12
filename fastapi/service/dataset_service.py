@@ -30,6 +30,7 @@ import numpy as np
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import ColumnType
 from service.db.pipeline_mysql_service import create_mysql_pipeline
+from service.storage.storage import add_index_to_csv
 
 logger = logging.getLogger()
 
@@ -76,11 +77,13 @@ async def upload_dataset_and_save_metadata(
         bucket_name = "datasets"
         object_name = f"project_{project_id}/{file.filename}"
 
+        indexed_data = add_index_to_csv(file_io, encoding=config.get("encoding"))
+
         # MinIO에 파일 업로드
         upload_success = await minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
-            file_data=file_io,
+            file_data=indexed_data,
             content_type=file.content_type,
             encoding=config.get("encoding")
         )

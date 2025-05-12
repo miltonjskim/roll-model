@@ -293,7 +293,6 @@ class MinioClient:
             count_data = ""
             for d in count_response.stream():
                 count_data += d.decode(encoding)
-                # print(count_data)
 
             total_records = int(count_data.split('\n')[0])
             count_response.stream().close()
@@ -344,7 +343,6 @@ class MinioClient:
             data = b""
             for d in response.stream():
                 data += d
-                # print(data)
 
             # 데이터 처리
             records = []
