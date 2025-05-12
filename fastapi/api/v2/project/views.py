@@ -15,9 +15,9 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
+from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
 import logging
 import json
 
@@ -133,7 +133,7 @@ async def upload_project_dataset(
             domain = domain
         )
         # NaN, INF 수동 인코딩
-        safe_result = jsonable_encoder(replace_nan_values(result))
+        safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
 
         # 응답 구성
         return ApiResponse(
@@ -591,7 +591,7 @@ async def get_dataset_page(
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",
-            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page)))
+            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page, round_decimals=2)))
         )
 
     except Exception as e:

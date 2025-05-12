@@ -235,7 +235,7 @@ async def encode_target(
         handler_method="encode_target"
     )
 
-@router.post('/imbalance/balance')
+@router.post('/class-balancing')
 async def balance_class(
     request: ClassBalancingRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
@@ -257,6 +257,7 @@ async def delete_preprocessing(
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     step_index: Optional[int] = Query(
         None, 
+        alias="stepIndex",
         description="되돌아갈 스텝 인덱스. None이면 마지막 스텝 제거, -1이면 모든 스텝 제거",
         ge=-1
     ),
@@ -398,7 +399,7 @@ async def complete_preprocessing(
         config = {
             "delimiter": "comma",
             "customDelimiter": None,
-            "encoding": "UTF-8",
+            "encoding":  encoding,
             "hasHeader": True,
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }

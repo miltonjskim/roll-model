@@ -63,6 +63,6 @@ class TargetEncodingRequest(BasePreprocessingRequest):
 
 # 클래스 불균형 처리 요청
 class ClassBalancingRequest(BasePreprocessingRequest):
-    target_column: str = Field(..., description="타겟 컬럼 이름", alias="targetColumn")
+    target_column: str = Field(..., description="타겟 컬럼 이름", alias="column")
     sampling_ratio: int = Field(200, description="샘플링 비율 (%)", alias="samplingRatio")
     method: str = Field(..., description="불균형 처리 방법 ('OVER', 'UNDER')")

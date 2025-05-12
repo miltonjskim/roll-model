@@ -65,14 +65,6 @@ class ClassBalancingHandler:
         X = self.df.drop(columns=[target_column])
         y = self.df[target_column]
 
-        # 결측치 확인
-        if X.isnull().any().any():
-            raise CustomAPIException(
-                status_code=400,
-                error_code="BALANCE_003",
-                message="특성 데이터에 결측치가 있어 처리가 불가능합니다."
-            )
-
         if y.isnull().any():
             raise CustomAPIException(
                 status_code=400,
