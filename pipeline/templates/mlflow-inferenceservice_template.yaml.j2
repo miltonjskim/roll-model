@@ -38,12 +38,12 @@ spec:
           {% if gpu_fraction > 0 %}
           nvidia.com/gpu: {{ gpu_fraction }}
           {% endif %}
-        {% if gpu_fraction > 0 %}
-        env:
-          - name: NVIDIA_VISIBLE_DEVICES
-            value: "all"
-          - name: NVIDIA_DRIVER_CAPABILITIES
-            value: "compute,utility"
-          - name: CUDA_VISIBLE_DEVICES
-            value: "0"
-        {% endif %}
+      {% if gpu_fraction > 0 %}
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+      {% endif %}
