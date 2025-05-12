@@ -206,7 +206,7 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
       );
 
       if (onAddStep && column) {
-        const parameters: Record<string, any> = { columnId: column };
+        const parameters: Record<string, string | number> = { columnId: column };
         if (option.method) parameters.method = option.method;
         if (option.apiEndpoint.includes('outliers')) parameters.detection = detection;
         if (option.apiEndpoint.includes('log')) parameters.offset = offset;
