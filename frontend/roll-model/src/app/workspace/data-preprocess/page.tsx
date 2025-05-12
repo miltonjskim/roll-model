@@ -83,7 +83,7 @@ const PreprocessDataPage = () => {
 
       console.log('response:', response);
 
-      setCompletedDataset(response.data.data.data.columns);
+      setCompletedDataset(response.data.data.data);
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {

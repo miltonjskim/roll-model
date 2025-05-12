@@ -47,21 +47,22 @@ export default function FcmCatStatus() {
     window.addEventListener('storage', handleStorageChange);
 
     // COMPLETED 또는 FAILED 상태일 때 30초 후 롤링캣으로 돌아가는 타이머
-    let timer: NodeJS.Timeout | null = null;
+    // let timer: NodeJS.Timeout | null = null;
 
-    if (modelStatus === 'COMPLETED' || modelStatus === 'FAILED' || modelStatus === 'LEARNING') {
-      console.log(`Cat: ${modelStatus} 상태 감지, 30초 타이머 시작`);
-      timer = setTimeout(() => {
-        console.log('Cat: 30초 후 기본 상태로 복귀');
-        setModelStatus('PREPROCESSED'); // 기본 상태로 복귀
-      }, 30000);
-    }
+    // if (modelStatus === 'COMPLETED' || modelStatus === 'FAILED' || modelStatus === 'LEARNING') {
+    //   console.log(`Cat: ${modelStatus} 상태 감지, 30초 타이머 시작`);
+    //   timer = setTimeout(() => {
+    //     console.log('Cat: 30초 후 기본 상태로 복귀');
+    //     setModelStatus('PREPROCESSED'); // 기본 상태로 복귀
+    //     localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
+    //   }, 30000);
+    // }
 
     // 컴포넌트 언마운트 시 정리
     return () => {
       window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
       window.removeEventListener('storage', handleStorageChange);
-      if (timer) clearTimeout(timer);
+      // if (timer) clearTimeout(timer);
     };
   }, [modelStatus]); // modelStatus가 변경될 때마다 타이머 재설정
 
