@@ -28,6 +28,7 @@ from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
 from models.project.dataset_models import DatasetPageResponse
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
+from service.dataset_paginator import ChunkedCSVReader
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
 from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_service import PipelineService, get_pipeline_service
@@ -594,18 +595,26 @@ async def get_dataset_page(
                 message="파이프라인에 연결된 데이터셋 정보가 없습니다."
             )
 
-        # MinioClient에서 CSV 데이터 조회
-        dataset_page = await minio_client.query_csv_with_paging(
-            bucket_name=bucket_name,
-            object_name=object_name,
-            page=page,
-            page_size=size,
-            filter_condition=filter_condition,
+        # CSV 리더 생성
+        csv_reader = ChunkedCSVReader(
+            minio_client=minio_client,
+            bucket_name="datasets",
+            object_name=object_name
         )
+
+        result = await csv_reader.query_csv_with_paging(
+            page=page,
+            page_size=size
+        )
+
+        # 첫 번째 행 출력
+        if result['data']:
+            print(f"- 첫 번째 행: {result['data'][0]}")
+
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",
-            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(dataset_page, round_decimals=2)))
+            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(result, round_decimals=2)))
         )
 
     except Exception as e:
