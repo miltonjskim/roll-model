@@ -145,7 +145,8 @@ public class PipelineApiService {
                 .build();
 
         // TODO: Endpoint 구성 (API 키는 하드코딩)
-        String url = "https://api.yourdomain.com/models/proj-" + pipelineEntity.getPipelineId().substring(0, 5) + "/predict";
+        String baseUrl = "https://roll-model.store";
+        String url = baseUrl + "/v1/models/model-" + pipelineEntity.getPipelineId();
         String apiKey = "sk_12345abcdef67890";
 
         GetPipelineApiResponse.Endpoint endpoint = GetPipelineApiResponse.Endpoint.builder()
