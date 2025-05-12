@@ -196,7 +196,7 @@ def deploy_model_with_virtual_service(
     # 2. InferenceService 배포
     success, message = deploy_kubernetes_resource(inference_yaml_path, "InferenceService")
     if not success:
-        return False, message, service_name
+        return False, message, service_name, None
 
     print(f"[INFO] InferenceService '{service_name}' 배포 완료: {message}")
 
