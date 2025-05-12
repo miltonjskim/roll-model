@@ -4,6 +4,7 @@ import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { formatDate, getRelativeTime } from '@/shared/lib/utils/dateUtils';
+import { useState } from 'react';
 
 interface ProjectCardProps {
   project: Project;
@@ -11,6 +12,7 @@ interface ProjectCardProps {
 
 export const ProjectCard = ({ project }: ProjectCardProps) => {
   const setProjectDetail = useSetAtom(projectDetailAtom);
+  const [showDropdown, setShowDropdown] = useState(false);
   const router = useRouter();
 
   const handleProjectClick = () => {
@@ -27,6 +29,15 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
     // 프로젝트 상세 페이지로 라우팅
     router.push(`/project-detail/${project.id}`);
   };
+
+  const handleAfterSchoolClick = (afterSchool: string) => {
+    if (afterSchool === 'ToPreprocessing') {
+      // 전처리부터 재학습
+    } else if (afterSchool === 'ToModeling') {
+      // 모델링부터 재학습
+    }
+  };
+
   return (
     <div className="rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="mb-2 flex cursor-default items-start justify-between select-none">
@@ -86,7 +97,57 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             상세
           </button>
         )}
-        <button className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out">재학습</button>
+        {project.status === 'COMPLETED' && (
+          <button
+            className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
+            onMouseEnter={() => setShowDropdown(true)}
+            onMouseLeave={() => setShowDropdown(false)}
+          >
+            재학습
+          </button>
+        )}
+        {project.status === 'FAILED' && (
+          <button
+            className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
+            onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+          >
+            재학습
+          </button>
+        )}
+        <div className="relative">
+          {project.status === 'PREPROCESSED' && (
+            <button
+              className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
+              onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+            >
+              재학습
+            </button>
+          )}
+
+          {showDropdown && (
+            <div
+              className="absolute right-0 bottom-full mt-1 flex flex-col gap-1 rounded-md border border-gray-200 bg-white p-1 shadow-md"
+              onMouseEnter={() => setShowDropdown(true)}
+              onMouseLeave={() => setShowDropdown(false)}
+            >
+              <button
+                className="bg-[theme(color-blue-02)] hover:bg-[theme(color-blue-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
+                onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+              >
+                전처리부터 재학습
+              </button>
+              <button
+                className="bg-[theme(color-green-02)] hover:bg-[theme(color-green-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
+                onClick={() => handleAfterSchoolClick('ToModeling')}
+              >
+                모델링부터 재학습
+              </button>
+            </div>
+          )}
+        </div>
+        {project.status === 'LEARNING' && (
+          <button className="bg-[theme(color-gray-01)] hover:bg-[theme(primary-black)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out">학습중</button>
+        )}
       </div>
     </div>
   );

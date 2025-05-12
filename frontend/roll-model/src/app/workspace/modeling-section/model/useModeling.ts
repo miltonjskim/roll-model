@@ -2,14 +2,26 @@
 
 import { useState } from 'react';
 import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
-import { PIPELINE_ID, CLASSIFICATION_MODELS, REGRESSION_MODELS, INITIAL_CATEGORY } from '@/shared/api/mocks/modeling/modelingData';
+import { CLASSIFICATION_MODELS, REGRESSION_MODELS } from '@/shared/api/mocks/modeling/modelingData';
 import { startModelTraining } from '@/shared/api/modelingApi';
+import { useAtomValue } from 'jotai';
+import { completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
+import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 
 export const useModeling = () => {
+  const projectDetail = useAtomValue(projectDetailAtom);
   // 모델 카테고리 (분류 또는 회귀)
-  const initialCategory = INITIAL_CATEGORY;
+  const initialCategory = useAtomValue(projectCategoryAtom);
   const [modelCategory] = useState<ModelCategory>(initialCategory);
   const models = modelCategory === 'CLASSIFICATION' ? CLASSIFICATION_MODELS : REGRESSION_MODELS;
+
+  // 파이프라인 아이디
+  const uploadedData = useAtomValue(uploadedDatasetAtom);
+  const completedUploadset = useAtomValue(completedDatasetAtom);
+  const PIPELINE_ID = uploadedData?.pipelineId || completedUploadset?.pipelineId || projectDetail.id;
+
+  const TARGET_VARIABLES = completedUploadset ? completedUploadset.columns.map((col) => col.name) : [];
 
   // 상태 관리
   const [selectedModelId, setSelectedModelId] = useState('');
@@ -73,7 +85,7 @@ export const useModeling = () => {
             trainRatio: trainRatio,
             testRatio: testRatio,
             validationRatio: 0,
-            random_seed: 42,
+            randomSeed: 42,
           },
           parameters: parameterValues,
           targetFeature: targetVariable, // targetColumn 대신 targetFeature로 변경
@@ -108,6 +120,7 @@ export const useModeling = () => {
     dataSplit,
     isLoading,
     selectedModel,
+    TARGET_VARIABLES,
 
     setTargetVariable,
     setDataSplit,

@@ -12,7 +12,7 @@ export const startModelTraining = async (
         trainRatio: number;
         testRatio: number;
         validationRatio: number;
-        random_seed: number;
+        randomSeed: number;
       };
       parameters: Record<string, any>;
       targetFeature: string;
