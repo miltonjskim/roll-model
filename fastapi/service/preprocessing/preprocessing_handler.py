@@ -199,7 +199,7 @@ class PreprocessingHandler:
                 "dataset": dataset  # 전처리된 데이터셋을 여기에 추가
             }
         }
-        return jsonable_encoder(replace_nan_values(response))
+        return jsonable_encoder(replace_nan_values(response, round_decimals=2))
 
 # 공통 의존성 함수
 def get_preprocessing_handler(

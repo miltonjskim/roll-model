@@ -34,20 +34,28 @@ from service.storage.storage import add_index_to_csv
 
 logger = logging.getLogger()
 
-def replace_nan_values(obj):
-    """NaN 값을 None으로 변환"""
+
+def replace_nan_values(obj, round_decimals=None):
+    """
+    NaN 값을 "NaN" 문자열로 변환하고, 옵션으로 float 값 반올림
+
+    Args:
+        obj: 처리할 객체
+        round_decimals: float 값을 반올림할 소수점 자릿수 (None이면 반올림 안함)
+    """
     if isinstance(obj, dict):
-        return {k: replace_nan_values(v) for k, v in obj.items()}
+        return {k: replace_nan_values(v, round_decimals) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [replace_nan_values(item) for item in obj]
+        return [replace_nan_values(item, round_decimals) for item in obj]
     elif isinstance(obj, float):
         if math.isnan(obj):
             return "NaN"
-        return obj
+        return round(obj, round_decimals) if round_decimals is not None else obj
     elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.floating):
         if np.isnan(obj):
             return "NaN"
-        return float(obj)
+        float_value = float(obj)
+        return round(float_value, round_decimals) if round_decimals is not None else float_value
     elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.integer):
         if np.isnan(obj):
             return "NaN"
