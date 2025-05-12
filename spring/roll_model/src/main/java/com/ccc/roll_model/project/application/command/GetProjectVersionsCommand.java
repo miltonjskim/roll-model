@@ -8,7 +8,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class GetProjectVersionsCommand {
-    private Integer projectId;
     private String pipelineId;
     private Integer memberId;
 }
