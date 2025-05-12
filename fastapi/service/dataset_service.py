@@ -341,11 +341,12 @@ async def store_dataset_to_mongodb(
     object_name: str,
     category: str,
     domain: str,
-    sample_data: List
+    sample_data: List,
+    is_preprocessed: bool = False
 ) -> str:
     try:
         dataset_collection = get_dataset_collection()
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now().isoformat() + "Z"
 
         # 사용자가 제공한 타입을 우리 시스템의 ColumnType으로 매핑
         type_mapping = {
@@ -389,7 +390,7 @@ async def store_dataset_to_mongodb(
             "file_size": file_size,
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
-            "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
+            "is_preprocessed": is_preprocessed,  # is_deleted 대신 is_preprocessed 사용
             "sample_data": sample_data,
             "category": category,
             "domain": domain,

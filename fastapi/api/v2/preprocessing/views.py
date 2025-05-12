@@ -423,7 +423,8 @@ async def complete_preprocessing(
             object_name=final_dataset_object_name,
             sample_data = dataset_analysis["data_sample"]["data"][:10] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
             category = project.category,
-            domain = project.domain
+            domain = project.domain,
+            is_preprocessed=True,
         )
         # 이제 버퍼를 닫음
         buffer.close()
