@@ -79,6 +79,11 @@ public class PipelineEntity extends BaseCreatedAndUpdatedEntity {
         }
     }
 
+    // 다운로드 수 증가 (모델 다운로드 말하는 거임)
+    public void incrementDownloadCount() {
+        this.downloadCount = this.downloadCount != null ? this.downloadCount + 1 : 1;
+    }
+
     public void updateTargetFeature(String targetFeature) {
         this.targetFeature = targetFeature;
     }
