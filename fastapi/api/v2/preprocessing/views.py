@@ -2,19 +2,20 @@ import io
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from sqlalchemy.orm import Session
 
 from core.api_response import ApiResponse
 from core.security import verify_token, verify_pipeline_ownership
-from core.storage import get_minio_client
+from core.storage import get_minio_client, MinioClient
 from db.mysql_config import get_mysql_db
 from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, TargetEncodingRequest, \
     LabelEncodingRequest, OneHotEncodingRequest, SqrtTransformRequest, LogTransformRequest, MinMaxScalingRequest, \
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
 from schemas.mysql.schemas import PipelineStatus, Pipeline, Project
-from service.dataset_service import store_dataset_to_mongodb, analyze_dataset
+from service.dataset_service import store_dataset_to_mongodb, analyze_dataset, replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
@@ -263,6 +264,7 @@ async def delete_preprocessing(
     ),
     member_id: int = Depends(verify_pipeline_ownership),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
+    minio_client: MinioClient = Depends(get_minio_client),
 ):
     """
     전처리 스텝 삭제 API
@@ -278,7 +280,8 @@ async def delete_preprocessing(
             pipeline_id=pipeline_id,
             step_index=step_index,
             member_id=member_id,
-            add_to_history=True
+            add_to_history=True,
+            minio_client=minio_client
         )
         
         if result is None:
@@ -290,12 +293,13 @@ async def delete_preprocessing(
         return ApiResponse(
             status_code=200,
             message="삭제 성공",
-            data=convert_dict_to_camel_case(result)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(result), round_decimals=2))
         )
     except Exception as e:
+        logger.error(f"전처리 스텝 삭제 중 오류 발생: {str(e)}")
         raise HTTPException(
             status_code=400,
-            detail="스텝 제거에 실패했습니다."
+            detail="스텝 제거에 실패했습니다.",
         )
 
 @router.post('/complete')
@@ -325,7 +329,7 @@ async def complete_preprocessing(
                 final_dataset_etag = latest_history.preprocessing_steps[-1].preprocessed_dataset_etag
         
         if not final_dataset_object_name:
-            raise HTTPException(status_code=400, detail="전처리된 데이터셋이 없습니다")
+            final_dataset_object_name = pipeline.original_dataset_object_name
         
         # MinIO 클라이언트 가져오기
         minio_client = get_minio_client()

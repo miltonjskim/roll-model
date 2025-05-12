@@ -162,7 +162,8 @@ async def reload_recent_workspace(
     project_id: int = Path(..., title="프로젝트 ID"),                  
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
-    db: Session = Depends(get_mysql_db)
+    db: Session = Depends(get_mysql_db),
+    minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
     가장 최근에 작업한 파이프라인 워크스페이스 정보를 불러옵니다.
@@ -232,11 +233,17 @@ async def reload_recent_workspace(
                 workspace_data["modelingInfo"] = latest_history.modeling_info
 
             workspace_data["status"] = latest_history.status
-        
+        # 데이터셋 호출
+        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline_details,
+            minio_client,
+            n_rows=30,
+            return_full=False
+        )
         return ApiResponse(
             status_code =200,
             message="최근 워크스페이스를 불러왔습니다.",
-            data=convert_dict_to_camel_case(workspace_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
         )
     
     except Exception as e:
@@ -253,7 +260,8 @@ async def reload_workspace_by_pipeline_version(
     pipeline_id: str = Path(..., description="파이프라인 ID"),                   
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
-    db: Session = Depends(get_mysql_db)
+    db: Session = Depends(get_mysql_db),
+    minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
     특정 파이프라인 버전의 워크스페이스 정보를 불러옵니다.
@@ -326,10 +334,18 @@ async def reload_workspace_by_pipeline_version(
 
             workspace_data["status"] = latest_history.status
 
+        # 데이터셋 호출
+        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline_details,
+            minio_client,
+            n_rows=30,
+            return_full=False
+        )
+
         return ApiResponse(
             status_code=200,
             message="워크스페이스를 불러왔습니다.",
-            data=convert_dict_to_camel_case(workspace_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
         )
     
     except Exception as e:
