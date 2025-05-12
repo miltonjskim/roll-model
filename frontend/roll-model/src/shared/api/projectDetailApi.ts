@@ -33,12 +33,12 @@ export const fetchProjectDetailData = async (pipelineId: string) => {
 export const fetchProjectDetailVersion = async (pipelineId: string) => {
   try {
     // 나중에 api 완성 후에 활성화
-    // const response = await axiosInstance.get(`/api/v1/projects/${pipelineId}/versions`);
-    // return response.data;
+    const response = await axiosInstance.get(`/api/v1/projects/${pipelineId}/versions`);
+    return response.data;
 
     // mock data
     // 시간차 어택 제거
-    return projectDetailVersionMock as ProjectDetailVersionResponse;
+    // return projectDetailVersionMock as ProjectDetailVersionResponse;
   } catch (error) {
     console.error('상세 버전섹션 호출 실패', error);
     throw error;
