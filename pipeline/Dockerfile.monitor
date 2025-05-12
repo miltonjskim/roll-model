@@ -3,12 +3,20 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # 필요한 패키지 설치
-RUN apt-get update && apt-get install -y apt-transport-https gnupg curl && \
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
-    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list && \
-    apt-get update && apt-get install -y kubectl jq && \
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    jq \
+    tar \
+    gzip \
+    findutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# kubectl 설치 (K3s 버전과 일치)
+RUN curl -LO "https://dl.k8s.io/release/v1.32.4/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/
 
 # Python 패키지 설치
 COPY requirements.monitor.txt .

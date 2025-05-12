@@ -3,7 +3,7 @@ version: '3'
 services:
   celery_worker_1:
     build: .
-    command: celery -A celery_worker.celery_worker worker --loglevel=info
+    command: celery -A celery_worker worker --loglevel=info
     volumes:
       - ./.env:/app/.env  # .env 파일 마운트
       - ./models:/app/models  # 모델 저장 디렉토리 마운트
@@ -26,7 +26,7 @@ services:
 
   celery_worker_2:
     build: .
-    command: celery -A celery_worker.celery_worker worker --loglevel=info --concurrency=1 --hostname=worker2@%h
+    command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker2@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
@@ -49,7 +49,7 @@ services:
 
   celery_worker_3:
     build: .
-    command: celery -A celery_worker.celery_worker worker --loglevel=info --concurrency=1 --hostname=worker3@%h
+    command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker3@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
@@ -72,7 +72,7 @@ services:
 
   celery_worker_4:
     build: .
-    command: celery -A celery_worker.celery_worker worker --loglevel=info --concurrency=1 --hostname=worker4@%h
+    command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker4@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
@@ -95,7 +95,7 @@ services:
 
   celery_worker_5:
     build: .
-    command: celery -A celery_worker.celery_worker worker --loglevel=info --concurrency=1 --hostname=worker5@%h
+    command: celery -A celery_worker worker --loglevel=info --concurrency=1 --hostname=worker5@%h
     volumes:
       - ./.env:/app/.env
       - ./models:/app/models
@@ -123,6 +123,7 @@ services:
       - ./.env:/app/.env
       - ./models:/app/models
       - ~/.kube:/root/.kube
+      - .:/app # 모든 파일을 마운트
     depends_on:
       - rabbitmq
     deploy:

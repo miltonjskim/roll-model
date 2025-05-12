@@ -12,22 +12,19 @@ ENV CUDA_VISIBLE_DEVICES=0
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kubernetes 클라이언트 설치 (kubectl)
-RUN apt-get update && apt-get install -y apt-transport-https gnupg curl && \
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
-    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list && \
-    apt-get update && apt-get install -y kubectl && \
+# curl 및 jq 설치 (필요한 도구)
+RUN apt-get update && apt-get install -y curl jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# jq 설치 (JSON 처리용)
-RUN apt-get update && apt-get install -y jq && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# kubectl 설치 (K3s 버전과 일치)
+RUN curl -LO "https://dl.k8s.io/release/v1.32.4/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/
 
 # 애플리케이션 코드 복사
 COPY *.py .
-COPY mlflow-inferenceservice_template.yaml.j2 .
+COPY templates/mlflow-inferenceservice_template.yaml.j2 .
 
 # .env 파일 복사
 COPY .env .
