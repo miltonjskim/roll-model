@@ -50,7 +50,7 @@ public class ModelParameterFactory {
 				case RANDOM_FOREST_CLASSIFIER -> RandomForestClassifierParams.builder()
 					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
 					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
-					.max_features(getStringValue(parameterMap, "maxFeatures"))
+					.max_features(getIntegerValue(parameterMap, "maxFeatures"))
 					.build();
 				case GRADIENT_BOOSTING_CLASSIFIER -> GradientBoostingClassifierParams.builder()
 					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
@@ -69,7 +69,7 @@ public class ModelParameterFactory {
 				case RANDOM_FOREST_REGRESSOR -> RandomForestRegressorParams.builder()
 					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))
 					.max_depth(getIntegerValue(parameterMap, "maxDepth"))
-					.max_features(getStringValue(parameterMap, "maxFeatures"))
+					.max_features(getIntegerValue(parameterMap, "maxFeatures"))
 					.build();
 				case GRADIENT_BOOSTING_REGRESSOR -> GradientBoostingRegressorParams.builder()
 					.n_estimators(getIntegerValue(parameterMap, "nEstimators"))

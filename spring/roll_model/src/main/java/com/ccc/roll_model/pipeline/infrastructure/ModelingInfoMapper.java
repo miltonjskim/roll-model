@@ -38,20 +38,4 @@ public class ModelingInfoMapper {
 			.randomSeed(domainDataSplit.getRandomSeed())
 			.build();
 	}
-
-	private String determineModelType(String algorithm) {
-		if (algorithm == null) {
-			return null;
-		}
-
-		// 알고리즘에 따라 모델 타입 결정 (예시)
-		return switch (algorithm.toUpperCase()) {
-			case "RANDOM_FOREST", "DECISION_TREE", "LOGISTIC_REGRESSION", "SVM", "KNN", "NAIVE_BAYES" ->
-				"CLASSIFICATION";
-			case "LINEAR_REGRESSION", "RIDGE", "LASSO", "ELASTIC_NET", "SVR" -> "REGRESSION";
-			default ->
-				// 기본값 또는 알 수 없는 알고리즘의 경우
-				"UNKNOWN";
-		};
-	}
 }
