@@ -65,12 +65,13 @@ class MinioClient:
             logger.error(f"버킷 '{bucket_name}' 생성 중 오류: {str(e)}")
             return False
 
-    def upload_file(
+    async def upload_file(
             self,
             bucket_name: str,
             object_name: str,
             file_data: BinaryIO,
-            content_type: Optional[str] = None
+            content_type: Optional[str] = None,
+            encoding: Optional[str] = "utf-8"
     ) -> bool:
         """파일을 MinIO에 업로드"""
         try:
@@ -93,7 +94,8 @@ class MinioClient:
                 object_name=object_name,
                 data=file_data,
                 length=file_size,
-                content_type=content_type
+                content_type=content_type,
+                metadata={"encoding": encoding}  # 메타데이터 추가
             )
             # file_data.close() 호출을 제거 - 호출자가 파일을 닫도록 함
 
@@ -125,6 +127,24 @@ class MinioClient:
             return data
         except S3Error as e:
             logger.error(f"파일 '{object_name}' 다운로드 중 오류: {str(e)}")
+            return None
+
+    def get_metadata(self, bucket_name: str, object_name: str) -> Optional[Dict[str, Any]]:
+        try:
+            obj_info = self.client.stat_object(bucket_name, object_name)
+
+            metadata = {
+                'size': obj_info.size,
+                'content_type': obj_info.content_type,
+                'etag': obj_info.etag,
+                'last_modified': obj_info.last_modified,
+                'metadata': obj_info.metadata,
+                'version_id': obj_info.version_id
+            }
+
+            return metadata
+        except S3Error as e:
+            logger.error(f"파일 '{object_name}' 메타데이터 호출 중 오류: {str(e)}")
             return None
 
     def get_file_url(self, bucket_name: str, object_name: str, expires=timedelta(hours=1)) -> Optional[str]:
@@ -160,7 +180,7 @@ class MinioClient:
             logger.error(f"파일 '{object_name}' 삭제 중 오류: {str(e)}")
             return False
 
-    async def save_object_with_etag(self, bucket_name: str, object_name: str, data: BinaryIO, content_type: str) -> \
+    async def save_object_with_etag(self, bucket_name: str, object_name: str, data: BinaryIO, content_type: str, encoding: str) -> \
             Optional[str]:
         """객체를 저장하고 생성된 etag를 반환합니다."""
         try:
@@ -183,9 +203,9 @@ class MinioClient:
                 object_name=object_name,
                 data=data,
                 length=size,  # 명시적 크기 지정
-                content_type=content_type
+                content_type=content_type,
+                metadata={"encoding": encoding}
             )
-            logger.info(f"minio 저장 결과값 : {result}")
             # etag 반환 (따옴표 제거)
             return result.etag.strip('"')
 
@@ -228,7 +248,9 @@ class MinioClient:
         """
         try:
             # 먼저 CSV 컬럼 확인
-            columns = await self.get_csv_columns(bucket_name, object_name)
+            minio_metadata = self.get_metadata(bucket_name, object_name)
+            encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
+            columns = await self.get_csv_columns(bucket_name, object_name, encoding)
             logger.info(f"CSV 컬럼: {columns}")
             has_idx_column = 'idx' in columns
             logger.info(f"page: {page}, page_size: {page_size}, last_idx: {last_idx}, filter_condition: {filter_condition}")
@@ -270,7 +292,7 @@ class MinioClient:
 
             count_data = ""
             for d in count_response.stream():
-                count_data += d.decode('utf-8')
+                count_data += d.decode(encoding)
                 # print(count_data)
 
             total_records = int(count_data.split('\n')[0])
@@ -329,10 +351,7 @@ class MinioClient:
             new_last_idx = last_idx
 
             if data:
-                df = pd.read_csv(BytesIO(data), encoding='utf-8', header=None)
-                # 컬럼명을 수동으로 설정
-                df.columns = columns
-                logger.info(f"CSV 데이터 조회 성공: {df}")
+                df = pd.read_csv(BytesIO(data), encoding=encoding)
                 if not df.empty and has_idx_column:
                     # 현재 페이지의 마지막 idx 값 저장
                     new_last_idx = df['idx'].max()
@@ -352,7 +371,7 @@ class MinioClient:
         except Exception as e:
             raise Exception(f"CSV 파일 쿼리 중 오류 발생: {str(e)}")
 
-    async def get_csv_columns(self, bucket_name: str, object_name: str) -> List[str]:
+    async def get_csv_columns(self, bucket_name: str, object_name: str, encoding: str) -> List[str]:
         """CSV 파일의 컬럼 목록 가져오기"""
         try:
             # 컬럼만 가져오기 위한 쿼리
@@ -392,7 +411,7 @@ class MinioClient:
                 # print(data)
             # 데이터프레임으로 변환하여 컬럼 추출
             if data:
-                df = pd.read_csv(BytesIO(data), encoding='utf-8')
+                df = pd.read_csv(BytesIO(data), encoding=encoding)
                 response.stream().close()
                 return df.columns.tolist()
             else:
@@ -400,64 +419,6 @@ class MinioClient:
 
         except Exception as e:
             raise Exception(f"CSV 컬럼 가져오기 중 오류 발생: {str(e)}")
-def test_file_persistence():
-    """파일이 실제로 MinIO에 유지되는지 테스트"""
-    try:
-        minio_client = get_minio_client()
-        bucket_name = settings.MINIO_DATASET_BUCKET
-        object_name = "persistent_test.csv"
-
-        # 테스트용 CSV 데이터 생성
-        test_data = "id,name,age\n1,John,30\n2,Jane,25\n3,Bob,40"
-        data_stream = io.BytesIO(test_data.encode('utf-8'))
-
-        # 파일 업로드
-        print("\n업로드 테스트 시작")
-        upload_success = minio_client.upload_file(
-            bucket_name=bucket_name,
-            object_name=object_name,
-            file_data=data_stream,
-            content_type="text/csv"
-        )
-
-        data_stream.close()
-
-        assert upload_success, "파일 업로드 실패"
-        print(f"✅ 테스트 파일 '{object_name}' 업로드 성공")
-
-        # 파일이 실제로 존재하는지 확인
-        print("\n파일 존재 여부 직접 확인")
-        try:
-            stat = minio_client.client.stat_object(bucket_name, object_name)
-            print(f"✅ 파일이 실제로 존재함: {stat.object_name}, 크기: {stat.size}")
-            assert True
-        except Exception as e:
-            print(f"❌ 파일이 존재하지 않음: {str(e)}")
-            assert False
-
-        # URL 생성
-        file_url = minio_client.get_file_url(bucket_name, object_name)
-        print(f"생성된 URL: {file_url}")
-
-        # 다운로드 테스트 - 다른 방식으로
-        print("\n다운로드 테스트")
-        try:
-            response = minio_client.client.get_object(bucket_name, object_name)
-            data = response.read()
-            print(f"✅ 다운로드한 데이터 크기: {len(data)} 바이트")
-            print(f"✅ 다운로드한 데이터 내용: {data.decode('utf-8')}")
-            response.close()
-            response.release_conn()
-        except Exception as e:
-            print(f"❌ 다운로드 실패: {str(e)}")
-            assert False
-
-        # 파일 삭제하지 않고 유지
-        print("\n테스트 완료: 파일은 삭제하지 않고 유지됨")
-
-    except Exception as e:
-        print(f"❌ 테스트 실패: {str(e)}")
-        assert False
 
 # 싱글톤 인스턴스 생성
 minio_client = None

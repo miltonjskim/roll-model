@@ -33,7 +33,6 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         # HTTPBearer에서는 credentials.credentials로 토큰을 가져옴
         token = credentials.credentials
-        logger.info("토큰 검증 시작")  # 디버깅용 로그
         
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         logger.info(f"Decoded payload: {payload}")  # 디버깅용 로그

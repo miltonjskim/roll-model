@@ -6,7 +6,7 @@ from core.exception import CustomAPIException
 
 
 class TransformationHandler:
-    def __init__(self, data_path=None, df=None):
+    def __init__(self, data_path=None, df=None, encoding="utf-8"):
         """
         데이터 변환 처리 클래스 초기화
 
@@ -21,9 +21,9 @@ class TransformationHandler:
             self.df = df.copy()
         elif data_path is not None:
             if isinstance(data_path, io.BytesIO):
-                self.df = pd.read_csv(data_path)
+                self.df = pd.read_csv(data_path, encoding=encoding)
             else:
-                self.df = pd.read_csv(data_path)
+                self.df = pd.read_csv(data_path, encoding=encoding)
         else:
             raise CustomAPIException(
                 status_code=400,

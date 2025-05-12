@@ -77,11 +77,12 @@ async def upload_dataset_and_save_metadata(
         object_name = f"project_{project_id}/{file.filename}"
 
         # MinIO에 파일 업로드
-        upload_success = minio_client.upload_file(
+        upload_success = await minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
             file_data=file_io,
-            content_type=file.content_type
+            content_type=file.content_type,
+            encoding=config.get("encoding")
         )
 
         if not upload_success:
