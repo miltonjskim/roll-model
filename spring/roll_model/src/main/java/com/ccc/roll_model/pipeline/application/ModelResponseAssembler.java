@@ -140,7 +140,7 @@ public class ModelResponseAssembler {
                     .build());
             parameters.add(GetModelAndMetricResponse.ModelParameters.builder()
                     .parameterName("분할 시 사용할 특성 수")
-                    .parameterValue(rfrParams.getMax_features())
+                    .parameterValue(rfrParams.getMax_features().toString())
                     .parameterKey("max_features")
                     .build());
 
@@ -196,7 +196,7 @@ public class ModelResponseAssembler {
                     .build());
             parameters.add(GetModelAndMetricResponse.ModelParameters.builder()
                     .parameterName("분할 시 고려할 최대 특성 수 ('sqrt', 'log2')")
-                    .parameterValue(rfcParams.getMax_features())
+                    .parameterValue(rfcParams.getMax_features().toString())
                     .parameterKey("max_features")
                     .build());
 
