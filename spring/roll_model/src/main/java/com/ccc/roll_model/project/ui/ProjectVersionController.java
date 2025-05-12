@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ccc.roll_model.global.utils.ApiUtils;
 import com.ccc.roll_model.project.application.ProjectVersionService;
 import com.ccc.roll_model.project.application.command.GetProjectVersionsCommand;
-import com.ccc.roll_model.project.ui.request.GetProjectVersionsRequest;
 import com.ccc.roll_model.project.ui.response.GetProjectVersionsResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -24,17 +23,15 @@ public class ProjectVersionController {
 
     private final ProjectVersionService projectVersionService;
 
-    @GetMapping("/{projectId}/versions")
+    @GetMapping("/{pipelineId}/versions")
     public ApiUtils.ApiResponse<GetProjectVersionsResponse> getProjectVersions(
-            @PathVariable Integer projectId,
-            @RequestBody GetProjectVersionsRequest request,
+            @PathVariable String pipelineId,
             @AuthenticationPrincipal Integer memberId) {
 
-        log.info("Received request for project versions, projectId: {}, memberId: {}", projectId, memberId);
+        log.info("Received request for project versions, pipelineId: {}, memberId: {}", pipelineId, memberId);
 
         GetProjectVersionsCommand command = GetProjectVersionsCommand.builder()
-                .projectId(projectId)
-                .pipelineId(request.getPipelineId())
+                .pipelineId(pipelineId)
                 .memberId(memberId)
                 .build();
 

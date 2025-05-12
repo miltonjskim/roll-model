@@ -38,36 +38,42 @@ public class ProjectVersionService {
 
     @Transactional(readOnly = true)
     public GetProjectVersionsResponse getProjectVersions(GetProjectVersionsCommand command) {
-        log.info("Getting project versions for projectId: {}, pipelineId: {}, memberId: {}",
-                command.getProjectId(), command.getPipelineId(), command.getMemberId());
+        log.info("Getting project versions for pipelineId: {}, memberId: {}",
+                command.getPipelineId(), command.getMemberId());
 
         // 1. 현재 사용자 조회
         Member member = memberRepository.findById(command.getMemberId())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 프로젝트 조회
-        ProjectEntity project = projectRepository.findById(command.getProjectId())
+        // 2. 파이프라인이 속한 프로젝트의 ID 조회
+        PipelineEntity pipelineEntity = pipelineRepository.findByPipelineId(command.getPipelineId())
+                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND));
+
+        Integer projectId = pipelineEntity.getProjectEntity().getProjectId();
+
+        // 3. 프로젝트 조회
+        ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_PARAMETER));
 
-        // 3. 프로젝트 소유자 여부 확인
+        // 4. 프로젝트 소유자 여부 확인
         boolean isProjectOwner = project.getMemberEntity().getMemberId().equals(member.getMemberId());
         log.debug("User is project owner: {}", isProjectOwner);
 
-        // 4. 현재 파이프라인 조회 (요청에 포함된 경우)
-        PipelineEntity currentPipeline = null;
-        if (command.getPipelineId() != null && !command.getPipelineId().isEmpty()) {
-            currentPipeline = pipelineRepository.findById(command.getPipelineId())
-                    .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
-            log.debug("Current pipeline found: {}", currentPipeline.getPipelineId());
-        }
+        // 5. 현재 파이프라인 조회 (요청에 포함된 경우)
+//        PipelineEntity currentPipeline = null;
+//        if (command.getPipelineId() != null && !command.getPipelineId().isEmpty()) {
+//            currentPipeline = pipelineRepository.findById(command.getPipelineId())
+//                    .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
+//            log.debug("Current pipeline found: {}", currentPipeline.getPipelineId());
+//        }
 
-        // 5. 프로젝트에 속한 모든 파이프라인 조회
+        // 6. 프로젝트에 속한 모든 파이프라인 조회
         List<PipelineEntity> pipelines = pipelineRepository.findAll().stream()
-                .filter(p -> p.getProjectEntity().getProjectId().equals(command.getProjectId()))
+                .filter(p -> p.getProjectEntity().getProjectId().equals(projectId))
                 .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
-        // 6. 파이프라인 정보 매핑 및 응답 구성
+        // 7. 파이프라인 정보 매핑 및 응답 구성
         List<PipelineInfo> pipelineInfoList = new ArrayList<>();
 
         for (PipelineEntity pipeline : pipelines) {
@@ -85,18 +91,18 @@ public class ProjectVersionService {
 
         log.debug("Built {} pipeline info objects", pipelineInfoList.size());
 
-        // 7. 프로젝트 정보 구성
+        // 프로젝트 정보 구성
         ProjectInfo projectInfo = ProjectInfo.builder()
                 .title(project.getTitle())
                 .category(project.getCategory().name())
                 .domain(project.getDomain().name())
-                .version(currentPipeline != null ? currentPipeline.getVersion().toString() : "1.0")
+                .version(pipelineEntity.getVersion().toString())
                 .projectPublicYn(project.getPublicYn())
-                .pipelinePublicYn(currentPipeline != null ? currentPipeline.getPublicYn() : false)
+                .pipelinePublicYn(pipelineEntity.getPublicYn())
                 .ownerYn(isProjectOwner)
                 .build();
 
-        // 8. 최종 응답 구성
+        // 최종 응답 구성
         GetProjectVersionsResponse response = GetProjectVersionsResponse.builder()
                 .projectInfo(projectInfo)
                 .pipelines(pipelineInfoList)

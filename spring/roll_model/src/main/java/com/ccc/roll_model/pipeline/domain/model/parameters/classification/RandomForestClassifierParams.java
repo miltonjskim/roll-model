@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class RandomForestClassifierParams implements ModelParameter {
 	private Integer n_estimators;
 	private Integer max_depth;
-	private String max_features;
+	private Integer max_features;
 
 	@Override
 	public boolean validateParameters() {
