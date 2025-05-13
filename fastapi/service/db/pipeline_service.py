@@ -1,10 +1,8 @@
-import json
-from typing import Dict, Any, List, Optional, Coroutine
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 from bson import ObjectId
-from fastapi import Depends
 
-from core.storage import get_minio_client, MinioClient
+from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 
