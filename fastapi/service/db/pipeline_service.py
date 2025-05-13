@@ -1,9 +1,10 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Coroutine
 from datetime import datetime
 from bson import ObjectId
 
 from core.storage import MinioClient
-from db.mongo_config import get_pipeline_collection
+from db.mongo_config import get_pipeline_collection, get_dataset_collection
+from schemas.mongo.dataset import DatasetModel, DatasetColumn
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 
 import logging
@@ -463,6 +464,46 @@ class PipelineService:
             
             return dataset
             
+        except Exception as e:
+            logger.error(f"Error getting latest dataset: {e}")
+            return None
+
+    async def get_latest_dataset_columns(
+            self,
+            pipeline: PipelineModel,
+    ) -> list[DatasetColumn] | None:
+        """
+        파이프라인에서 가장 최근 데이터셋 컬럼을 가져옵니다.
+
+        Args:
+            pipeline: 파이프라인 모델
+
+        Returns:
+            List[Dict]: (데이터셋, 데이터 타입, 파일명) 또는 None
+        """
+        try:
+            # 파이프라인에 히스토리가 있는지 확인
+            if not pipeline.history:
+                logger.warning(f"Pipeline has no history")
+                return None
+
+            latest_history = pipeline.history[-1]
+
+            # 전처리 스텝이 있는지 확인
+            dataset_id = None
+
+            if latest_history.preprocessing_steps:
+                # 가장 최근 전처리된 데이터 사용
+                latest_step = latest_history.preprocessing_steps[-1]
+                dataset_id = latest_step.preprocessed_dataset_id
+            else:
+                # 원본 데이터 사용
+                dataset_id = pipeline.original_dataset_id
+
+            datasets = get_dataset_collection()
+            dataset:DatasetModel = await datasets.find_one(dataset_id)
+            return dataset.columns
+
         except Exception as e:
             logger.error(f"Error getting latest dataset: {e}")
             return None

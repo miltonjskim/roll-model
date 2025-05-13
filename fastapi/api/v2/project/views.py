@@ -717,12 +717,18 @@ async def fork_pipeline_total(
         )
 
         # 8. 응답 데이터 준비 (카테고리 정보 포함)
+
         response_data = await prepare_response_data(
             new_pipeline_id,
             new_pipeline,
             target_project_category,
             include_all_history=True
         )
+
+        # 9. 컬럼 데이터 가져오기
+
+        columns = await pipeline_service.get_latest_dataset_columns()
+        response_data["columns"] = columns
 
         return ApiResponse(
             status_code=200,

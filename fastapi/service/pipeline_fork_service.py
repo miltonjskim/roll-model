@@ -5,7 +5,7 @@ from sqlalchemy import text
 from core.api_response import ApiResponse
 from core.exception import CustomAPIException
 from db.mongo_config import get_pipeline_collection
-from schemas.mongo.pipeline import PipelineModel, PyObjectId
+from schemas.mongo.pipeline import PipelineModel
 from schemas.mysql.schemas import Pipeline, Project
 import logging
 
@@ -437,6 +437,8 @@ async def prepare_response_data(new_pipeline_id, new_pipeline, category, include
     """
     응답 데이터를 준비합니다.
     """
+
+
     response_data = {
         "pipelineId": new_pipeline_id,
         "category": category,  # 전달받은 category 사용
