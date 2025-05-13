@@ -15,7 +15,7 @@ export interface Project {
   rSquared: number | null; // 회귀일때의 정확도 (전처리만완료시 accuracy and rSquared null)
   target: string | null; // 목표변수 (전처리만완료시 null)
   dataCount: number; // 데이터수
-  runnungDuration: number | null; // 학습시간 (전처리만완료시 null)
+  runningDuration: number | null; // 학습시간 (전처리만완료시 null)
   likeCount: number; // 좋아요
   downloadCount: number; // 다운로드
   publicYn: boolean; // 공개여부
