@@ -101,7 +101,7 @@ public class ModelingService {
 		// 카프카 메시징
 		ModelingData modelingData = ModelingData.builder()
 				.projectId(pipelineDocument.getProjectId())
-				.modelType(modelingInfo.getModelType())
+				.modelType(modelingInfo.getModelType().getAlgorithmName())
 				.memberId(command.getMemberId())
 				.pipelineId(command.getPipelineId())
 				.parameters(modelParameter)

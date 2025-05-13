@@ -31,7 +31,7 @@ public class ModelingData implements Serializable {
     private final String pipelineId;
 
     @JsonProperty("model_type")
-    private final ModelType modelType;
+    private final String modelType;
 
     @JsonProperty("parameters")
     private final ModelParameter parameters;
@@ -48,7 +48,7 @@ public class ModelingData implements Serializable {
     }
 
     @Builder
-    public ModelingData(Integer projectId, Integer memberId, String pipelineId, ModelType modelType,
+    public ModelingData(Integer projectId, Integer memberId, String pipelineId, String modelType,
                         ModelParameter parameters, String trainDataPath, String targetColumn) {
         this.projectId = projectId;
         this.memberId = memberId;
