@@ -1,4 +1,6 @@
 from celery import Celery
+from confluent_kafka import Producer
+import json
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, ElasticNet
 from sklearn.svm import SVC, SVR
@@ -15,6 +17,8 @@ from config import (
     DEFAULT_TARGET_COLUMN,
     MINIO_DATASETS_BUCKET,
     MINIO_MODELS_BUCKET,
+    KAFKA_PRODUCER_CONFIG,
+    KAFKA_STATUS_TOPIC
 )
 from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
@@ -510,56 +514,101 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 memory_limit=model_memory_limit
             )
 
-        #     if deployment_success:
-        #         # 배포 정보 기록
-        #         deployment_info = {
-        #             "status": "deployed",
-        #             "service_name": service_name,
-        #             "url": service_url,
-        #             "deployment_time": pd.Timestamp.now().isoformat()
-        #         }
-        #     else:
-        #         deployment_info = {
-        #             "status": "failed",
-        #             "error": deployment_message,
-        #             "deployment_time": pd.Timestamp.now().isoformat()
-        #         }
-        # else:
-        #     deployment_info = {
-        #         "status": "skipped",
-        #         "reason": "MLflow 모델 등록 실패"
-        #     }
-        #
-        # # 결과 반환에 MLflow 및 배포 정보 추가
-        # result = {
-        #     "status": "success",
-        #     "model_type": model_type,
-        #     "s3_model_path": s3_model_path,
-        #     "model_metadata": model_metadata,
-        #     "mlflow_info": mlflow_info,
-        #     "deployment_info": deployment_info
-        # }
-        #
-        # if pipeline_id:
-        #     result["pipeline_id"] = pipeline_id
-        #
-        #     # MongoDB에 배포 상태 업데이트
-        #     if deployment_info["status"] == "deployed":
-        #         update_data = {
-        #             "deployment_status": "deployed",
-        #             "api_endpoint": deployment_info["url"],
-        #             "deployment_timestamp": deployment_info["deployment_time"]
-        #         }
-        #         update_model_by_pipeline_id(pipeline_id, update_data)
+        # 결과 생성
+        result = {
+            "status": "success",
+            "model_type": model_type,
+            "s3_model_path": s3_model_path,
+            "model_metadata": model_metadata
+        }
 
-        # return result
-        return model_metadata
+        if pipeline_id:
+            result["pipeline_id"] = pipeline_id
+
+        # Kafka로 학습 완료 메시지 발행
+        try:
+            # 생산자 생성
+            producer = Producer(KAFKA_PRODUCER_CONFIG)
+
+            # 메시지 페이로드
+            message = {
+                "event_type": "model_training_completed",
+                "timestamp": pd.Timestamp.now().isoformat(),
+                "pipeline_id": pipeline_id,
+                "project_id": project_id,
+                "model_type": model_type,
+                "model_path": s3_model_path,
+                "status": "success"
+            }
+
+            # 토픽 지정 (config에서 가져올 수도 있음)
+            topic = KAFKA_STATUS_TOPIC
+
+            # 메시지 발행
+            producer.produce(
+                topic,
+                key=str(pipeline_id) if pipeline_id else "unknown",
+                value=json.dumps(message).encode('utf-8'),
+                callback=lambda err, msg: print(
+                    f"[Producer] 메시지 전송 완료: {msg.topic()}" if err is None else f"[Producer] 메시지 전송 실패: {err}")
+            )
+
+            # 모든 메시지가 발행될 때까지 대기
+            producer.flush()
+
+            print(f"[Task] 학습 완료 메시지가 Kafka에 성공적으로 발행됨: {topic}")
+
+        except Exception as kafka_error:
+            print(f"[Task] Kafka 메시지 발행 중 오류 발생: {kafka_error}")
+
+        return result
 
     except Exception as e:
         error_result = {"status": "error", "error": str(e)}
 
         if pipeline_id:
             error_result["pipeline_id"] = pipeline_id
+
+        # Kafka로 학습 실패 메시지 발행
+        try:
+            # Kafka 설정
+            kafka_producer_config = {
+                'bootstrap.servers': os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
+                'client.id': 'model-training-producer'
+            }
+
+            # 생산자 생성
+            producer = Producer(kafka_producer_config)
+
+            # 메시지 페이로드
+            message = {
+                "event_type": "model_training_failed",
+                "timestamp": pd.Timestamp.now().isoformat(),
+                "pipeline_id": pipeline_id,
+                "project_id": project_id,
+                "error_message": str(e),
+                "status": "fail"
+            }
+
+            # 토픽 지정
+            topic = KAFKA_STATUS_TOPIC
+
+            # 메시지 발행
+            producer.produce(
+                topic,
+                key=str(pipeline_id) if pipeline_id else "unknown",
+                value=json.dumps(message).encode('utf-8'),
+                callback=lambda err, msg: print(
+                    f"[Producer] 메시지 전송 완료: {msg.topic()}" if err is None else f"[Producer] 메시지 전송 실패: {err}")
+            )
+
+            # 모든 메시지가 발행될 때까지 대기
+            producer.flush()
+
+            print(f"[Task] 학습 실패 메시지가 Kafka에 성공적으로 발행됨: {topic}")
+
+        except Exception as kafka_error:
+            print(f"[Task] Kafka 메시지 발행 중 오류 발생: {kafka_error}")
 
         print(f"[Task] Error during model training: {e}")
         return error_result
