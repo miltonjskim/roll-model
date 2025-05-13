@@ -1,7 +1,7 @@
 import { ApiProjectDomain } from '@/shared/lib/utils/domainMapping';
 
 export type ProjectType = 'CLASSIFICATION' | 'REGRESSION';
-export type ProjectStatus = 'COMPLETED' | 'PREPROCESSED' | 'LEARNING' | 'FAILED';
+export type ProjectStatus = 'COMPLETED' | 'PREPROCESSED' | 'LEARNING' | 'FAILED' | 'CREATED';
 
 export interface Project {
   id: string;
