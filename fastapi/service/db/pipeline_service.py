@@ -5,7 +5,7 @@ from bson import ObjectId
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import DatasetModel, DatasetColumn
-from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
+from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus, PyObjectId
 
 import logging
 import pandas as pd
@@ -488,10 +488,6 @@ class PipelineService:
                 return None
 
             latest_history = pipeline.history[-1]
-
-            # 전처리 스텝이 있는지 확인
-            dataset_id = None
-
             if latest_history.preprocessing_steps:
                 # 가장 최근 전처리된 데이터 사용
                 latest_step = latest_history.preprocessing_steps[-1]
@@ -499,10 +495,11 @@ class PipelineService:
             else:
                 # 원본 데이터 사용
                 dataset_id = pipeline.original_dataset_id
-
+            print(dataset_id)
             datasets = get_dataset_collection()
-            dataset:DatasetModel = await datasets.find_one(dataset_id)
-            return dataset.columns
+            dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
+            print(dataset)
+            return dataset["metadata"]["data_types"]
 
         except Exception as e:
             logger.error(f"Error getting latest dataset: {e}")

@@ -727,7 +727,7 @@ async def fork_pipeline_total(
 
         # 9. 컬럼 데이터 가져오기
 
-        columns = await pipeline_service.get_latest_dataset_columns()
+        columns = await pipeline_service.get_latest_dataset_columns(new_pipeline)
         response_data["columns"] = columns
 
         return ApiResponse(
