@@ -63,7 +63,7 @@ const PreprocessDataPage = () => {
     setIsLoading(true);
     try {
       // TODO: AI 요청 url 변경
-      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/recommendation`);
+      const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/preprocessing/recommendation`);
       setRecommendedSteps(response.data.data.preprocessingSteps);
       console.log(response.data);
     } catch (error) {
