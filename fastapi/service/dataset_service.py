@@ -251,9 +251,15 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
                 }
 
         # 모든 데이터 포함
+        # data_sample = {
+        #     "columns": df.columns.tolist(),
+        #     "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
+        # }
+
+        # 30행만 포함하도록 수정
         data_sample = {
             "columns": df.columns.tolist(),
-            "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
+            "data": df.head(30).to_dict(orient="records")  # 30행만 반환
         }
 
         return {
