@@ -29,16 +29,16 @@ spec:
         requests:
           cpu: {{ cpu_request }}
           memory: {{ memory_request }}
-          {% if gpu_fraction > 0 %}
-          nvidia.com/gpu: {{ gpu_fraction }}
+          {% if use_gpu == true %}
+          nvidia.com/gpu: 1
           {% endif %}
         limits:
           cpu: {{ cpu_limit }}
           memory: {{ memory_limit }}
-          {% if gpu_fraction > 0 %}
-          nvidia.com/gpu: {{ gpu_fraction }}
+          {% if use_gpu == true %}
+          nvidia.com/gpu: 1
           {% endif %}
-      {% if gpu_fraction > 0 %}
+      {% if use_gpu == true %}
       env:
         - name: NVIDIA_VISIBLE_DEVICES
           value: "all"
