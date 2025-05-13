@@ -5,6 +5,7 @@ import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { formatDate, getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useState } from 'react';
+import { LetterText } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
