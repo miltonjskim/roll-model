@@ -105,7 +105,7 @@ public class ModelingService {
 				.memberId(command.getMemberId())
 				.pipelineId(command.getPipelineId())
 				.parameters(modelParameter)
-				.trainDataPath(filePath)
+				.trainDataPath(filePath.replace("storage/datasets/", "s3://datasets/"))
 				.targetColumn(modelingInfo.getTargetFeature())
 				.build();
 		// 저장
