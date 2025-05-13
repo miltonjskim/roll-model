@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     REDIS_DB: int
 
     # API 기본 경로
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = "/api/v2"
 
     # MinIO 설정
     MINIO_ENDPOINT: str

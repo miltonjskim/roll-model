@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import text
-from schemas.mysql.schemas import Pipeline, PipelineStatus, Project
+from schemas.mysql.schemas import PipelineStatus
 from typing import Dict, Any
 import logging
 

@@ -28,25 +28,38 @@ from schemas.mysql.schemas import ProjectDataset
 import math
 import numpy as np
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
-from schemas.mongo.dataset import DatasetDomain, DatasetCategory, ColumnType
+from schemas.mongo.dataset import ColumnType
 from service.db.pipeline_mysql_service import create_mysql_pipeline
+from service.storage.storage import add_index_to_csv
 
 logger = logging.getLogger()
 
-def replace_nan_values(obj):
-    """NaN 값을 None으로 변환"""
+
+def replace_nan_values(obj, round_decimals=None):
+    """
+    NaN 값을 "NaN" 문자열로 변환하고, 옵션으로 float 값 반올림
+
+    Args:
+        obj: 처리할 객체
+        round_decimals: float 값을 반올림할 소수점 자릿수 (None이면 반올림 안함)
+    """
     if isinstance(obj, dict):
-        return {k: replace_nan_values(v) for k, v in obj.items()}
+        return {k: replace_nan_values(v, round_decimals) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [replace_nan_values(item) for item in obj]
+        return [replace_nan_values(item, round_decimals) for item in obj]
     elif isinstance(obj, float):
         if math.isnan(obj):
             return "NaN"
-        return obj
+        return round(obj, round_decimals) if round_decimals is not None else obj
     elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.floating):
         if np.isnan(obj):
             return "NaN"
-        return float(obj)
+        float_value = float(obj)
+        return round(float_value, round_decimals) if round_decimals is not None else float_value
+    elif hasattr(obj, 'dtype') and np.issubdtype(obj.dtype, np.integer):
+        if np.isnan(obj):
+            return "NaN"
+        return int(obj)
     else:
         return obj
 
@@ -61,6 +74,8 @@ async def upload_dataset_and_save_metadata(
         file: UploadFile,
         config_json: str,
         background_tasks: BackgroundTasks,
+        category: str,
+        domain: str
 ) -> Dict[str, Any]:
     try:
         config = json.loads(config_json)
@@ -68,14 +83,17 @@ async def upload_dataset_and_save_metadata(
         file_io = io.BytesIO(file_content)
         minio_client = get_minio_client()
         bucket_name = "datasets"
-        object_name = f"project_{project_id}_{datetime.now()}/{file.filename}"
+        object_name = f"project_{project_id}/{file.filename}"
+
+        indexed_data = add_index_to_csv(file_io, encoding=config.get("encoding"))
 
         # MinIO에 파일 업로드
-        upload_success = minio_client.upload_file(
+        upload_success = await minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
-            file_data=file_io,
-            content_type=file.content_type
+            file_data=indexed_data,
+            content_type=file.content_type,
+            encoding=config.get("encoding")
         )
 
         if not upload_success:
@@ -113,6 +131,9 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
+            sample_data = dataset_analysis["data_sample"]["data"][:10] if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else [],
+            category=category,
+            domain=domain
         )
 
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
@@ -121,7 +142,7 @@ async def upload_dataset_and_save_metadata(
             member_id=member_id,
             etag=etag,
             dataset_id=dataset_id,
-            object_name=object_name,
+            object_name=object_name
         )
 
         # MySQL에 파이프라인 데이터 저장 (MongoDB 파이프라인 ID 사용)
@@ -230,9 +251,15 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
                 }
 
         # 모든 데이터 포함
+        # data_sample = {
+        #     "columns": df.columns.tolist(),
+        #     "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
+        # }
+
+        # 30행만 포함하도록 수정
         data_sample = {
             "columns": df.columns.tolist(),
-            "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
+            "data": df.head(30).to_dict(orient="records")  # 30행만 반환
         }
 
         return {
@@ -317,11 +344,15 @@ async def store_dataset_to_mongodb(
     dataset_analysis: Dict[str, Any],
     config: Dict[str, Any],
     file_size: int,
-    object_name: str
+    object_name: str,
+    category: str,
+    domain: str,
+    sample_data: List,
+    is_preprocessed: bool = False
 ) -> str:
     try:
         dataset_collection = get_dataset_collection()
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now().isoformat() + "Z"
 
         # 사용자가 제공한 타입을 우리 시스템의 ColumnType으로 매핑
         type_mapping = {
@@ -365,9 +396,10 @@ async def store_dataset_to_mongodb(
             "file_size": file_size,
             "file_type": file_type,  # metadata에서 별도 필드로 이동
             "etag": etag,
-            "is_preprocessed": False,  # is_deleted 대신 is_preprocessed 사용
-            "category": DatasetCategory.CLASSIFICATION.value,
-            "domain": DatasetDomain.GENERAL.value,
+            "is_preprocessed": is_preprocessed,  # is_deleted 대신 is_preprocessed 사용
+            "sample_data": sample_data,
+            "category": category,
+            "domain": domain,
             "metadata": {
                 "row_count": dataset_analysis["total_rows"],
                 "column_count": dataset_analysis["total_columns"],
@@ -480,9 +512,6 @@ async def calculate_and_update_statistics(
                 correlation_matrix = corr_matrix
             except Exception as e:
                 logger.warning(f"상관관계 행렬 계산 중 오류: {str(e)}")
-        logger.info(f"생성된 숫자형 통계: {list(numeric_features.keys())}")
-        logger.info(f"생성된 범주형 통계: {list(categorical_features.keys())}")
-        logger.info(f"상관관계 행렬 생성 여부: {correlation_matrix is not None}")
         # 모든 통계 정보를 담은 객체 생성
         statistics = {
             "numeric_features": numeric_features,

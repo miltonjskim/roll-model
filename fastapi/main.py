@@ -3,9 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
-from api.v1.preprocessing.routers import api_router as preprocessing_router
-from api.v1.project.routers import api_router as project_router
+from api.v2.preprocessing.routers import api_router as preprocessing_router
+from api.v2.project.routers import api_router as project_router
 from core.api_response import ApiResponse
+import signal
 
 from core.exception import (
     startlette_http_exception_handler,
@@ -95,6 +96,7 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     logger.info(f"Response status code: {response}")
     return response
+
 
 if __name__ == "__main__":
     import uvicorn
