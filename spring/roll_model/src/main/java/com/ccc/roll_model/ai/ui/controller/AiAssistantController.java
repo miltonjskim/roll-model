@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v2/pipelines")
+@RequestMapping("/api/v1/pipelines")
 class AiAssistantController {
 
     private final OpenAiService openAiService;
