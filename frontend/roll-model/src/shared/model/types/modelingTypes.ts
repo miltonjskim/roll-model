@@ -1,4 +1,5 @@
-import { ProjectStatus } from '@/entities/dashboard/model/types';
+import { ColumnConfig } from '@/entities/workspace/data-config/model/types';
+import { projectCategory } from '@/entities/workspace/model/types';
 import { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 
 export type DataSplit = {
@@ -10,7 +11,7 @@ export type DataSplit = {
 
 export interface ForkTotalResponse {
   pipelineId: string;
-  category: ProjectStatus;
+  category: projectCategory;
   registeredAt: string;
   modifiedAt: string;
   preprocessingSteps: Step[];
@@ -20,5 +21,5 @@ export interface ForkTotalResponse {
     parameters: Record<string, number>;
     targetFeature: string;
   };
-  columns: Record<string, string>[];
+  columns: ColumnConfig[];
 }
