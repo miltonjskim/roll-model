@@ -9,12 +9,7 @@ export type DataSplit = {
   randomSeed: number;
 };
 
-export interface ForkTotalResponse {
-  pipelineId: string;
-  category: projectCategory;
-  registeredAt: string;
-  modifiedAt: string;
-  preprocessingSteps: Step[];
+export interface ForkTotalResponse extends ForkPreprocessResponse {
   modelingInfo: {
     algorithm: string;
     dataSplit: DataSplit;
@@ -22,4 +17,10 @@ export interface ForkTotalResponse {
     targetFeature: string;
   };
   columns: ColumnConfig[];
+}
+
+export interface ForkPreprocessResponse {
+  pipelineId: string;
+  category: projectCategory;
+  preprocessingSteps: Step[];
 }
