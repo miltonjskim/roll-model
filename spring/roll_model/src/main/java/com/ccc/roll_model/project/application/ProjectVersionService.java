@@ -15,10 +15,12 @@ import com.ccc.roll_model.project.application.command.GetProjectVersionsCommand;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.Category;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.VersionRepository;
 import com.ccc.roll_model.project.ui.response.GetProjectVersionsResponse;
 import com.ccc.roll_model.project.ui.response.GetProjectVersionsResponse.PipelineInfo;
 import com.ccc.roll_model.project.ui.response.GetProjectVersionsResponse.ProjectInfo;
@@ -35,6 +37,9 @@ public class ProjectVersionService {
     private final PipelineRepository pipelineRepository;
     private final ModelRepository modelRepository;
     private final MemberRepository memberRepository;
+    private final VersionRepository versionRepository;
+
+    float ROOT_VERSION = 0.1f;
 
     @Transactional(readOnly = true)
     public GetProjectVersionsResponse getProjectVersions(GetProjectVersionsCommand command) {
@@ -166,5 +171,79 @@ public class ProjectVersionService {
                 .updatedAt(pipeline.getModifiedAt())
                 .ownerYn(isProjectOwner) // 프로젝트 소유자 ==> 파이프라인 소유자
                 .build();
+    }
+
+    public void savePipeline(String pipelineId) {
+        float newVersion;
+        VersionEntity version;
+
+        // 현재 파이프라인의 부모 정보 조회
+        VersionEntity parentVersion = versionRepository.findVersionEntityByPipelineId(pipelineId);
+
+        if (parentVersion == null) {
+            // 부모가 없으면 새로운 그룹 생성
+            newVersion = ROOT_VERSION;
+            Integer newGroupId = generateNewGroupId();
+
+            version = VersionEntity.builder()
+                .pipelineId(pipelineId)
+                .versionNum(newVersion)
+                .groupId(newGroupId)
+                .parentVersion(null)
+                .build();
+        } else {
+            // 같은 그룹의 모든 버전들을 조회 (내림차순 정렬)
+            List<VersionEntity> pipelineGroups = versionRepository
+                .findVersionEntitiesByGroupIdOrderByVersionNumDesc(parentVersion.getGroupId());
+
+            // 새로운 버전 생성
+            newVersion = createNewVersion(parentVersion.getVersionNum(), pipelineGroups);
+
+            version = VersionEntity.builder()
+                .pipelineId(pipelineId)
+                .versionNum(newVersion)
+                .groupId(parentVersion.getGroupId())
+                .parentVersion(parentVersion.getVersionNum())
+                .build();
+        }
+
+        versionRepository.save(version);
+    }
+
+    private float createNewVersion(Float parentVersion, List<VersionEntity> pipelineGroups) {
+        if (parentVersion == null) {
+            return ROOT_VERSION;
+        }
+
+        if (pipelineGroups.isEmpty()) {
+            throw new ApiException(ErrorCode.PIPELINE_NOT_FOUND);
+        }
+
+        // pipelineGroups는 버전 내림차순으로 정렬됨
+        float highestIntegerVersion = pipelineGroups.get(0).getVersionNum();
+
+        if (parentVersion == ROOT_VERSION) {
+            // 정수 버전 중 가장 높은 버전 찾기
+            return Math.round(highestIntegerVersion) + 1.0f;
+        } else {
+            // 해당 메이저 버전의 소수점 버전 중 가장 높은 버전 찾기
+            int majorVersion = (int) Math.floor(parentVersion);
+            float highestMinorVersion = majorVersion;
+
+            for (VersionEntity group : pipelineGroups) {
+                float version = group.getVersionNum();
+                // 같은 메이저 버전인지 확인
+                if (Math.floor(version) == majorVersion && version > highestMinorVersion) {
+                    highestMinorVersion = version;
+                }
+            }
+
+            // 0.1 증가
+            return highestMinorVersion + 0.1f;
+        }
+    }
+
+    private Integer generateNewGroupId() {
+        return versionRepository.findHighestGroupId().orElse(1);
     }
 }
