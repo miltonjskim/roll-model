@@ -531,9 +531,16 @@ async def fork_pipeline_total(
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
         # 5. 모든 히스토리 복제
-        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
-            for history_item in source_pipeline_details.history:
-                new_pipeline.history.append(history_item.model_copy())
+        latest_history = source_pipeline_details.history[-1]
+
+        # 전처리 단계만 포함한 새 히스토리 항목 생성
+        new_history_item = PipelineHistoryItem(
+            preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
+            modeling_info=latest_history.modeling_info if latest_history.modeling_info else None,
+            status=PipelineStatus.PREPROCESSED
+        )
+
+        new_pipeline.history.append(new_history_item)
 
         # 7. 새 파이프라인 저장
         new_pipeline_id = await save_new_pipeline(

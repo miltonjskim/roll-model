@@ -430,10 +430,6 @@ async def save_new_pipeline(db, new_pipeline, pipeline_id, target_project_id,
     source_pipeline.fork_count += 1
     db.commit()
 
-    # 새 파이프라인을 저장
-    new_pipeline.id = PyObjectId(new_pipeline_id)
-    await pipeline_service.create_pipeline(new_pipeline)
-
     return new_pipeline_id
 
 
