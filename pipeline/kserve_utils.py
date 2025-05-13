@@ -51,7 +51,9 @@ def sanitize_k8s_name(name):
     print(f"[DEBUG] Original name: '{name}' -> Converted name: '{sanitized}'")
     return sanitized
 
-def generate_inference_service_yaml(model_name, model_path, namespace="default", gpu_fraction=0.0, cpu_request="100m", cpu_limit="300m", memory_request="256Mi", memory_limit="512Mi"):
+def generate_inference_service_yaml(
+        model_name, model_path, namespace="default",
+        gpu_fraction=0.0, cpu_request="100m", cpu_limit="300m", memory_request="256Mi", memory_limit="512Mi"):
     """
     Jinja2 템플릿을 사용하여 InferenceService YAML 파일 생성
 
@@ -99,13 +101,17 @@ def generate_inference_service_yaml(model_name, model_path, namespace="default",
         service_name = sanitize_k8s_name(model_name)
         print(f"[DEBUG] Service name to be created: {service_name}, GPU allocation: {gpu_fraction}")
 
+        # GPU 사용 여부 결정 (gpu_fraction이 0보다 크면 GPU 사용)
+        use_gpu = gpu_fraction > 0.0
+        print(f"[DEBUG] GPU will be used: {use_gpu}")
+
         # 템플릿 렌더링
         rendered_yaml = template.render(
             model_name=service_name,
             model_path=model_path,
             namespace=namespace,
             endpoint_url=endpoint_url,
-            gpu_fraction=gpu_fraction,
+            use_gpu=use_gpu,  # 수정: gpu_fraction 대신 use_gpu 사용
             cpu_request=cpu_request,
             cpu_limit=cpu_limit,
             memory_request=memory_request,

@@ -446,49 +446,68 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             import yaml
             import json
 
-            # 현재 사용 중인 GPU 리소스 확인
+            # 현재 사용 중인 CPU 리소스 확인
             try:
-                gpu_cmd = "kubectl get inferenceservices -n default -o json | jq '.items[].spec.predictor.sklearn.resources.limits[\"nvidia.com/gpu\"] | select(. != null)' | jq -s 'add'"
-                gpu_result = subprocess.run(gpu_cmd, shell=True, check=True, stdout=subprocess.PIPE,
+                cpu_cmd = "kubectl get inferenceservices -n default -o json | jq '.items[].spec.predictor.sklearn.resources.requests.cpu' | jq -s 'add'"
+                cpu_result = subprocess.run(cpu_cmd, shell=True, check=True, stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE)
-                current_gpu_usage = float(gpu_result.stdout.decode().strip() or "0")
+                current_cpu_usage = float(cpu_result.stdout.decode().strip() or "0")
+                # CPU 사용량을 코어 단위로 변환 (예: 300m -> 0.3)
+                if current_cpu_usage > 0:
+                    current_cpu_usage = current_cpu_usage / 1000 if current_cpu_usage > 10 else current_cpu_usage
             except Exception as e:
-                current_gpu_usage = 0.0
-                print(f"Warning: Could not check GPU usage: {e}")
+                current_cpu_usage = 0.0
+                print(f"Warning: Could not check CPU usage: {e}")
 
-            # 사용 가능한 GPU 리소스 계산 (총 40%에서 이미 사용 중인 리소스 차감)
-            available_gpu = max(0.0, 0.4 - current_gpu_usage)
+            # 사용 가능한 CPU 리소스 계산 (총 4 코어 중 90%만 할당하여 시스템 여유 확보)
+            total_available_cpu = 3.6  # 4 코어의 90%
+            available_cpu = max(0.0, total_available_cpu - current_cpu_usage)
 
-            # GPU 할당 결정
-            gpu_fraction = 0.0
-            gpu_mem_limit = None
-            if available_gpu >= 0.01:  # 최소 1% 이상 사용 가능할 때
-                gpu_fraction = min(0.03, available_gpu)  # 최대 3% 할당 (30개 모델 고려)
-                gpu_mem_limit = "256"  # 256MB 제한 (필요시 조정)
+            # 메모리 사용량 확인
+            try:
+                mem_cmd = "kubectl get inferenceservices -n default -o json | jq '.items[].spec.predictor.sklearn.resources.requests.memory' | grep -o '[0-9]*' | jq -s 'add'"
+                mem_result = subprocess.run(mem_cmd, shell=True, check=True, stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
+                current_mem_usage = float(mem_result.stdout.decode().strip() or "0")
+            except Exception as e:
+                current_mem_usage = 0.0
+                print(f"Warning: Could not check memory usage: {e}")
 
-            # CPU와 메모리 리소스 설정 - GPU 사용 가능 여부에 따라 다르게 설정
-            if gpu_fraction > 0:
-                cpu_request = "100m"
-                cpu_limit = "300m"
-                memory_request = "256Mi"
-                memory_limit = "512Mi"
-            else:
-                # GPU 없을 경우 CPU 리소스 증가
-                cpu_request = "300m"
-                cpu_limit = "500m"
-                memory_request = "512Mi"
-                memory_limit = "1Gi"
+            # 총 16GB 메모리 중 90%만 할당 (Mi 단위로 계산)
+            total_available_mem = 14745  # 약 14.4GB (16GB의 90%)
+            available_mem = max(0.0, total_available_mem - current_mem_usage)
+
+            # 리소스 할당 결정 - 최대 30개 모델 고려
+            # 각 모델당 평균 0.12 vCPU (120m) 기준
+            model_cpu_request = "120m"  # 0.12 코어
+            model_cpu_limit = "200m"  # 0.2 코어 (버스트 허용)
+
+            # 각 모델당 메모리 - 약 480MB (500Mi)
+            model_memory_request = "400Mi"
+            model_memory_limit = "500Mi"
+
+            # 인스턴스 부하 분산을 위한 리소스 요청 체크
+            # 리소스가 부족할 경우 최소 요청으로 조정
+            deployed_services_cmd = "kubectl get inferenceservices -n default | wc -l"
+            deployed_count = int(subprocess.run(deployed_services_cmd, shell=True, check=True,
+                                                stdout=subprocess.PIPE).stdout.decode().strip()) - 1  # 헤더 행 제외
+
+            if deployed_count >= 25:  # 많은 모델이 이미 배포된 경우
+                model_cpu_request = "100m"
+                model_cpu_limit = "150m"
+                model_memory_request = "300Mi"
+                model_memory_limit = "400Mi"
 
             # InferenceService와 VirtualService 모두 배포
             deployment_success, deployment_message, service_name, service_url = deploy_model_with_virtual_service(
                 model_name=pipeline_id,
                 model_path=model_path,
                 namespace="default",
-                gpu_fraction=gpu_fraction,
-                cpu_request=cpu_request,
-                cpu_limit=cpu_limit,
-                memory_request=memory_request,
-                memory_limit=memory_limit
+                gpu_fraction=0.0,  # GPU 사용 안함
+                cpu_request=model_cpu_request,
+                cpu_limit=model_cpu_limit,
+                memory_request=model_memory_request,
+                memory_limit=model_memory_limit
             )
 
         #     if deployment_success:
