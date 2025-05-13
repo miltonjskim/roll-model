@@ -5,7 +5,7 @@ import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { formatDate, getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useState } from 'react';
-import { LetterText } from 'lucide-react';
+import { useAfterSchool } from '@/shared/lib/utils/useAfterSchool';
 
 interface ProjectCardProps {
   project: Project;
@@ -15,6 +15,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   const setProjectDetail = useSetAtom(projectDetailAtom);
   const [showDropdown, setShowDropdown] = useState(false);
   const router = useRouter();
+  const { handleAfterSchoolClick } = useAfterSchool();
 
   const handleProjectClick = () => {
     // atom 상태 업데이트
@@ -31,13 +32,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
     router.push(`/project-detail/${project.id}`);
   };
 
-  const handleAfterSchoolClick = (afterSchool: string) => {
-    if (afterSchool === 'ToPreprocessing') {
-      // 전처리부터 재학습
-    } else if (afterSchool === 'ToModeling') {
-      // 모델링부터 재학습
-    }
-  };
+  const handlTempPreprocessClick = (pipelineId: string) => {};
 
   return (
     <div className="rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
@@ -110,7 +105,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         {project.status === 'FAILED' && (
           <button
             className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
-            onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+            onClick={() => handleAfterSchoolClick(project.id)}
           >
             재학습
           </button>
@@ -119,7 +114,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           {project.status === 'PREPROCESSED' && (
             <button
               className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
-              onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+              onClick={() => handleAfterSchoolClick(project.id)}
             >
               재학습
             </button>
@@ -133,13 +128,13 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             >
               <button
                 className="bg-[theme(color-blue-02)] hover:bg-[theme(color-blue-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
-                onClick={() => handleAfterSchoolClick('ToPreprocessing')}
+                onClick={() => handlTempPreprocessClick(project.id)}
               >
                 전처리부터 재학습
               </button>
               <button
                 className="bg-[theme(color-green-02)] hover:bg-[theme(color-green-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
-                onClick={() => handleAfterSchoolClick('ToModeling')}
+                onClick={() => handleAfterSchoolClick(project.id)}
               >
                 모델링부터 재학습
               </button>

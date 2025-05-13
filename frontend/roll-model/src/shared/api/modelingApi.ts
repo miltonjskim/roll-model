@@ -28,11 +28,11 @@ export const startModelTraining = async (
   }
 };
 
-// 재학습 (모델링부터 시작하기) 
+// 재학습 (모델링부터 시작하기)
 // api 응답형식 개복잡함 == any
 export const YouHaveToAfterSchool = async (pipelineId: string): Promise<any> => {
   try {
-    const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/total`);
+    const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/fork/total`);
     return response.data;
   } catch (error) {
     console.error('모델링 테스트 API 호출 실패:', error);
