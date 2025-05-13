@@ -74,7 +74,7 @@ async def delete_dataset(
         logger.error(f"데이터셋 삭제 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"데이터셋 삭제 중 오류 발생: {str(e)}")
     
-def add_index_to_csv(file_data: BinaryIO, encoding) -> BinaryIO:
+def add_index_to_csv(file_data: BinaryIO, encoding: str) -> BinaryIO:
     """
     CSV 파일에 인덱스 열 추가 (idx 컬럼이 없는 경우에만)
     
@@ -83,6 +83,8 @@ def add_index_to_csv(file_data: BinaryIO, encoding) -> BinaryIO:
         
     Returns:
         BinaryIO: 인덱스가 추가된 CSV 데이터 또는 원본 데이터
+        :param file_data:
+        :param encoding:
     """
     # BinaryIO를 텍스트로 변환
     text_data = file_data.read().decode(encoding)
