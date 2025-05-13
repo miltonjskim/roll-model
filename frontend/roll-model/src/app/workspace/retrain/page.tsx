@@ -5,10 +5,7 @@ import { Project } from '@/entities/dashboard/model/types';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
-import { ProjectCardCompact } from '@/features/workspace/retrain/ui/ProjectCard';
-import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { ProjectCardCompact } from '@/features/workspace/retrain/ui/ProjectCardCompact';
 
 const statusSections = [
   { type: 'COMPLETED', label: '성공한 프로젝트', emoji: '✅' },
@@ -17,11 +14,8 @@ const statusSections = [
 ] as const;
 
 const ProjectRetrainSelectionPage = () => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [myProjectList, setMyProjectList] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [showSelectionModal, setShowSelectionModal] = useState(false);
 
   useEffect(() => {
     fetchMyProjects();
@@ -31,6 +25,8 @@ const ProjectRetrainSelectionPage = () => {
     setIsLoading(true);
     try {
       const { data } = await axiosInstance.get('/api/v1/projects/my');
+      console.log(data);
+
       setMyProjectList(data.data.projects);
     } catch (error) {
       const apiError = error as ApiError;
@@ -40,18 +36,9 @@ const ProjectRetrainSelectionPage = () => {
     }
   };
 
-  const moveToRetrain = (project: Project): void => {
-    if (project.status === 'COMPLETED') {
-      setSelectedProject(project);
-      setShowSelectionModal(true);
-    } else {
-      router.push(`/workspace/train/${project.id}`);
-    }
-  };
-
   return (
     <div className="flex flex-col justify-center">
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">내 프로젝트 목록</h1>
         <p className="text-sm text-gray-600">재학습 가능한 프로젝트를 확인하세요.</p>
       </div>
@@ -60,15 +47,15 @@ const ProjectRetrainSelectionPage = () => {
           const filteredProjects = myProjectList.filter((p) => p.status === type);
           return (
             <div key={type}>
-              <h3 className="mb-4 text-lg font-bold">
+              <h3 className="mb-4 text-lg font-bold select-none">
                 <span className="font-tossface">{emoji} </span>
                 {label}
               </h3>
-              <div className="max-h-[50rem] space-y-4 overflow-y-auto">
+              <div className="max-h-[68vh] space-y-4 overflow-y-auto">
                 {filteredProjects.length > 0 ? (
-                  filteredProjects.map((project: Project) => <ProjectCardCompact key={project.id} project={project} onClick={() => moveToRetrain(project)} />)
+                  filteredProjects.map((project: Project) => <ProjectCardCompact key={project.id} project={project} />)
                 ) : (
-                  <div className="flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm text-gray-500">
+                  <div className="flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm text-gray-500 select-none">
                     <span className="font-tossface mb-2 text-4xl">📭</span>
                     <p>해당 상태의 프로젝트가 없습니다.</p>
                     <p className="mt-1 text-xs">학습 완료된 프로젝트가 여기에 표시됩니다.</p>
@@ -79,18 +66,6 @@ const ProjectRetrainSelectionPage = () => {
           );
         })}
       </div>
-      <Dialog open={showSelectionModal} onOpenChange={setShowSelectionModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>재학습 방법 선택</DialogTitle>
-            <DialogDescription>선택한 프로젝트로 어떤 재학습을 진행할까요?</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Button onClick={() => router.push(`/workspace/preprocess/${selectedProject?.id}`)}>데이터 전처리부터</Button>
-            <Button onClick={() => router.push(`/workspace/train/${selectedProject?.id}`)}>모델 학습부터</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
