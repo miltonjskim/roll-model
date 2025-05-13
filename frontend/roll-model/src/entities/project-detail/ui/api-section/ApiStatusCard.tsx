@@ -37,15 +37,26 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
     const startTime = Date.now();
 
     try {
-      // inputSchema에서 예시 값만 추출하여 배열로 만들기
+      // 프록시 적용 전
+      // const apiEndpoint = endpoint.endsWith(':predict') ? endpoint : `${endpoint}:predict`;
+
+      // 프록시 적용
       const modelId = endpoint.split('/').pop(); // 'model-681dc05b94fed8acc6f1dc6d' 추출
       const apiEndpoint = `/api/model/${modelId}${endpoint.endsWith(':predict') ? '' : ':predict'}`;
+
       const exampleValues = inputSchema.features.map((feature: Feature) => feature.example);
 
-      // 요청 본문 생성
+      // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 테스트 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      // 요청 본문 생성 (테스트할때 여기주석하고)
       const requestBody = {
         inputs: [exampleValues],
       };
+      // 681dc05b94fed8acc6f1dc6d (url 파이프라인 id 바꾸고)
+      // 테스트 바디 (주석풀고)
+      // const requestBody = {
+      //   inputs: [[1513.56, 4, 493, 3.1, 4.5, 30.9]],
+      // };
+      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
       // POST 요청 보내기
       console.log('요청 가보자', apiEndpoint, '그리고', requestBody);
