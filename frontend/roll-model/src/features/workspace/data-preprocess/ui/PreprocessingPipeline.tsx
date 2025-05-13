@@ -8,10 +8,10 @@ export interface Step {
   parameters: Record<string, string | number | number[]>;
   order: number;
   active: boolean;
-  categoryId: string; // 'missing-values'
-  optionId: string; // 'mean'
-  optionName: string; // '평균값으로 대체'
-  optionDescription: string; // '결측치를 평균값으로 대체'
+  categoryId?: string; // 'missing-values'
+  optionId?: string; // 'mean'
+  optionName?: string; // '평균값으로 대체'
+  optionDescription?: string; // '결측치를 평균값으로 대체'
 }
 
 const getStepLabel = (type: string) => {
