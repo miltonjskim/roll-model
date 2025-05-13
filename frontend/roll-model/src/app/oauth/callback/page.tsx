@@ -7,7 +7,7 @@ import { userAtom, isLoggedInAtom, userToken, UserInfo } from '@/features/auth/m
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiResponse } from '@/shared/model/types/apiResponse';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
-import { requestFCMToken } from '@/shared/lib/firebase/fcm';
+import { getFCMTokenFromStorage, requestFCMToken } from '@/shared/lib/firebase/fcm';
 
 const CallbackPage = () => {
   const router = useRouter();
@@ -37,8 +37,13 @@ const CallbackPage = () => {
           return;
         }
 
-        const fcmToken = await requestFCMToken(vapidKey, true);
-        console.log('fcmToken:', fcmToken);
+        const isValidToken = getFCMTokenFromStorage(); // 로컬 스토리지에서 fcm토큰 확인
+        if (isValidToken) {
+          console.log('fcm settup'); // 있으면 그냥사용
+        } else {
+          const fcmToken = await requestFCMToken(vapidKey); // 없으면 새로발급
+          console.log('fcmToken새로발급:', fcmToken);
+        }
 
         setUser(apiResponse.data);
         setIsLoggedIn(true);
