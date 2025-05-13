@@ -23,7 +23,9 @@ const CallbackPage = () => {
 
     const fetchUser = async () => {
       try {
-        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        const tempvapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        console.log('vapidKey in CallbackPage : ', tempvapidKey);
+        const vapidKey = tempvapidKey || 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q';
         const accessToken = getCookieValue('access_token');
         if (!accessToken) throw new Error('access_token 없음');
 
@@ -31,6 +33,10 @@ const CallbackPage = () => {
         setUserToken(accessToken);
 
         const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
+        console.log('환경 변수 확인 in CallbackPage :');
+        console.log('API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+        console.log('VAPID_KEY:', process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY);
+        console.log('AUTH_DOMAIN:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
 
         if (!vapidKey) {
           showErrorToast('vapidKey가 없습니다.');

@@ -27,7 +27,9 @@ export const InitAuthProvider = () => {
     const checkLogin = async () => {
       try {
         const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
-        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        const tempvapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        console.log('vapidKey in checkLogin : ', tempvapidKey);
+        const vapidKey = tempvapidKey || 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q';
 
         console.log('checkLogin res:', apiResponse);
         if (!vapidKey) {
