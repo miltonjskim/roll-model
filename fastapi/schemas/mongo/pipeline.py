@@ -120,6 +120,7 @@ class PipelineModel(BaseModel):
     original_dataset_etag: str = None
     original_dataset_object_name: str = None
     history: List[PipelineHistoryItem] = []
+    _class: str = "com.ccc.roll_model.pipeline.infrastructure.entity.mongo.PipelineDocument"
 
     class Config:
         validate_by_name = True

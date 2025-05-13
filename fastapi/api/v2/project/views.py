@@ -420,6 +420,7 @@ async def get_pipeline_versions(
             data=None
         )
 
+
 @pipeline_router.post("/fork/preprocess", response_class=ApiResponse)
 async def fork_pipeline_preprocess(
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
@@ -444,10 +445,12 @@ async def fork_pipeline_preprocess(
 
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
+
+        # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
+        target_project_id, target_project_category = await determine_target_project(
             db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
+
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
@@ -463,22 +466,26 @@ async def fork_pipeline_preprocess(
 
             new_pipeline.history.append(new_history_item)
 
-        # 7. 새 파이프라인 저장
+        # 7. 새 파이프라인 저장 - 수정된 부분
         new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, PipelineStatus.PREPROCESSED, None, pipeline_service
+            db=db,
+            new_pipeline=new_pipeline,
+            pipeline_id=pipeline_id,
+            target_project_id=target_project_id,
+            source_pipeline=source_pipeline,  # member_id 대신 source_pipeline
+            status=PipelineStatus.PREPROCESSED,  # status 매개변수 추가
+            pipeline_service=pipeline_service
         )
 
-        # 8. 응답 데이터 준비
+        # 8. 응답 데이터 준비 (카테고리 정보 포함)
         response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            None, new_pipeline, include_all_history=False
+            new_pipeline_id, new_pipeline, target_project_category
         )
 
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=convert_dict_to_camel_case(response_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
         )
 
     except Exception as e:
@@ -515,8 +522,8 @@ async def fork_pipeline_total(
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
 
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
+        # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
+        target_project_id, target_project_category = await determine_target_project(
             db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
 
@@ -530,20 +537,27 @@ async def fork_pipeline_total(
 
         # 7. 새 파이프라인 저장
         new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, source_pipeline.status, None, pipeline_service
+            db=db,
+            pipeline_id=pipeline_id,
+            pipeline_service=pipeline_service,
+            target_project_id=target_project_id,
+            source_pipeline=source_pipeline,
+            new_pipeline=new_pipeline,
+            status=source_pipeline.status,
         )
 
-        # 8. 응답 데이터 준비
+        # 8. 응답 데이터 준비 (카테고리 정보 포함)
         response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            None, new_pipeline, include_all_history=True
+            new_pipeline_id,
+            new_pipeline,
+            target_project_category,
+            include_all_history=True
         )
 
         return ApiResponse(
             status_code=200,
             message="파이프라인이 성공적으로 복제되었습니다.",
-            data=convert_dict_to_camel_case(response_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
         )
 
     except Exception as e:
@@ -553,7 +567,6 @@ async def fork_pipeline_total(
             message=f"파이프라인 복제 중 오류가 발생했습니다: {str(e)}",
             data=None
         )
-
 
 @pipeline_router.get("/dataset", response_class=ApiResponse)
 async def get_dataset_page(
