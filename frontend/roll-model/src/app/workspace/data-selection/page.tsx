@@ -21,12 +21,12 @@ const SelectDataPage = () => {
 
   return (
     <div>
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">프로젝트 데이터 선택</h1>
         <h2>데이터를 선택해 주세요</h2>
       </div>
 
-      <div className="mx-auto mt-4 max-w-[70rem]">
+      <div className="mx-auto mt-4 max-w-[70rem] select-none">
         <div className="bg-[theme(primary-white)] flex h-120 justify-center gap-4 rounded-lg p-4">
           <FileUploadDialog />
           <div className="h-full flex-1/2 cursor-pointer rounded-lg border border-[var(--color-gray-03)]" onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>

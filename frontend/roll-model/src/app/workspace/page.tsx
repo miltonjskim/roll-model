@@ -16,7 +16,7 @@ const Workspace = () => {
 
   return (
     <div>
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">시작하기</h1>
         <h2>시작할 프로젝트를 선택하세요.</h2>
       </div>

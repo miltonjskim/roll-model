@@ -37,7 +37,7 @@ export const FileUploadDialog = () => {
           로컬 파일 사용하기
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-[theme(primary-white)] w-150 sm:max-w-[50%]">
+      <DialogContent className="bg-[theme(primary-white)] w-150 select-none sm:max-w-[50%]">
         <DialogHeader className="text-center">
           <DialogTitle>로컬 데이터 업로드</DialogTitle>
         </DialogHeader>
@@ -69,7 +69,7 @@ export const FileUploadDialog = () => {
               }}
               className={`${fileEnter ? 'border-4' : 'border-2'} bg-[theme(color-gray-04)] mx-auto flex h-72 w-full max-w-lg flex-col items-center justify-center rounded-md border-dashed border-[color:var(--color-gray-02)]`}
             >
-              <label htmlFor="file" className="flex h-full flex-col justify-center text-center text-sm">
+              <label htmlFor="file" className="flex h-full w-full flex-col items-stretch justify-center text-center text-sm">
                 <span className="font-tossface text-7xl">{file ? '🗂️' : '📁'}</span>
                 {file ? (
                   <>
