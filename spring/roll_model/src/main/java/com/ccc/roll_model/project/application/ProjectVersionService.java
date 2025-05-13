@@ -1,9 +1,9 @@
 package com.ccc.roll_model.project.application;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import com.ccc.roll_model.project.infrastructure.entity.mysql.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +13,6 @@ import com.ccc.roll_model.member.domain.Member;
 import com.ccc.roll_model.member.domain.MemberRepository;
 import com.ccc.roll_model.project.application.command.GetProjectVersionsCommand;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
-import com.ccc.roll_model.project.infrastructure.entity.mysql.Category;
-import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
-import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
-import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
@@ -50,13 +46,25 @@ public class ProjectVersionService {
         Member member = memberRepository.findById(command.getMemberId())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 파이프라인이 속한 프로젝트의 ID 조회
+        // 2. 해당 파이프라인이 속한 그룹의 모든 파이프라인 조회
+        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
+        Integer groupId = versionEntity.getGroupId();
+        List<VersionEntity> versionEntities =
+                versionRepository.findVersionEntitiesByGroupIdOrderByVersionNumDesc(groupId);
+        List<PipelineEntity> pipelines = versionEntities.stream()
+                .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
+                .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+                .toList();
+        log.debug("Found {} pipelines for project", pipelines.size());
+
+        // 3. 파이프라인이 속한 프로젝트 조회
         PipelineEntity pipelineEntity = pipelineRepository.findByPipelineId(command.getPipelineId())
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND));
 
         Integer projectId = pipelineEntity.getProjectEntity().getProjectId();
 
-        // 3. 프로젝트 조회
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_PARAMETER));
 
@@ -64,21 +72,7 @@ public class ProjectVersionService {
         boolean isProjectOwner = project.getMemberEntity().getMemberId().equals(member.getMemberId());
         log.debug("User is project owner: {}", isProjectOwner);
 
-        // 5. 현재 파이프라인 조회 (요청에 포함된 경우)
-//        PipelineEntity currentPipeline = null;
-//        if (command.getPipelineId() != null && !command.getPipelineId().isEmpty()) {
-//            currentPipeline = pipelineRepository.findById(command.getPipelineId())
-//                    .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
-//            log.debug("Current pipeline found: {}", currentPipeline.getPipelineId());
-//        }
-
-        // 6. 프로젝트에 속한 모든 파이프라인 조회
-        List<PipelineEntity> pipelines = pipelineRepository.findAll().stream()
-                .filter(p -> p.getProjectEntity().getProjectId().equals(projectId))
-                .toList();
-        log.debug("Found {} pipelines for project", pipelines.size());
-
-        // 7. 파이프라인 정보 매핑 및 응답 구성
+        // 5. 파이프라인 정보 매핑 및 응답 구성
         List<PipelineInfo> pipelineInfoList = new ArrayList<>();
 
         for (PipelineEntity pipeline : pipelines) {
