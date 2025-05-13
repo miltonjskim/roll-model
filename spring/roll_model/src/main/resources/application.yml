@@ -14,7 +14,7 @@ spring:
     bootstrap-servers: ${KAFKA_HOST}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     topic:
       processing-data:
         name: train-requests

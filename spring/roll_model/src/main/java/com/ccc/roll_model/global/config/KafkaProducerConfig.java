@@ -1,6 +1,6 @@
 package com.ccc.roll_model.global.config;
 
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,9 +40,9 @@ public class KafkaProducerConfig {
         // kafka 서버 주소
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
         // 메시지 Key를 직렬화할 클래스
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
         // 메시지 Value 직렬화
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class);
 
         //ACK_Confing -> 0,1,all -> all : 모든 팔로워가 메시지 받았을 때만 성공
         props.put(ProducerConfig.ACKS_CONFIG, "all");
