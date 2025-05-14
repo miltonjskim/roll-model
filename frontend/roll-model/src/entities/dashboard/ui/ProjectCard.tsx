@@ -61,11 +61,11 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         <p>목표변수: {project.target || '학습대기중'}</p>
         <p>데이터 수: {project.dataCount.toLocaleString()}</p>
         <p>버전 : {project.version || 'X'}</p>
-        <p>학습시간 : {project.runnungDuration || '학습대기중'}</p>
+        <p>학습시간 : {project.runningDuration || '학습대기중'}</p>
         {project.category === 'CLASSIFICATION' ? (
           <p>정확도: {project.accuracy ? `${(project.accuracy * 100).toFixed(2)}%` : '학습대기중'}</p>
         ) : (
-          <p>R²: {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}</p>
+          <p>R²: {project.rsquared ? (project.rsquared * 100).toFixed(2) : '학습대기중'}</p>
         )}
         {/* <p>{formatDate(project.updatedAt, 'yyyy-MM-dd')} 수정됨</p> */}
         <p>{getRelativeTime(project.updatedAt)} 수정됨</p>
