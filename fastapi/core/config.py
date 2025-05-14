@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     MINIO_DATASET_BUCKET: str
     MINIO_MODEL_BUCKET: str
 
+    OPENAI_API_KEY: str
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8"
