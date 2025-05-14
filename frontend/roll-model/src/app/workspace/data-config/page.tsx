@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { projectIdAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,7 @@ import { DelimiterSelector } from '@/features/workspace/data-upload/ui/component
 import { EncodingSelector } from '@/features/workspace/data-upload/ui/components/EncodingSelector';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ApiError } from '@/shared/model/types/apiResponse';
+import { createProject } from '@/features/workspace/service/createProject';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -38,6 +39,11 @@ const ConfigDataPage = () => {
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
   const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
   const [isLoading, setIsLoading] = useState(false);
+  const projectDescription = useAtomValue(projectDescriptionAtom);
+  const projectdomain = useAtomValue(projectDomainAtom);
+  const projectCategory = useAtomValue(projectCategoryAtom);
+  const projectPublic = useAtomValue(projectPublicAtom);
+  const setProjectId = useSetAtom(projectIdAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -61,6 +67,28 @@ const ConfigDataPage = () => {
     setColumnTypes(updated);
   };
 
+  // 프로젝트 생성 요청 함수
+  const handleCreateProject = async () => {
+    const payload = {
+      title: projectTitle,
+      description: projectDescription,
+      domain: projectdomain,
+      type: projectCategory,
+      isPublic: projectPublic,
+    };
+    try {
+      const response = await createProject(payload);
+
+      const projectId = response.data.id;
+      setProjectId(projectId.toString());
+
+      handleUpload();
+    } catch (err) {
+      console.error('프로젝트 생성 실패:', err);
+    }
+  };
+
+  // 원본 데이터셋 업로드 함수
   const handleUpload = () => {
     if (!file) return;
 
@@ -317,7 +345,7 @@ const ConfigDataPage = () => {
           </div>
 
           <div className="pt-6">
-            <Button variant="black" size="lg" className="h-12 w-full" onClick={handleUpload}>
+            <Button variant="black" size="lg" className="h-12 w-full" onClick={handleCreateProject}>
               전처리 단계로 넘어가기 →
             </Button>
           </div>
