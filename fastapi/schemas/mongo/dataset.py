@@ -6,10 +6,11 @@ from ..mongo.pipeline import PyObjectId
 import enum
 
 class ColumnType(str, enum.Enum):
-    NUMERIC = "NUMERIC"
-    CATEGORICAL = "CATEGORICAL" 
-    TEXT = "TEXT"
-    DATETIME = "DATETIME"
+    string = "string"
+    datetime = "datetime"
+    integer = "integer"
+    boolean = "boolean"
+    double = "double"
 
 # 데이터셋 도메인 정의
 class DatasetDomain(str, enum.Enum):
