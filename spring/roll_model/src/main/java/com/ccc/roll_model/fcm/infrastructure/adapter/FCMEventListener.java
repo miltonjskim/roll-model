@@ -20,7 +20,7 @@ public class FCMEventListener {
     @KafkaListener(topics = "train-status", groupId = "handle-train-status")
     public void handleModelTrainingStatusEvent(String jsonMessage) {
 
-        log.info("Received model training status event: {}", event);
+        log.info("Received model training status event: {}", jsonMessage);
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
