@@ -114,7 +114,7 @@ const PreprocessDataPage = () => {
   };
 
   return (
-    <div className="mx-auto">
+    <div className="mx-auto select-none">
       <div>
         <h1 className="text-xl font-bold">전처리 설정하기</h1>
         <h2>필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
@@ -137,11 +137,12 @@ const PreprocessDataPage = () => {
               <label htmlFor="column-select" className="text-sm font-medium">
                 전처리할 컬럼 선택
               </label>
-              <Select value={selectedColumn} onValueChange={setSelectedColumn}>
+              <Select value={selectedColumn ?? '__ALL__'} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="컬럼을 선택하세요" />
+                  <SelectValue placeholder="컬럼을 선택하지 않으면 전체 컬럼에 적용됩니다." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__ALL__">전체 컬럼</SelectItem>
                   {columnNames?.map((col) => (
                     <SelectItem key={col} value={col}>
                       {col}
@@ -191,7 +192,7 @@ const PreprocessDataPage = () => {
                   <p className="text-sm text-[var(--color-gray-01)]">현재까지 적용한 전처리 과정을 확인할 수 있습니다.</p>
                   <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">단계를 삭제하거나 추가할 수 있습니다.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleRemoveStep}>
+                <Button variant="outline" size="sm" onClick={handleRemoveStep} disabled={steps.length === 0}>
                   - 최근 단계 삭제
                 </Button>
               </div>

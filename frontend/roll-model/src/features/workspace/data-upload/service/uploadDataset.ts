@@ -4,6 +4,7 @@ import { ApiResponse } from '@/shared/model/types/apiResponse';
 
 export const uploadDataset = async (projectId: string, config: UploadDatasetRequest, file: File): Promise<ApiResponse<UploadDatasetResponse>> => {
   const formData = new FormData();
+  console.log('projectId:', projectId);
 
   formData.append('config', JSON.stringify(config));
   formData.append('dataFile', file);
