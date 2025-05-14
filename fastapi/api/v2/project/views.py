@@ -13,13 +13,15 @@
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
 """
 from typing import Optional
+from wsgiref.headers import Headers
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
-from fastapi.params import Query
+from fastapi.params import Query, Header
 from sqlalchemy.orm import Session
 import logging
 import json
+import io
 
 from core.exception import CustomAPIException
 from core.security import verify_token
@@ -27,6 +29,7 @@ from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
 from core.api_response import ApiResponse
 from models.project.dataset_models import DatasetPageResponse
+from models.project.sample_models import get_sample_dataset, get_all_sample_datasets
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus
 from service.dataset_paginator import ChunkedCSVReader
 from service.dataset_service import upload_dataset_and_save_metadata, replace_nan_values
@@ -39,6 +42,7 @@ from service.pipeline_fork_service import get_source_pipeline, find_root_pipelin
 from utils.snake_to_camel import convert_dict_to_camel_case
 
 router = APIRouter()
+sample_router = APIRouter()
 pipeline_router = APIRouter()
 logger = logging.getLogger()
 
@@ -156,6 +160,165 @@ async def upload_project_dataset(
             status_code=500,
             error_code="UPLOAD_ERROR",
             error_message=f"데이터셋 업로드 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@sample_router.get("/datasets/samples", response_class=ApiResponse)
+async def get_sample_datasets_list():
+    """
+    사용 가능한 샘플 데이터셋 목록 조회
+
+    Returns:
+        ApiResponse: 샘플 데이터셋 목록
+    """
+    try:
+        samples = get_all_sample_datasets()
+
+        # 응답 데이터 구성 (민감한 실제 데이터는 제외)
+        response_data = []
+        for sample_id, sample_config in samples.items():
+            response_data.append({
+                "id": sample_config.id,
+                "name": sample_config.name,
+                "description": sample_config.description,
+                "category": sample_config.category,
+                "domain": sample_config.domain,
+                "columns": sample_config.columns,
+                "rowCount": len(sample_config.data),
+                "columnCount": len(sample_config.columns)
+            })
+
+        return ApiResponse(
+            status_code=200,
+            message="샘플 데이터셋 목록을 성공적으로 조회했습니다.",
+            data=convert_dict_to_camel_case({"samples": response_data})
+        )
+
+    except Exception as e:
+        logger.error(f"샘플 데이터셋 목록 조회 중 오류: {str(e)}")
+        return ApiResponse(
+            status_code=500,
+            error_code="SAMPLE_LIST_ERROR",
+            error_message=f"샘플 데이터셋 목록 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.post("/datasets/samples/{sample_id}", response_class=ApiResponse)
+async def upload_project_sample_dataset(
+        sample_id: int = Path(..., title="샘플 데이터셋 ID"),
+        project_id: int = Path(..., title="프로젝트 ID"),
+        member_id: int = Depends(verify_token),
+        db: Session = Depends(get_mysql_db),
+        background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    """
+    프로젝트에 샘플 데이터셋 업로드
+
+    Args:
+        sample_id: 사용할 샘플 데이터셋 ID (iris, sales_data, customer_data 등)
+        project_id: 데이터셋을 업로드할 프로젝트 ID
+        member_id: 사용자 ID (토큰에서 추출)
+
+    처리 과정:
+    1. 선택된 샘플 데이터셋 조회
+    2. 샘플 데이터를 CSV bytes로 변환
+    3. 가상 UploadFile 객체 생성
+    4. 기존 upload_dataset_and_save_metadata 함수 활용
+    5. 분석 결과 반환
+    :param sample_id:
+    :param project_id:
+    :param member_id:
+    :param background_tasks:
+    :param db:
+    """
+    try:
+        # 프로젝트 존재 여부 및 소유자 확인
+        project = db.query(Project).filter(
+            Project.project_id == project_id,
+            Project.deleted_yn == False
+        ).first()
+
+        if not project:
+            return ApiResponse(
+                status_code=404,
+                error_code="PROJECT_NOT_FOUND",
+                error_message="프로젝트를 찾을 수 없습니다"
+            )
+
+        # 선택된 샘플 데이터셋 조회
+        sample_config = get_sample_dataset(sample_id)
+        if not sample_config:
+            return ApiResponse(
+                status_code=404,
+                error_code="SAMPLE_NOT_FOUND",
+                error_message=f"샘플 데이터셋 '{sample_id}'를 찾을 수 없습니다"
+            )
+
+        # 샘플 데이터를 CSV bytes로 변환
+        csv_bytes = sample_config.to_csv_bytes()
+
+        # 설정 정보 가져오기
+        config_dict = sample_config.get_config_dict()
+        config_json = json.dumps(config_dict)
+
+        # 가상 UploadFile 객체 생성
+        filename = sample_config.get_filename()
+
+        file_obj = io.BytesIO(csv_bytes)
+
+        # 실제 FastAPI UploadFile 객체 생성
+        sample_file = UploadFile(
+            file=file_obj,
+            filename=filename,
+            headers=Headers([
+                ("content-type", "text/csv"),
+                ("content-disposition", 'form-data; name="file"; filename="data.csv"')
+            ])
+        )
+
+        # 데이터셋 업로드 및 분석 (기존 함수 재사용)
+        result = await upload_dataset_and_save_metadata(
+            db=db,
+            project_id=project_id,
+            member_id=member_id,
+            file=sample_file,
+            config_json=config_json,
+            background_tasks=background_tasks,
+            category=sample_config.category,
+            domain=sample_config.domain
+        )
+
+        # NaN, INF 수동 인코딩
+        safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
+
+        # 응답 구성
+        response_data = {
+            **safe_result,
+            "sampleInfo": {
+                "sampleId": sample_id,
+                "sampleName": sample_config.name,
+                "sampleDescription": sample_config.description,
+            }
+        }
+
+        return ApiResponse(
+            data=convert_dict_to_camel_case(response_data),
+            message=f"샘플 데이터셋 '{sample_config.name}'이 성공적으로 업로드되었습니다.",
+            status_code=200
+        )
+
+    except Exception as e:
+        logger.error(f"샘플 데이터셋 업로드 중 오류: {str(e)}")
+        # 예외 발생 시 명시적 롤백
+        try:
+            db.rollback()
+            logger.info("오류로 인한 트랜잭션 롤백 완료")
+        except Exception as rollback_error:
+            logger.error(f"롤백 중 오류: {str(rollback_error)}")
+
+        return ApiResponse(
+            status_code=500,
+            error_code="SAMPLE_UPLOAD_ERROR",
+            error_message=f"샘플 데이터셋 업로드 중 오류가 발생했습니다: {str(e)}"
         )
 
 @router.get("/workspace", response_class=ApiResponse)
@@ -420,6 +583,7 @@ async def get_pipeline_versions(
             data=None
         )
 
+
 @pipeline_router.post("/fork/preprocess", response_class=ApiResponse)
 async def fork_pipeline_preprocess(
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
@@ -444,10 +608,12 @@ async def fork_pipeline_preprocess(
 
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
+
+        # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
+        target_project_id, target_project_category = await determine_target_project(
             db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
+
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
@@ -463,22 +629,26 @@ async def fork_pipeline_preprocess(
 
             new_pipeline.history.append(new_history_item)
 
-        # 7. 새 파이프라인 저장
+        # 7. 새 파이프라인 저장 - 수정된 부분
         new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, PipelineStatus.PREPROCESSED, None, pipeline_service
+            db=db,
+            new_pipeline=new_pipeline,
+            pipeline_id=pipeline_id,
+            target_project_id=target_project_id,
+            source_pipeline=source_pipeline,  # member_id 대신 source_pipeline
+            status=PipelineStatus.PREPROCESSED,  # status 매개변수 추가
+            pipeline_service=pipeline_service
         )
 
-        # 8. 응답 데이터 준비
+        # 8. 응답 데이터 준비 (카테고리 정보 포함)
         response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            None, new_pipeline, include_all_history=False
+            new_pipeline_id, new_pipeline, target_project_category
         )
 
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=convert_dict_to_camel_case(response_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
         )
 
     except Exception as e:
@@ -515,8 +685,8 @@ async def fork_pipeline_total(
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
 
-        # 3. 타겟 프로젝트 결정
-        target_project_id = await determine_target_project(
+        # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
+        target_project_id, target_project_category = await determine_target_project(
             db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
 
@@ -524,26 +694,46 @@ async def fork_pipeline_total(
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
         # 5. 모든 히스토리 복제
-        if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
-            for history_item in source_pipeline_details.history:
-                new_pipeline.history.append(history_item.model_copy())
+        latest_history = source_pipeline_details.history[-1]
+
+        # 전처리 단계만 포함한 새 히스토리 항목 생성
+        new_history_item = PipelineHistoryItem(
+            preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
+            modeling_info=latest_history.modeling_info if latest_history.modeling_info else None,
+            status=PipelineStatus.PREPROCESSED
+        )
+
+        new_pipeline.history.append(new_history_item)
 
         # 7. 새 파이프라인 저장
         new_pipeline_id = await save_new_pipeline(
-            db, new_pipeline, pipeline_id, target_project_id, member_id,
-            source_pipeline, source_pipeline.status, None, pipeline_service
+            db=db,
+            pipeline_id=pipeline_id,
+            pipeline_service=pipeline_service,
+            target_project_id=target_project_id,
+            source_pipeline=source_pipeline,
+            new_pipeline=new_pipeline,
+            status=source_pipeline.status,
         )
 
-        # 8. 응답 데이터 준비
+        # 8. 응답 데이터 준비 (카테고리 정보 포함)
+
         response_data = await prepare_response_data(
-            new_pipeline_id, target_project_id, pipeline_id, original_project_id,
-            None, new_pipeline, include_all_history=True
+            new_pipeline_id,
+            new_pipeline,
+            target_project_category,
+            include_all_history=True
         )
+
+        # 9. 컬럼 데이터 가져오기
+
+        columns = await pipeline_service.get_latest_dataset_columns(new_pipeline)
+        response_data["columns"] = columns
 
         return ApiResponse(
             status_code=200,
             message="파이프라인이 성공적으로 복제되었습니다.",
-            data=convert_dict_to_camel_case(response_data)
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
         )
 
     except Exception as e:
@@ -553,7 +743,6 @@ async def fork_pipeline_total(
             message=f"파이프라인 복제 중 오류가 발생했습니다: {str(e)}",
             data=None
         )
-
 
 @pipeline_router.get("/dataset", response_class=ApiResponse)
 async def get_dataset_page(

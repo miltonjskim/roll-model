@@ -42,11 +42,11 @@ class DatasetModel(BaseModel):
     description: Optional[str] = None # 선택적 필드
     dataset_file_path: str
     file_size: int
-    columns: List[DatasetColumn] = []
     registered_at: datetime = Field(default_factory=datetime.now())
     modified_at: datetime = Field(default_factory=datetime.now())
     etag: str  # MinIO 또는 S3의 ETag
     is_deleted: bool = False
+    metadata: Optional[Dict[str, Any]] = None
 
     class Config:
         validate_by_name = True
