@@ -16,18 +16,19 @@ export const useAfterSchool = () => {
     try {
       const response = await YouHaveToAfterSchool(pipelineId);
       console.log('모델링 테스트 결과:', response);
-      
+
       setProjectCategoryAtom(response.data.category);
-      
+
       setProjectDetailAtom({
         ...projectDetail,
         id: pipelineId,
         category: response.data.category,
       });
-      
+
       setCompletedDatasetAtom({
         pipelineId: response.data.pipelineId,
         columns: response.data.columns,
+        category: response.data.category,
       });
 
       router.push('/workspace/modeling-section');
