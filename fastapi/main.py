@@ -92,7 +92,7 @@ async def add_process_time_header(request: Request, call_next):
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Request URL: {request.url.path}")
-    print(f"logger: {logger}")
+    #print(f"logger: {logger}")
     response = await call_next(request)
     logger.info(f"Response status code: {response}")
     return response
