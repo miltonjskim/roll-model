@@ -24,7 +24,7 @@ import { createProject } from '@/features/workspace/service/createProject';
 const ConfigDataPage = () => {
   const router = useRouter();
   const projectId = useAtomValue(projectIdAtom);
-  const mutation = useUploadDataset(projectId);
+  const mutation = useUploadDataset();
   const file = useAtomValue(uploadedFileAtom);
   const [projectTitle] = useAtom(projectTitleAtom);
   const [csvData, setCsvData] = useState<string[][] | null>(null);
@@ -113,7 +113,7 @@ const ConfigDataPage = () => {
     };
 
     mutation.mutate(
-      { config: payload, file },
+      { projectId, config: payload, file },
       {
         onSuccess: (response) => {
           console.log('onSuccessData:', response.data);
