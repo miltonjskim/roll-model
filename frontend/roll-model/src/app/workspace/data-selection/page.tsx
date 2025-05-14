@@ -5,6 +5,7 @@ import { FileUploadDialog } from '@/features/workspace/data-upload/ui/FileUpload
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
+import BackButton from '@/shared/ui/BackButton';
 import { useState } from 'react';
 
 const SelectDataPage = () => {
@@ -86,7 +87,9 @@ const SelectDataPage = () => {
           </div>
         </div>
       </div>
-      <div className="mt-4 flex justify-center gap-4"></div>
+      <BackButton size="lg" className="mt-4 w-70">
+        이전 단계로
+      </BackButton>
     </div>
   );
 };
