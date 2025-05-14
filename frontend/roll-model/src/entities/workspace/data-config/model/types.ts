@@ -1,3 +1,5 @@
+import { projectCategory } from '@/entities/workspace/model/types';
+
 // 컬럼 정보
 export type ColumnConfig = {
   name: string;
@@ -56,4 +58,5 @@ export interface UploadDatasetResponse {
 export interface CompleteDatasetResponse {
   pipelineId: string;
   columns: ColumnConfig[];
+  category: projectCategory;
 }
