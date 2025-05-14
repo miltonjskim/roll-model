@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 const Workspace = () => {
   const router = useRouter();
@@ -11,13 +10,13 @@ const Workspace = () => {
     router.push('/workspace/project-meta');
   };
 
-  const handleRelearnProject = () => {
-    // TODO: 내 프로젝트 재학습 목록이 뜨게.. 렌더링 방식은 아직 생각 못함
+  const moveToMyProjectListPage = () => {
+    router.push('/workspace/retrain');
   };
 
   return (
     <div>
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">시작하기</h1>
         <h2>시작할 프로젝트를 선택하세요.</h2>
       </div>
@@ -26,7 +25,7 @@ const Workspace = () => {
           <Button variant="black" onClick={handleCreateProject} className="h-full w-1/2 text-lg">
             + 새로운 프로젝트 만들기
           </Button>
-          <Button variant="outline" onClick={handleRelearnProject} className="hover:bg-[theme(color-gray-04)] h-full w-1/2 text-lg">
+          <Button variant="outline" onClick={moveToMyProjectListPage} className="hover:bg-[theme(color-gray-04)] h-full w-1/2 text-lg">
             최근 프로젝트에서 재학습
           </Button>
         </div>

@@ -3,9 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
-import PreprocessingPipeline, { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
+import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
@@ -63,7 +64,7 @@ const PreprocessDataPage = () => {
     setIsLoading(true);
     try {
       // TODO: AI 요청 url 변경
-      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/recommendation`);
+      const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/preprocessing/recommendation`);
       setRecommendedSteps(response.data.data.preprocessingSteps);
       console.log(response.data);
     } catch (error) {

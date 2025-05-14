@@ -19,14 +19,14 @@ export default function FcmCatStatus() {
   };
 
   useEffect(() => {
-    console.log('Cat: 컴포넌트 마운트, 현재 상태:', modelStatus);
+    // console.log('Cat: 컴포넌트 마운트, 현재 상태:', modelStatus);
     const savedStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
     setModelStatus(savedStatus);
 
     // 모델 상태 업데이트(새로고침) 이벤트 리스너
     const handleStatusUpdate = () => {
       const currentStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
-      console.log('Cat: 모델 상태 업데이트 이벤트 감지', currentStatus);
+      // console.log('Cat: 모델 상태 업데이트 이벤트 감지', currentStatus);
       if (currentStatus) {
         setModelStatus(currentStatus);
       }

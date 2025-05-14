@@ -28,6 +28,7 @@ export const useAfterSchool = () => {
       setCompletedDatasetAtom({
         pipelineId: response.data.pipelineId,
         columns: response.data.columns,
+        category: response.data.category,
       });
       console.log(completedDatasetAtom);
 

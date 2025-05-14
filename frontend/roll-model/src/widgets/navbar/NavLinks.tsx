@@ -15,7 +15,7 @@ const NavLinks = () => (
       <Link
         key={href}
         href={href}
-        className="border-b-[var(--color-blue-01)] transition-all duration-300 hover:w-full hover:border-b-[2px] hover:text-[1.125rem] hover:font-semibold hover:text-[var(--primary-black)]"
+        className="border-b-[var(--color-blue-01)] transition-all duration-300 select-none hover:w-full hover:border-b-[2px] hover:text-[1.125rem] hover:font-semibold hover:text-[var(--primary-black)]"
       >
         {label}
       </Link>

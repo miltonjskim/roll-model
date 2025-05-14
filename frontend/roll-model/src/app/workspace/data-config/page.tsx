@@ -17,6 +17,8 @@ import { showErrorToast } from '@/shared/lib/toast/toast';
 import { DataPreviewTable } from '@/features/workspace/data-upload/ui/components/DataPreviewTable';
 import { DelimiterSelector } from '@/features/workspace/data-upload/ui/components/DelimiterSelector';
 import { EncodingSelector } from '@/features/workspace/data-upload/ui/components/EncodingSelector';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { ApiError } from '@/shared/model/types/apiResponse';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -35,6 +37,7 @@ const ConfigDataPage = () => {
   const [selectedDelimiterOption, setSelectedDelimiterOption] = useState(','); // UI에서 선택된 라디오 옵션
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
   const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -88,7 +91,12 @@ const ConfigDataPage = () => {
           console.log('onSuccessData:', response.data);
 
           setUploadedDataset(response.data);
-          router.push('/workspace/data-preprocess');
+          if (response.data) {
+            const data = response.data;
+            console.log('pipelineId:', data.pipelineId);
+            router.push('/workspace/data-preprocess');
+            // requestAIPreprocessingRecommendation(data.pipelineId);
+          }
         },
         onError: (err) => {
           showErrorToast(err.message);
@@ -96,6 +104,24 @@ const ConfigDataPage = () => {
         },
       },
     );
+  };
+
+  // ai기반 전처리 방법 추천 요청하는 함수
+  const requestAIPreprocessingRecommendation = async (pipelineId: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await axiosInstance(`/api/v1/pipelines/${pipelineId}/preprocessing/recommendation`);
+
+      console.log('ai 추천 response:', response);
+      router.push('/workspace/data-preprocess');
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 컬럼 타입 확인하는 함수
@@ -165,6 +191,8 @@ const ConfigDataPage = () => {
       setDelimiter(selectedDelimiterOption);
     }
   }, [selectedDelimiterOption, customDelimiter]);
+
+  if (isLoading) <div>Loading...</div>;
 
   return (
     <div>
