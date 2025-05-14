@@ -68,14 +68,14 @@ export default function ProjectDetailHeader() {
     } else if (projectDetail.pipelinePublicYn) {
       // 공개 상태 (노란색)
       return {
-        borderColor: 'border-[theme(--color-yellow-01)]',
-        textColor: 'text-[theme(--color-yellow-01)]',
+        borderColor: 'border-[theme(--color-green-01)]',
+        textColor: 'text-[theme(--color-green-01)]',
       };
     } else {
       // 비공개 상태 (초록색)
       return {
-        borderColor: 'border-[theme(--color-green-01)]',
-        textColor: 'text-[theme(--color-green-01)]',
+        borderColor: 'border-[theme(--color-yellow-01)]',
+        textColor: 'text-[theme(--color-yellow-01)]',
       };
     }
   };
@@ -125,12 +125,15 @@ export default function ProjectDetailHeader() {
               </button>
               {/* 공개여부 버튼 */}
               <button
-                className={`flex items-center justify-center rounded-[var(--radius-lg)] bg-[var(--primary-black)] shadow-sm ${buttonStyle.textColor} w-16 cursor-pointer select-none`}
+                className={`flex items-end justify-center rounded-[var(--radius-lg)] bg-[var(--primary-black)] shadow-sm ${buttonStyle.textColor} w-16 cursor-pointer select-none`}
                 onClick={handleTogglePublic}
                 disabled={!projectDetail.projectPublicYn}
               >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${buttonStyle.borderColor}`}>
-                  {!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? <TiLockOpen className="text-xl" /> : <TiLockClosed className="text-xl" />}
+                <div className="mb-2 flex flex-col items-center justify-center">
+                  <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-full border-2 ${buttonStyle.borderColor}`}>
+                    {!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? <TiLockOpen className="text-xl" /> : <TiLockClosed className="text-xl" />}
+                  </div>
+                  <div className="rounded-sm bg-[var(--primary-white)]/10 px-1 text-xs text-white">{!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? '공개' : '비공개'}</div>
                 </div>
               </button>
             </>
