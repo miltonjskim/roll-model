@@ -356,11 +356,11 @@ async def store_dataset_to_mongodb(
 
         # 사용자가 제공한 타입을 우리 시스템의 ColumnType으로 매핑
         type_mapping = {
-            "string": ColumnType.CATEGORICAL.value,
-            "datetime": ColumnType.DATETIME.value,
-            "integer": ColumnType.NUMERIC.value,
-            "boolean": ColumnType.CATEGORICAL.value,
-            "double": ColumnType.NUMERIC.value
+            "string": ColumnType.string.value,
+            "datetime": ColumnType.datetime.value,
+            "integer": ColumnType.integer.value,
+            "boolean": ColumnType.boolean.value,
+            "double": ColumnType.double.value,
         }
 
         # 데이터 타입 매핑
@@ -369,7 +369,7 @@ async def store_dataset_to_mongodb(
             for column in config["columns"]:
                 col_name = column["name"]
                 col_type = column.get("type", "string")  # 기본값은 string
-                data_types[col_name] = type_mapping.get(col_type.lower(), ColumnType.CATEGORICAL.value)
+                data_types[col_name] = type_mapping.get(col_type.lower(), ColumnType.string.value)
 
         # 결측치 정보 변환
         missing_value_count = {}
@@ -453,7 +453,7 @@ async def calculate_and_update_statistics(
         for col in columns:
             col_name = col.get("name")
             if col_name in df.columns:
-                col_type = col.get("type", ColumnType.CATEGORICAL.value)
+                col_type = col.get("type", ColumnType.string.value)
 
                 # 숫자형 변수 처리
                 # logger.info(f"{col_type}, {ColumnType.NUMERIC.value}")
