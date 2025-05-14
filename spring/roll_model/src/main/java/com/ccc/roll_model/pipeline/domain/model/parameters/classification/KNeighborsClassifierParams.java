@@ -1,5 +1,7 @@
 package com.ccc.roll_model.pipeline.domain.model.parameters.classification;
 
+import java.util.Set;
+
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
 
 import lombok.AllArgsConstructor;
@@ -11,12 +13,30 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class KNeighborsClassifierParams implements ModelParameter {
-	private Integer n_neighbors;
-	private String weights;
-	private String metric;
+	@Builder.Default
+	private Integer n_neighbors = 1;
+
+	@Builder.Default
+	private String weights = "uniform";
+
+	@Builder.Default
+	private String metric = "minkowski";
 
 	@Override
 	public boolean validateParameters() {
-		return n_neighbors != null && n_neighbors > 0;
+
+		if (n_neighbors == null || n_neighbors <= 0) {
+			return false;
+		}
+
+		// weights는 선택사항이지만 있다면 유효한 값이어야 함
+		if (!("uniform".equalsIgnoreCase(weights) || "distance".equalsIgnoreCase(weights))) {
+			return false;
+		}
+
+		// metric은 선택사항이지만 있다면 유효한 값이어야 함
+		return metric != null &&
+			Set.of("minkowski", "euclidean", "manhattan", "cosine", "hamming")
+				.contains(metric.toLowerCase());
 	}
 }
