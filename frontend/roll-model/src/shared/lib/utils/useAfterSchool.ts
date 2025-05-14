@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
-import { completedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { completedDatasetAtom, dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { YouHaveToAfterSchool } from '@/shared/api/modelingApi';
 
 export const useAfterSchool = () => {
@@ -11,6 +11,8 @@ export const useAfterSchool = () => {
   const setProjectDetailAtom = useSetAtom(projectDetailAtom);
   const setProjectCategoryAtom = useSetAtom(projectCategoryAtom);
   const setCompletedDatasetAtom = useSetAtom(completedDatasetAtom);
+  const setPipelineIdAtom = useSetAtom(pipelineIdAtom);
+  const setDataColumnsAtom = useSetAtom(dataColumnsAtom);
 
   const handleAfterSchoolClick = async (pipelineId: string) => {
     try {
@@ -30,7 +32,8 @@ export const useAfterSchool = () => {
         columns: response.data.columns,
         category: response.data.category,
       });
-      console.log(completedDatasetAtom);
+      setPipelineIdAtom(response.data.pipelineId);
+      setDataColumnsAtom(response.data.columns);
 
       router.push('/workspace/modeling-section');
     } catch (error) {
