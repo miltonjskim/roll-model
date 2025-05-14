@@ -7,5 +7,5 @@ export const uploadedFileAtom = atom<File | null>(null);
 export const uploadedDatasetAtom = atom<UploadDatasetResponse | null>(null);
 export const completedDatasetAtom = atom<CompleteDatasetResponse | null>(null);
 export const pipelineIdAtom = atom<string>('');
-export const preprocessingSteps = atom<PreviousPreprocessingSteps | null>(null);
-export const dataColumns = atom<Record<string, string>[]>([]);
+export const preprocessingStepsAtom = atom<PreviousPreprocessingSteps | null>(null);
+export const dataColumnsAtom = atom<Record<string, string>[]>([]);

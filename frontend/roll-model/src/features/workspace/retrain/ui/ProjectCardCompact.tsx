@@ -12,7 +12,7 @@ import { ForkPreprocessResponse, ForkTotalResponse } from '@/shared/model/types/
 import { useState } from 'react';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { dataColumns, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 
 interface ProjectCardCompactProps {
   project: Project;
@@ -25,7 +25,7 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setProjectTitle = useSetAtom(projectTitleAtom);
-  const setDataColumns = useSetAtom(dataColumns);
+  const setDataColumns = useSetAtom(dataColumnsAtom);
 
   const handleRoute = async (type: 'preprocess' | 'model') => {
     console.log('route 이동 버튼 클릭');

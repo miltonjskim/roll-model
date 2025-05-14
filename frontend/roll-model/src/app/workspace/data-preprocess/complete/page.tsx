@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { completedDatasetAtom, dataColumns, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { completedDatasetAtom, dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -13,7 +13,7 @@ const CompletePreprocessDataPage = () => {
   const router = useRouter();
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setProjectCategory = useSetAtom(projectCategoryAtom);
-  const setDataColumns = useSetAtom(dataColumns);
+  const setDataColumns = useSetAtom(dataColumnsAtom);
 
   console.log('completedUploadset:', completedUploadset);
 
