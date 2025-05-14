@@ -3,8 +3,14 @@ import { OpenSourceProject } from '@/entities/open-source/model/types';
 import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
 import { Project } from '@/entities/dashboard/model/types';
 
+interface MinimalProject {
+  id: string;
+  title: string;
+  status: string;
+}
+
 interface AfterSchoolDropdownProps {
-  project: OpenSourceProject | Project;
+  project: OpenSourceProject | Project | MinimalProject;
 }
 
 export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
