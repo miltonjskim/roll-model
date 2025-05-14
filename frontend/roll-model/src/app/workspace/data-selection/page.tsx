@@ -2,13 +2,32 @@
 
 import { Button } from '@/components/ui/button';
 import { FileUploadDialog } from '@/features/workspace/data-upload/ui/FileUploadDialog';
+import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { showErrorToast } from '@/shared/lib/toast/toast';
+import { ApiError } from '@/shared/model/types/apiResponse';
 import { useState } from 'react';
 
 const SelectDataPage = () => {
   const [isHover, setIsHover] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchSampleDatasetList = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axiosInstance.get(`/api/v2/datasets/samples`);
+      console.log('response:', data);
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUseSampleData = () => {
     console.log('샘플 데이터 사용');
+    fetchSampleDatasetList();
   };
 
   const handleUseRegressionData = () => {
@@ -21,15 +40,15 @@ const SelectDataPage = () => {
 
   return (
     <div>
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">프로젝트 데이터 선택</h1>
         <h2>데이터를 선택해 주세요</h2>
       </div>
 
-      <div className="mx-auto mt-4 max-w-[70rem]">
+      <div className="mx-auto mt-4 max-w-[70rem] select-none">
         <div className="bg-[theme(primary-white)] flex h-120 justify-center gap-4 rounded-lg p-4">
           <FileUploadDialog />
-          <div className="h-full flex-1/2 cursor-pointer rounded-lg border border-[var(--color-gray-03)]" onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
+          <div className="h-full flex-1/2 cursor-pointer rounded-lg border border-[var(--color-gray-03)]" onClick={handleUseSampleData}>
             {isHover ? (
               <div className="flex h-full items-center justify-center">
                 <div className="flex h-full w-full flex-col">

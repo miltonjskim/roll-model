@@ -37,7 +37,7 @@ export const FileUploadDialog = () => {
           로컬 파일 사용하기
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-[theme(primary-white)] w-150 sm:max-w-[50%]">
+      <DialogContent className="bg-[theme(primary-white)] w-150 select-none sm:max-w-[50%]">
         <DialogHeader className="text-center">
           <DialogTitle>로컬 데이터 업로드</DialogTitle>
         </DialogHeader>

@@ -20,7 +20,7 @@ const UserMenu = () => {
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 select-none">
         <div className="group relative">
           {/* 프로필 이미지 부분 */}
           <div className="bg-[theme(color-gray-01)] grid aspect-square w-10 cursor-pointer place-items-center rounded-full">

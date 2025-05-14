@@ -2,6 +2,23 @@ export interface ImputedRow {
   [key: string]: string | number | null;
 }
 
+// 전처리 단계 타입
+export const PREPROCESS_TYPES = [
+  'MISSING_VALUE_IMPUTATION',
+  'MISSING_VALUE_REMOVE',
+  'OUTLIER_DETECTION',
+  'OUTLIER_IMPUTATION',
+  'OUTLIER_REMOVE',
+  'ZSCORE_SCALING',
+  'MINMAX_SCALING',
+  'LOG_TRANSFORM',
+  'SQRT_TRANSFORM',
+  'ONEHOT_ENCODING',
+  'TARGET_ENCODING',
+  'LABEL_ENCODING',
+  'CLASS_BALANCING',
+] as const;
+
 // 결측치 처리 api response
 export interface PreprocessMissingValueResponse {
   pipelineId: number; // 파이프라인 ID
@@ -77,3 +94,30 @@ export interface OutlierRemovalResult {
 
 // // 클래스 불균형 처리 결과 인터페이스
 // export interface ClassImbalanceHandlingResult {}
+
+// 재학습 시 이전 데이터 전처리 단계 인터페이스
+export interface PreviousPreprocessingSteps {
+  active: boolean;
+  order: number;
+  parameters: PreviousPreprocessingParameter;
+  result: unknown;
+  type: typeof PREPROCESS_TYPES;
+}
+
+// 전처리 단계 정의 인터페이스
+export interface Step {
+  type: string;
+  parameters: Record<string, string | number | number[]>;
+  order: number;
+  active: boolean;
+  categoryId?: string; // 'missing-values'
+  optionId?: string; // 'mean'
+  optionName?: string; // '평균값으로 대체'
+  optionDescription?: string; // '결측치를 평균값으로 대체'
+}
+
+// 재학습 시 이전 데이터 전처리 단계의 파라미터
+export interface PreviousPreprocessingParameter {
+  column: string;
+  method: string;
+}
