@@ -9,6 +9,7 @@ import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, project
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
 import { CATEGORY_OPTIONS, DOMAIN_OPTIONS } from '@/features/workspace/constants/selectOptions';
 import { createProject } from '@/features/workspace/service/createProject';
+import BackButton from '@/shared/ui/BackButton';
 import { useAtom, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,24 +26,10 @@ const InputProjectMetaDataPage = () => {
 
   useEffect(() => {
     // 페이지 최초 진입 시만 초기화
-    setTitle('');
-    setDescription('');
-    setDomain('GENERAL');
-    setType('REGRESSION');
-    setIsPublic(true);
   }, [setTitle, setDescription, setDomain, setType, setIsPublic]);
 
-  const handleSubmit = async () => {
-    try {
-      const response = await createProject({ title, description, domain, type, isPublic });
-
-      const projectId = response.data.id;
-      setProjectId(projectId.toString());
-
-      router.push('/workspace/data-selection');
-    } catch (err) {
-      console.error('프로젝트 생성 실패:', err);
-    }
+  const handleSubmit = () => {
+    router.push('/workspace/data-selection');
   };
 
   return (
@@ -127,9 +114,14 @@ const InputProjectMetaDataPage = () => {
             </RadioGroup>
           </div>
         </div>
-        <Button variant="black" onClick={handleSubmit} size="lg" className="w-full">
-          다음 단계로
-        </Button>
+        <div className="flex gap-2">
+          <BackButton variant="outline" size="lg" className="flex-1">
+            이전 단계로
+          </BackButton>
+          <Button variant="black" className="flex-1" onClick={handleSubmit} size="lg">
+            다음 단계로
+          </Button>
+        </div>
       </div>
     </div>
   );
