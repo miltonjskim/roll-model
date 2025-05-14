@@ -31,6 +31,9 @@ const getStepSubLabel = (step: Step) => {
   if (step.type === 'OUTLIER-DETECTION') {
     return `컬럼: ${columnId} → ${detection}`;
   }
+  if (step.type === 'OUTLIER-HANDLE') {
+    return `컬럼: ${columnId} → ${method}`;
+  }
   if (step.type === 'DATA-TRANSFORMATION') {
     return `컬럼: ${columnId}${offset !== undefined ? ` (offset=${offset})` : ''}`;
   }
@@ -90,6 +93,12 @@ const PreprocessingPipeline = ({ steps }: PreprocessPipelineProps) => {
                 {step.type === 'MISSING-VALUES' && (
                   <div className="mt-1 text-xs font-medium">
                     <p>결측치 대체 값: {step.parameters.fillValue}</p>
+                  </div>
+                )}
+
+                {step.type === 'OUTLIER-HANDLE' && (
+                  <div>
+                    <p></p>
                   </div>
                 )}
               </div>
