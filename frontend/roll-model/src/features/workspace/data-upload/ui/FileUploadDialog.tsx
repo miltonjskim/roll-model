@@ -69,7 +69,7 @@ export const FileUploadDialog = () => {
               }}
               className={`${fileEnter ? 'border-4' : 'border-2'} bg-[theme(color-gray-04)] mx-auto flex h-72 w-full max-w-lg flex-col items-center justify-center rounded-md border-dashed border-[color:var(--color-gray-02)]`}
             >
-              <label htmlFor="file" className="flex h-full w-full flex-col items-stretch justify-center text-center text-sm">
+              <label htmlFor="file" className="flex h-full flex-col justify-center text-center text-sm">
                 <span className="font-tossface text-7xl">{file ? '🗂️' : '📁'}</span>
                 {file ? (
                   <>
