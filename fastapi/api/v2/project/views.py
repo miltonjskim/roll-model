@@ -624,7 +624,7 @@ async def fork_pipeline_preprocess(
             # 전처리 단계만 포함한 새 히스토리 항목 생성
             new_history_item = PipelineHistoryItem(
                 preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
-                status=PipelineStatus.PREPROCESSED
+                status=PipelineStatus.CREATED
             )
 
             new_pipeline.history.append(new_history_item)
@@ -636,7 +636,7 @@ async def fork_pipeline_preprocess(
             pipeline_id=pipeline_id,
             target_project_id=target_project_id,
             source_pipeline=source_pipeline,  # member_id 대신 source_pipeline
-            status=PipelineStatus.PREPROCESSED,  # status 매개변수 추가
+            status=PipelineStatus.CREATED,  # status 매개변수 추가
             pipeline_service=pipeline_service
         )
 
@@ -713,7 +713,7 @@ async def fork_pipeline_total(
             target_project_id=target_project_id,
             source_pipeline=source_pipeline,
             new_pipeline=new_pipeline,
-            status=source_pipeline.status,
+            status=PipelineStatus.PREPROCESSED,
         )
 
         # 8. 응답 데이터 준비 (카테고리 정보 포함)
