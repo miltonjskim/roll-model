@@ -6,7 +6,7 @@ import UserMenu from '@/widgets/navbar/UserMenu';
 
 const Navbar = () => {
   return (
-    <nav className="flex min-w-[90vw] basis-[90vw] items-center justify-between px-24 pt-6">
+    <nav className="flex w-full items-center justify-between px-24 pt-6">
       <AppLogo />
       <NavLinks />
       <UserMenu />
