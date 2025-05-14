@@ -120,7 +120,6 @@ async def upload_dataset_and_save_metadata(
         # 데이터셋 분석
         file_io.seek(0)
         dataset_analysis = await analyze_dataset(file_io, config)
-        file_io.close()
 
         # MongoDB에 데이터셋 정보 저장
         dataset_id = await store_dataset_to_mongodb(

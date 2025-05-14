@@ -295,7 +295,6 @@ class MinioClient:
                 count_data += d.decode(encoding)
 
             total_records = int(count_data.split('\n')[0])
-            count_response.stream().close()
 
             # SQL 쿼리 구성
             sql_query = "SELECT * FROM S3Object"
@@ -410,7 +409,6 @@ class MinioClient:
             # 데이터프레임으로 변환하여 컬럼 추출
             if data:
                 df = pd.read_csv(BytesIO(data), encoding=encoding)
-                response.stream().close()
                 return df.columns.tolist()
             else:
                 return []

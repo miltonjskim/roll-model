@@ -499,7 +499,16 @@ class PipelineService:
             datasets = get_dataset_collection()
             dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
             print(dataset)
-            return dataset["metadata"]["data_types"]
+            data_types_dict = dataset["metadata"]["data_types"]
+
+            columns = []
+            for column_name, column_type in data_types_dict.items():
+                columns.append({
+                    'name': column_name,
+                    'type': column_type
+                })
+
+            return columns
 
         except Exception as e:
             logger.error(f"Error getting latest dataset: {e}")
