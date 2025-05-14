@@ -1,6 +1,6 @@
 import { ColumnConfig } from '@/entities/workspace/data-config/model/types';
+import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectCategory } from '@/entities/workspace/model/types';
-import { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 
 export type DataSplit = {
   trainRatio: number;
