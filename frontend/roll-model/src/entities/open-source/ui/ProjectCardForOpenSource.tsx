@@ -6,6 +6,8 @@ import { OpenSourceProject } from '@/entities/open-source/model/types';
 import { getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useState } from 'react';
 import { likeThisPipeline } from '@/shared/api/openSourceApi';
+import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
+import { AfterSchoolDropdown } from '@/features/project-detail/RelearningDropdown';
 
 interface ProjectCardProps {
   project: OpenSourceProject;
@@ -13,6 +15,8 @@ interface ProjectCardProps {
 
 export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
   const setProjectDetail = useSetAtom(projectDetailAtom);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const { handleAfterSchoolClick, moveToPreprocessing } = useAfterSchool();
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(project.likeYn);
 
@@ -87,7 +91,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
             상세
           </button>
         )}
-        <button className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out">재학습</button>
+        {project.status === 'COMPLETED' && <AfterSchoolDropdown project={project} />}
       </div>
     </div>
   );
