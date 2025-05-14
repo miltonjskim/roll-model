@@ -16,6 +16,7 @@ interface PreprocessingOption {
   description: string;
   apiEndpoint: string;
   method?: string;
+  requireColumn?: boolean;
 }
 
 interface PreprocessingCategory {
@@ -33,9 +34,9 @@ const preprocessingCategories: PreprocessingCategory[] = [
     icon: '❓',
     description: '빠진 데이터를 채우거나 삭제할 수 있습니다.',
     options: [
-      { id: 'mean', name: '평균값으로 대체', description: '결측치를 평균값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MEAN' },
-      { id: 'median', name: '중앙값으로 대체', description: '결측치를 중앙값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MEDIAN' },
-      { id: 'mode', name: '최빈값으로 대체', description: '결측치를 최빈값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MODE' },
+      { id: 'mean', name: '평균값으로 대체', description: '결측치를 평균값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MEAN', requireColumn: true },
+      { id: 'median', name: '중앙값으로 대체', description: '결측치를 중앙값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MEDIAN', requireColumn: true },
+      { id: 'mode', name: '최빈값으로 대체', description: '결측치를 최빈값으로 대체', apiEndpoint: '/missing-values/imputation', method: 'MODE', requireColumn: true },
       { id: 'drop-rows', name: '결측치가 있는 행 제거', description: '결측치가 있는 행 제거', apiEndpoint: '/missing-values/remove', method: 'ROW_REMOVE' },
       { id: 'drop-columns', name: '결측치가 있는 열 제거', description: '결측치가 있는 열 제거', apiEndpoint: '/missing-values/remove', method: 'COL_REMOVE' },
     ],
@@ -47,7 +48,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     description: '데이터의 이상값을 탐지합니다.',
     options: [
       { id: 'z-score', name: 'Z-점수 기반 탐지', description: 'Z-점수로 이상치 탐지', apiEndpoint: '/outliers/detection', method: 'ZSCORE' },
-      { id: 'iqr', name: 'IQR 기반 탐지', description: 'IQR로 이상치 탐지', apiEndpoint: '/outliers/detection', method: 'IQR' },
+      { id: 'iqr', name: 'IQR 기반 탐지', description: 'IQR로 이상치 탐지', apiEndpoint: '/outliers/detection', method: 'IQR', requireColumn: true },
     ],
   },
   {
@@ -56,7 +57,10 @@ const preprocessingCategories: PreprocessingCategory[] = [
     icon: '🛠️',
     description: '탐지된 이상치를 제거하거나 대체합니다.',
     options: [
-      { id: 'replace', name: '이상치 대체', description: '이상치를 대체합니다.', apiEndpoint: '/outliers/imputation' },
+      { id: 'mean', name: '평균값으로 대체', description: '이상치를 평균값으로 대체', apiEndpoint: '/outliers/imputation', method: 'MEAN', requireColumn: true },
+      { id: 'median', name: '중앙값으로 대체', description: '이상치를 중앙값으로 대체', apiEndpoint: '/outliers/imputation', method: 'MEDIAN', requireColumn: true },
+      { id: 'mode', name: '최빈값으로 대체', description: '이상치를 최빈값으로 대체', apiEndpoint: '/outliers/imputation', method: 'MODE', requireColumn: true },
+      { id: 'threshold', name: '임계값으로 대체', description: '이상치를 임계값으로 대체', apiEndpoint: '/outliers/imputation', method: 'THRESHOLD', requireColumn: true },
       { id: 'remove-rows', name: '행 제거', description: '이상치가 있는 행을 제거합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE' },
       { id: 'remove-cols', name: '열 제거', description: '이상치가 있는 열을 제거합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE' },
     ],
@@ -69,8 +73,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
     options: [
       { id: 'z-score', name: 'Z-점수 정규화', description: 'Z-score 정규화 적용', apiEndpoint: '/transform/z-score' },
       { id: 'min-max', name: 'Min-Max 정규화', description: 'Min-Max 정규화 적용', apiEndpoint: '/transform/min-max' },
-      { id: 'log', name: '로그 변환', description: '로그 변환 적용', apiEndpoint: '/transform/log' },
-      { id: 'sqrt', name: '제곱근 변환', description: '제곱근 변환 적용', apiEndpoint: '/transform/sqrt' },
+      { id: 'log', name: '로그 변환', description: '로그 변환 적용', apiEndpoint: '/transform/log', requireColumn: true },
+      { id: 'sqrt', name: '제곱근 변환', description: '제곱근 변환 적용', apiEndpoint: '/transform/sqrt', requireColumn: true },
     ],
   },
   {
@@ -79,8 +83,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
     icon: '🧮',
     description: '범주형 데이터 인코딩',
     options: [
-      { id: 'one-hot', name: '원핫 인코딩', description: 'One-hot 인코딩', apiEndpoint: '/encoding/one-hot' },
-      { id: 'label', name: '레이블 인코딩', description: 'Label 인코딩', apiEndpoint: '/encoding/label' },
+      { id: 'one-hot', name: '원핫 인코딩', description: 'One-hot 인코딩', apiEndpoint: '/encoding/one-hot', requireColumn: true },
+      { id: 'label', name: '레이블 인코딩', description: 'Label 인코딩', apiEndpoint: '/encoding/label', requireColumn: true },
       { id: 'target', name: '타겟 인코딩', description: 'Target 인코딩', apiEndpoint: '/encoding/target' },
     ],
   },
@@ -127,10 +131,10 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
       const baseUrl = `/api/v2/pipelines/${pipelineId}/preprocessing`;
       const url = `${baseUrl}${option.apiEndpoint}`;
 
-      const body: Record<string, string | number | undefined> = {};
+      const body: Record<string, string | number | undefined | null> = {};
 
       if (categoryId !== 'class-imbalance') {
-        body.column = column;
+        body.column = column ?? null;
       }
 
       switch (categoryId) {
@@ -232,6 +236,11 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
           parameters.fillValue = result.fillValue;
         }
 
+        if (option.apiEndpoint.includes('imputation')) {
+          parameters.minThreshold = result.minThreshold;
+          parameters.maxThreshold = result.maxThreshold;
+        }
+
         onAddStep({
           type: categoryId.toUpperCase(),
           parameters,
@@ -281,7 +290,9 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
                 const needsOffset = opt.apiEndpoint.includes('/log');
                 const needsSampling = cat.id === 'class-balancing';
 
-                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
+                const isColumnRequired = opt.requireColumn ?? false;
+                const isColumnMissing = isColumnRequired && !column;
+                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined) && !isColumnMissing;
 
                 return (
                   <div
@@ -297,6 +308,24 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
 
                       {isSelected && (
                         <div className="">
+                          {isColumnRequired && (
+                            <div>
+                              <label className="block text-sm font-medium">전처리 컬럼</label>
+                              <Select value={column} onValueChange={(val) => {}}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="선택하세요" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {columnNames.map((col) => (
+                                    <SelectItem key={col} value={col}>
+                                      {col}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {isColumnMissing && <p className="mt-1 text-xs text-red-500">컬럼을 선택해 주세요.</p>}
+                            </div>
+                          )}
                           {needsTargetColumn && (
                             <div>
                               <label className="block text-sm font-medium">타겟 컬럼</label>
