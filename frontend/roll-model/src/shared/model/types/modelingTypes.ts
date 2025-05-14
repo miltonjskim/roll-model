@@ -16,7 +16,7 @@ export interface ForkTotalResponse extends ForkPreprocessResponse {
     parameters: Record<string, number>;
     targetFeature: string;
   };
-  columns: ColumnConfig[];
+  columns: Record<string, string>;
 }
 
 export interface ForkPreprocessResponse {
