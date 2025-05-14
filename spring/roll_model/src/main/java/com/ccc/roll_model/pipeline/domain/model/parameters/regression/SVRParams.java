@@ -1,5 +1,7 @@
 package com.ccc.roll_model.pipeline.domain.model.parameters.regression;
 
+import java.util.Set;
+
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
 
 import lombok.AllArgsConstructor;
@@ -11,13 +13,26 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class SVRParams implements ModelParameter {
-	private Double c;
-	private Double epsilon;
-	private String kernel;
+
+	@Builder.Default
+	private Double C = 1.0;
+
+	@Builder.Default
+	private Double epsilon = 0.1;
+
+	@Builder.Default
+	private String kernel = "rbf";
 
 	@Override
 	public boolean validateParameters() {
-		// c가 필수 파라미터
-		return c != null;
+		if (C == null || C <= 0) {
+			return false;
+		}
+
+		if (epsilon != null && epsilon < 0) {
+			return false;
+		}
+
+		return kernel == null || Set.of("linear", "rbf", "poly", "sigmoid").contains(kernel.toLowerCase());
 	}
 }

@@ -20,6 +20,8 @@ public class FCMEventListener {
     @KafkaListener(topics = "train-status", groupId = "handle-train-status")
     public void handleModelTrainingStatusEvent(String jsonMessage) {
 
+        log.info("Received model training status event: {}", event);
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             // 스네이크 케이스 -> 카멜 케이스 변환 설정
