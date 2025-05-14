@@ -11,13 +11,26 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class GradientBoostingRegressorParams implements ModelParameter {
-	private Integer n_estimators;
-	private Double learning_rate;
-	private Integer max_depth;
+	@Builder.Default
+	private Integer n_estimators = 1;
+
+	@Builder.Default
+	private Double learning_rate = 0.1;
+
+	@Builder.Default
+	private Integer max_depth = 10;
 
 	@Override
 	public boolean validateParameters() {
-		// nEstimators가 필수 파라미터
-		return n_estimators != null && n_estimators > 0;
+
+		if (n_estimators == null || n_estimators <= 0) {
+			return false;
+		}
+
+		if (learning_rate == null || (learning_rate <= 0.0 || learning_rate > 1.0)) {
+			return false;
+		}
+
+		return max_depth != null && max_depth > 0;
 	}
 }

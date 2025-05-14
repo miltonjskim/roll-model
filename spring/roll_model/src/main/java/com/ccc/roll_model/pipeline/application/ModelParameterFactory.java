@@ -32,12 +32,12 @@ public class ModelParameterFactory {
 			return switch (modelType) {
 				case LOGISTIC_REGRESSION -> LogisticRegressionParams.builder()
 					.penalty(getStringValue(parameterMap, "penalty"))
-					.c(getDoubleValue(parameterMap, "C"))
+					.C(getDoubleValue(parameterMap, "C"))
 					.solver(getStringValue(parameterMap, "solver"))
 					.max_iter(getIntegerValue(parameterMap, "maxIter"))
 					.build();
 				case SVC -> SVCParams.builder()
-					.c(getDoubleValue(parameterMap, "C"))
+					.C(getDoubleValue(parameterMap, "C"))
 					.kernel(getStringValue(parameterMap, "kernel"))
 					.gamma(getStringValue(parameterMap, "gamma"))
 					.degree(getIntegerValue(parameterMap, "degree"))
@@ -62,7 +62,7 @@ public class ModelParameterFactory {
 					.l1_ratio(getDoubleValue(parameterMap, "l1Ratio"))
 					.build();
 				case SVR -> SVRParams.builder()
-					.c(getDoubleValue(parameterMap, "C"))
+					.C(getDoubleValue(parameterMap, "C"))
 					.epsilon(getDoubleValue(parameterMap, "epsilon"))
 					.kernel(getStringValue(parameterMap, "kernel"))
 					.build();
