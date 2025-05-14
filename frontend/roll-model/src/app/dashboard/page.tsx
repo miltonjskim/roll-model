@@ -26,7 +26,7 @@ export default function Page() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto w-[80vw] px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">대시보드</h1>
         <NewProjectButton />

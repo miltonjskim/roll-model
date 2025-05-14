@@ -2,7 +2,7 @@
 
 import ParameterSectionWidget from '@/widgets/workspace/modeling-section/ParameterSectionWidget';
 import ModelSelectionWidget from '@/widgets/workspace/modeling-section/ModelSelectionWidget';
-import { useModeling } from './model/useModeling';
+import { useModeling } from '@/app/workspace/modeling-section/model/useModeling';
 import FcmGetToken from '@/app/workspace/modeling-section/test-for-fcm/FcmGetToken';
 
 export default function ModelingPage() {

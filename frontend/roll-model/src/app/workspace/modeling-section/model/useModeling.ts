@@ -20,6 +20,7 @@ export const useModeling = () => {
   const uploadedData = useAtomValue(uploadedDatasetAtom);
   const completedUploadset = useAtomValue(completedDatasetAtom);
   const PIPELINE_ID = uploadedData?.pipelineId || completedUploadset?.pipelineId || projectDetail.id;
+  console.log('??> : ', completedUploadset);
 
   const TARGET_VARIABLES = completedUploadset ? completedUploadset.columns.map((col) => col.name) : [];
 
