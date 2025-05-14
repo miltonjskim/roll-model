@@ -27,66 +27,45 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
   const setProjectTitle = useSetAtom(projectTitleAtom);
   const setDataColumns = useSetAtom(dataColumnsAtom);
 
-  const handleRoute = async (type: 'preprocess' | 'model') => {
-    console.log('route 이동 버튼 클릭');
+  const moveToPreprocessing = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.post<ApiResponse<ForkPreprocessResponse>>(`/api/v2/pipelines/${project.id}/fork/preprocess`);
 
-    if (type === 'model') {
-      const { data } = await forkTotalPipeline(project.id);
-      console.log('data:', data);
-
-      const columns = data.columns;
-      const category = data.category;
-      const pipelineId = data.pipelineId;
-
-      setProjectDetail({
-        id: pipelineId,
-        title: project.title,
-        version: project.version,
-        category: category,
-        domain: project.domain,
-        projectPublicYn: project.publicYn,
-        ownerYn: false,
-      });
-      setProjectCategory(project.category);
-      setDataColumns(columns);
-
-      router.push(`/workspace/modeling-section`);
-    } else {
-      const { data } = await forkPreprocessingPipeline(project.id);
-      console.log('response.data:', data);
-
+      const data = response.data.data;
       setPipelineId(data.pipelineId);
       setProjectTitle(project.title);
 
-      // router.push(`/workspace/${type}`);
-    }
-  };
-
-  const forkPreprocessingPipeline = async (pipelineId: string): Promise<ApiResponse<ForkPreprocessResponse>> => {
-    setIsLoading(true);
-
-    try {
-      const response = await axiosInstance.post<ApiResponse<ForkPreprocessResponse>>(`/api/v2/pipelines/${pipelineId}/fork/preprocess`);
-      return response.data;
+      router.push('/workspace/preprocess');
     } catch (error) {
-      const apiError = error as ApiError;
-      showErrorToast(apiError.message);
-      console.error(apiError);
-      throw apiError;
+      showErrorToast((error as ApiError).message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const forkTotalPipeline = async (pipelineId: string): Promise<ApiResponse<ForkTotalResponse>> => {
-    setIsLoading(true);
+  const moveToModeling = async () => {
     try {
-      const response = await axiosInstance.post<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${pipelineId}/fork/total`);
-      return response.data;
+      setIsLoading(true);
+      const response = await axiosInstance.post<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${project.id}/fork/total`);
+
+      const data = response.data.data;
+
+      setProjectDetail({
+        id: data.pipelineId,
+        title: project.title,
+        version: project.version,
+        category: data.category,
+        domain: project.domain,
+        projectPublicYn: project.publicYn,
+        ownerYn: false,
+      });
+
+      setProjectCategory(data.category);
+      setDataColumns(data.columns);
+      router.push('/workspace/modeling-section');
     } catch (error) {
-      const apiError = error as ApiError;
-      showErrorToast(apiError.message);
-      throw apiError;
+      showErrorToast((error as ApiError).message);
     } finally {
       setIsLoading(false);
     }
@@ -129,12 +108,12 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center">
-              <DropdownMenuItem onClick={() => handleRoute('preprocess')}>전처리부터 다시하기</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleRoute('model')}>모델링 다시하기</DropdownMenuItem>
+              <DropdownMenuItem onClick={moveToPreprocessing}>전처리부터 다시하기</DropdownMenuItem>
+              <DropdownMenuItem onClick={moveToModeling}>모델링 다시하기</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button size="sm" onClick={() => handleRoute('model')}>
+          <Button size="sm" onClick={moveToModeling}>
             모델 학습으로 이동
           </Button>
         )}
