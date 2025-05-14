@@ -8,11 +8,11 @@ import { useAtom, useSetAtom } from 'jotai';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { ApiError, ApiResponse } from '@/shared/model/types/apiResponse';
-import { ForkPreprocessResponse } from '@/shared/model/types/modelingTypes';
+import { ForkPreprocessResponse, ForkTotalResponse } from '@/shared/model/types/modelingTypes';
 import { useState } from 'react';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { dataColumns, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 
 interface ProjectCardCompactProps {
   project: Project;
@@ -25,29 +25,41 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setProjectTitle = useSetAtom(projectTitleAtom);
+  const setDataColumns = useSetAtom(dataColumns);
 
   const handleRoute = async (type: 'preprocess' | 'model') => {
     console.log('route 이동 버튼 클릭');
 
     if (type === 'model') {
+      const { data } = await forkTotalPipeline(project.id);
+      console.log('data:', data);
+
+      const columns = data.columns;
+      const category = data.category;
+      const pipelineId = data.pipelineId;
+
       setProjectDetail({
-        id: project.id,
+        id: pipelineId,
         title: project.title,
         version: project.version,
-        category: project.category,
+        category: category,
         domain: project.domain,
         projectPublicYn: project.publicYn,
         ownerYn: false,
       });
       setProjectCategory(project.category);
+      setDataColumns(columns);
+
+      router.push(`/workspace/modeling-section`);
     } else {
       const { data } = await forkPreprocessingPipeline(project.id);
       console.log('response.data:', data);
 
       setPipelineId(data.pipelineId);
       setProjectTitle(project.title);
+
+      // router.push(`/workspace/${type}`);
     }
-    // router.push(`/workspace/${type}`);
   };
 
   const forkPreprocessingPipeline = async (pipelineId: string): Promise<ApiResponse<ForkPreprocessResponse>> => {
@@ -61,7 +73,21 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
       console.error(apiError);
-      throw error;
+      throw apiError;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const forkTotalPipeline = async (pipelineId: string): Promise<ApiResponse<ForkTotalResponse>> => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${pipelineId}/fork/total`);
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      throw apiError;
     } finally {
       setIsLoading(false);
     }
