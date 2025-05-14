@@ -40,8 +40,7 @@ KAFKA_CONSUMER_CONFIG = {
 
 # Kafka 생산자 설정
 KAFKA_PRODUCER_CONFIG = {
-    'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-    'num.partitions': 1
+    'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS
 }
 
 # MinIO 설정

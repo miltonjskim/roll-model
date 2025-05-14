@@ -448,7 +448,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 현재 배포된 모델 수 확인하여 리소스 할당 결정
             import subprocess
             import yaml
-            import json
 
             # 현재 사용 중인 CPU 리소스 확인
             try:
@@ -536,6 +535,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 "timestamp": pd.Timestamp.now().isoformat(),
                 "pipeline_id": pipeline_id,
                 "project_id": project_id,
+                "member_id": member_id,
                 "model_type": model_type,
                 "model_path": s3_model_path,
                 "status": "success"
@@ -571,14 +571,8 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
 
         # Kafka로 학습 실패 메시지 발행
         try:
-            # Kafka 설정
-            kafka_producer_config = {
-                'bootstrap.servers': os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
-                'client.id': 'model-training-producer'
-            }
-
             # 생산자 생성
-            producer = Producer(kafka_producer_config)
+            producer = Producer(KAFKA_PRODUCER_CONFIG)
 
             # 메시지 페이로드
             message = {
@@ -586,6 +580,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 "timestamp": pd.Timestamp.now().isoformat(),
                 "pipeline_id": pipeline_id,
                 "project_id": project_id,
+                "member_id": member_id,
                 "error_message": str(e),
                 "status": "fail"
             }
