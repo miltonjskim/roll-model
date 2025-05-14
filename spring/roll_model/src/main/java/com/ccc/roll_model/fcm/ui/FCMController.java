@@ -75,13 +75,14 @@ public class FCMController {
     @PostMapping("/test-notification/{memberId}")
     public ResponseEntity<?> testNotification(
             @PathVariable Integer memberId,
-            @RequestParam(defaultValue = "테스트 프로젝트") String projectTitle,
+            @RequestParam Integer projectId,
+            @RequestParam String pipelineId,
             @RequestParam(defaultValue = "COMPLETED") String status) {
 
-        log.info("FCM 알림 테스트: memberId={}, status={}, projectTitle={}", memberId, status, projectTitle);
+        log.info("FCM 알림 테스트: memberId={}, status={}, projectId={}", memberId, status, projectId);
 
         try {
-            fcmService.sendModelTrainingStatusNotification(memberId, status, projectTitle);
+            fcmService.sendModelTrainingStatusNotification(memberId, status, projectId, pipelineId);
             return ResponseEntity.ok(ApiUtils.success("알림 전송 성공"));
         } catch (Exception e) {
             log.error("알림 전송 실패: {}", e.getMessage(), e);

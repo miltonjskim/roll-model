@@ -45,18 +45,18 @@ public class KafkaMessagePublisher implements MessagePublisher {
     /**
      * 모델 학습 상태 이벤트 발행
      */
-    public void publishModelTrainingStatus(String modelId, Integer memberId, String projectTitle, String status) {
-        try {
-            ModelTrainingEvent event = new ModelTrainingEvent(modelId, memberId, projectTitle, status);
-            String jsonMessage = objectMapper.writeValueAsString(event);
-
-            log.info("Model Training Status Topic: {}", modelTrainingStatusTopic);
-            log.info("Model Training Status Event: {}", jsonMessage);
-
-            kafkaTemplate.send(modelTrainingStatusTopic, jsonMessage);
-            log.info("모델 학습 상태 이벤트 발행 완료");
-        } catch(Exception e) {
-            log.error("모델 학습 상태 이벤트 발행 실패: {}", e.getMessage(), e);
-        }
-    }
+//    public void publishModelTrainingStatus(String modelId, Integer memberId, String projectTitle, String status) {
+//        try {
+//            ModelTrainingEvent event = new ModelTrainingEvent(modelId, memberId, projectTitle, status);
+//            String jsonMessage = objectMapper.writeValueAsString(event);
+//
+//            log.info("Model Training Status Topic: {}", modelTrainingStatusTopic);
+//            log.info("Model Training Status Event: {}", jsonMessage);
+//
+//            kafkaTemplate.send(modelTrainingStatusTopic, jsonMessage);
+//            log.info("모델 학습 상태 이벤트 발행 완료");
+//        } catch(Exception e) {
+//            log.error("모델 학습 상태 이벤트 발행 실패: {}", e.getMessage(), e);
+//        }
+//    }
 }

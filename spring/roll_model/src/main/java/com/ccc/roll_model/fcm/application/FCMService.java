@@ -3,6 +3,10 @@ package com.ccc.roll_model.fcm.application;
 import com.ccc.roll_model.fcm.application.command.SaveFCMTokenCommand;
 import com.ccc.roll_model.fcm.infrastructure.entity.FCMTokenEntity;
 import com.ccc.roll_model.fcm.infrastructure.repository.mysql.FCMTokenRepository;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.Status;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -25,6 +29,8 @@ public class FCMService {
 
     private final FirebaseApp firebaseApp;
     private final FCMTokenRepository fcmTokenRepository;
+    private final ProjectRepository projectRepository;
+    private final PipelineRepository pipelineRepository;
 
     // 토큰 저장
     @Transactional
@@ -50,8 +56,9 @@ public class FCMService {
 
     // 모델 학습 상태에 따른 메시지 발송
     @Transactional
-    public void sendModelTrainingStatusNotification(Integer memberId, String status, String projectTitle) {
+    public void sendModelTrainingStatusNotification(Integer memberId, String status, Integer projectId, String pipelineId) {
         List<FCMTokenEntity> tokens = fcmTokenRepository.findByMemberIdAndIsActiveTrue(memberId);
+        String projectTitle = projectRepository.findById(projectId).map(ProjectEntity::getTitle).orElse("unknown");
         if (tokens.isEmpty()) {
             log.info("No active FCM tokens found for member: {}", memberId);
             return; // 활성화된 토큰이 없으면 발송 불가
@@ -70,15 +77,17 @@ public class FCMService {
 //                data.put("body", projectTitle + " 학습 중 문제가 발생했습니다.");
 //                data.put("state", "FAILED");
 //                break;
-            case "COMPLETED":
+            case "success":
                 data.put("title", projectTitle);
                 data.put("body", "모델 학습이 성공적으로 완료되었습니다.");
                 data.put("state", "COMPLETED");
+                pipelineRepository.updateStatusByPipelineId(pipelineId, Status.COMPLETED);
                 break;
-            case "FAILED":
+            case "fail":
                 data.put("title", projectTitle);
                 data.put("body", "모델 학습 중 문제가 발생했습니다.");
                 data.put("state", "FAILED");
+                pipelineRepository.updateStatusByPipelineId(pipelineId, Status.FAILED);
                 break;
             default:
                 log.info("Unknown model status: {}", status);
