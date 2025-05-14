@@ -64,7 +64,6 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
 
   const forkPreprocessingPipeline = async (pipelineId: string): Promise<ApiResponse<ForkPreprocessResponse>> => {
     setIsLoading(true);
-    console.log('함수 진입');
 
     try {
       const response = await axiosInstance.post<ApiResponse<ForkPreprocessResponse>>(`/api/v2/pipelines/${pipelineId}/fork/preprocess`);
