@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
-import { ImputedRow } from '@/entities/workspace/data-preprocess/model/types';
+import { ImputedRow, Step } from '@/entities/workspace/data-preprocess/model/types';
 import { useAtom, useSetAtom } from 'jotai';
 import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Step } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import { Button } from '@/components/ui/button';
 
 interface PreprocessingOption {

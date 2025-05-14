@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
+import { useEffect, useRef, useState } from 'react';
 
 const getStepLabel = (type: string) => {
   switch (type) {
