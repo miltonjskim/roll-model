@@ -5,7 +5,7 @@ import { useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { formatDate, getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
-import { AfterSchoolDropdown } from '@/features/project-detail/RelearningDropdown';
+import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
 
 interface ProjectCardProps {
   project: Project;

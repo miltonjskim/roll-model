@@ -7,7 +7,7 @@ import { getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { useState } from 'react';
 import { likeThisPipeline } from '@/shared/api/openSourceApi';
 import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
-import { AfterSchoolDropdown } from '@/features/project-detail/RelearningDropdown';
+import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
 
 interface ProjectCardProps {
   project: OpenSourceProject;

@@ -2,7 +2,7 @@
 'use client';
 
 import { Pipeline } from '@/entities/project-detail/model/versionTypes';
-import { AfterSchoolDropdown } from '@/features/project-detail/RelearningDropdown';
+import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
 import { formatDate } from '@/shared/lib/utils/dateUtils';
 import { getDomainDisplayName } from '@/shared/lib/utils/domainMapping';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
