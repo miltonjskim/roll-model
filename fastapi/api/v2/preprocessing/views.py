@@ -49,7 +49,6 @@ client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 logger = logging.getLogger()
 router = APIRouter()
-logging.basicConfig(level=logging.INFO)
 
 @router.post('/missing-values/remove')
 async def remove_missing_values(
