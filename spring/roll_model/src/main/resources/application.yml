@@ -12,9 +12,20 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE}
   kafka:
     bootstrap-servers: ${KAFKA_HOST}
+    listener:
+      missing-topics-fatal: false
+      ack-mode: RECORD
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        max.poll.interval.ms: 300000
+        session.timeout.ms: 60000
+        heartbeat.interval.ms: 20000
     topic:
       processing-data:
         name: train-requests
