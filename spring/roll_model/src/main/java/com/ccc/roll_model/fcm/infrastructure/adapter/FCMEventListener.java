@@ -15,7 +15,7 @@ public class FCMEventListener {
 
     private final FCMService fcmService;
 
-    @KafkaListener(topics = "model-training-status", groupId = "fcm-group")
+    @KafkaListener(topics = "train-status", groupId = "fcm-group")
     public void handleModelTrainingStatusEvent(ModelTrainingEvent event) {
         log.info("Received model training status event: {}", event);
 
