@@ -6,7 +6,7 @@ import { useProjectDetailVersion } from '@/app/project-detail/[id]/version-secti
 import { ReactFlowProvider } from 'reactflow';
 import VersionGraphDagre from '@/entities/project-detail/ui/version-section/VersionGraphDagre';
 import VersionDetailCard from '@/entities/project-detail/ui/version-section/VersionDetailCard';
-import { useProjectDetailVersionSelection } from './model/useProjectDetailVersionSelection';
+import { useProjectDetailVersionSelection } from '@/app/project-detail/[id]/version-section/model/useProjectDetailVersionSelection';
 
 export default function VersionSectionPage() {
   const { id } = useParams();
