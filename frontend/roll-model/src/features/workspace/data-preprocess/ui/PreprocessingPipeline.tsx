@@ -1,18 +1,7 @@
 'use client';
 
+import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-
-export interface Step {
-  type: string;
-  parameters: Record<string, string | number | number[]>;
-  order: number;
-  active: boolean;
-  categoryId: string; // 'missing-values'
-  optionId: string; // 'mean'
-  optionName: string; // '평균값으로 대체'
-  optionDescription: string; // '결측치를 평균값으로 대체'
-}
 
 const getStepLabel = (type: string) => {
   switch (type) {

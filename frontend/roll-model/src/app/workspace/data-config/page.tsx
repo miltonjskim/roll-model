@@ -192,6 +192,8 @@ const ConfigDataPage = () => {
     }
   }, [selectedDelimiterOption, customDelimiter]);
 
+  if (isLoading) <div>Loading...</div>;
+
   return (
     <div>
       <div>

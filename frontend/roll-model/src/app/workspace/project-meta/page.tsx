@@ -47,7 +47,7 @@ const InputProjectMetaDataPage = () => {
 
   return (
     <div className="mx-auto max-w-[90%]">
-      <div>
+      <div className="select-none">
         <h1 className="text-xl font-bold">프로젝트 메타데이터 입력</h1>
         <h2>프로젝트 정보를 입력해 주세요.</h2>
       </div>
@@ -55,20 +55,27 @@ const InputProjectMetaDataPage = () => {
       <div className="bg-[theme(primary-white)] mx-auto mt-4 flex max-w-[70%] min-w-[44rem] flex-col justify-between gap-12 rounded-lg px-6 pt-8 pb-6 text-left">
         <div className="my-auto flex flex-col justify-center gap-8">
           <div className="flex items-center gap-2">
-            <label htmlFor="project-name" className="flex-1/5 font-semibold">
+            <label htmlFor="project-name" className="flex-1/5 font-semibold select-none">
               프로젝트 이름
             </label>
-            <Input type="text" value={title} id="project-name" placeholder="프로젝트 이름은 필수 입력 값입니다." onChange={(e) => setTitle(e.target.value)} className="flex-4/5 font-medium" />
+            <Input
+              type="text"
+              value={title}
+              id="project-name"
+              placeholder="프로젝트 이름은 필수 입력 값입니다."
+              onChange={(e) => setTitle(e.target.value)}
+              className="flex-4/5 font-medium select-none"
+            />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none">
             <label htmlFor="project-description" className="flex-1/5 font-semibold">
               목표 변수 설정
             </label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="" className="flex-4/5 font-medium" />
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="" className="flex-4/5 font-medium" id="project-description" />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none">
             <label htmlFor="project-domain" className="flex-1/5 font-semibold">
               도메인 선택
             </label>
@@ -86,7 +93,7 @@ const InputProjectMetaDataPage = () => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none">
             <label htmlFor="project-category" className="flex-1/5 font-semibold">
               모델 종류 선택
             </label>
@@ -104,7 +111,7 @@ const InputProjectMetaDataPage = () => {
             </Select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 select-none">
             <label htmlFor="project-public" className="flex-1/5 font-semibold">
               프로젝트 공개 여부
             </label>
