@@ -74,7 +74,6 @@ class PreprocessingHandler:
         # 핸들러 메서드 호출
         handler_method_func = getattr(handler, handler_method)
         result = handler_method_func(**method_args)
-        data_io.close()
 
         # 5. 처리된 데이터 MinIO에 저장
         df: DataFrame = handler.df if hasattr(handler, "df") else result.get("data")
@@ -147,11 +146,9 @@ class PreprocessingHandler:
                 content_type="text/csv",
                 encoding=encoding
             )
-            buffer.close()
             self.logger.info(f"MinIO 저장 성공: {object_name}, etag: {etag}")
             return object_name, etag
         except Exception as e:
-            buffer.close()
             self.logger.error(f"MinIO 저장 실패: {str(e)}")
             raise CustomAPIException(status_code=500, message=f"데이터 저장 실패: {str(e)}")
 

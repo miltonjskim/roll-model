@@ -449,8 +449,7 @@ async def complete_preprocessing(
             domain = project.domain,
             is_preprocessed=True,
         )
-        # 이제 버퍼를 닫음
-        buffer.close()
+ 
         # 파이프라인 업데이트
         updated_pipeline = await pipeline_service.update_pipeline_status(
             pipeline_id=pipeline_id,

@@ -133,8 +133,6 @@ def test_permanent_file():
         file_data=data_stream,
         content_type="text/csv"
     )
-    
-    data_stream.close()
 
     assert upload_success, "파일 업로드 실패"
     print(f"✅ 영구 파일 '{object_name}' 업로드 성공")

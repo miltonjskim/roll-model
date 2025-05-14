@@ -62,7 +62,6 @@ class ChunkedCSVReader:
             length=1024
         )
         first_chunk = response.read()
-        response.close()
 
         first_line = first_chunk.split(b'\n')[0]
         header_str = first_line.decode(self.encoding)
@@ -80,7 +79,6 @@ class ChunkedCSVReader:
             length=sample_size
         )
         sample_data = response.read()
-        response.close()
 
         # 줄 수 계산 (첫 줄은 헤더이므로 제외)
         lines = sample_data.count(b'\n') - 1
@@ -104,7 +102,6 @@ class ChunkedCSVReader:
                 length=search_size
             )
             data = response.read()
-            response.close()
 
             newline_pos = data.find(b'\n')
             return start_byte + newline_pos if newline_pos != -1 else start_byte
@@ -118,7 +115,6 @@ class ChunkedCSVReader:
                 length=start_byte - search_start
             )
             data = response.read()
-            response.close()
 
             newline_pos = data.rfind(b'\n')
             return search_start + newline_pos if newline_pos != -1 else start_byte
@@ -131,8 +127,6 @@ class ChunkedCSVReader:
             length=1024
         )
         data = response.read()
-        response.close()
-
         header_end = data.find(b'\n')
         return header_end + 1 if header_end != -1 else 0
 
@@ -182,8 +176,6 @@ class ChunkedCSVReader:
             length=1024
         )
         data = response.read()
-        response.close()
-
         try:
             # 첫 번째 완전한 줄 찾기
             lines = data.split(b'\n')
@@ -232,7 +224,6 @@ class ChunkedCSVReader:
                 length=end_byte - start_byte
             )
             chunk_data = response.read()
-            response.close()
 
             # DataFrame으로 변환
             if start_byte == 0:
