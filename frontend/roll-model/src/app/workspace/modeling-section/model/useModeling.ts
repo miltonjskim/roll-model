@@ -5,23 +5,28 @@ import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entitie
 import { CLASSIFICATION_MODELS, REGRESSION_MODELS } from '@/shared/api/mocks/modeling/modelingData';
 import { startModelTraining } from '@/shared/api/modelingApi';
 import { useAtomValue } from 'jotai';
-import { completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { completedDatasetAtom, dataColumnsAtom, pipelineIdAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 
 export const useModeling = () => {
-  const projectDetail = useAtomValue(projectDetailAtom);
+  // const projectDetail = useAtomValue(projectDetailAtom);
+  const projectDetail = useAtomValue(pipelineIdAtom);
   // 모델 카테고리 (분류 또는 회귀)
   const initialCategory = useAtomValue(projectCategoryAtom);
   const [modelCategory] = useState<ModelCategory>(initialCategory);
   const models = modelCategory === 'CLASSIFICATION' ? CLASSIFICATION_MODELS : REGRESSION_MODELS;
 
   // 파이프라인 아이디
-  const uploadedData = useAtomValue(uploadedDatasetAtom);
-  const completedUploadset = useAtomValue(completedDatasetAtom);
-  const PIPELINE_ID = uploadedData?.pipelineId || completedUploadset?.pipelineId || projectDetail.id;
+  // const uploadedData = useAtomValue(uploadedDatasetAtom);
+  const dataColumns = useAtomValue(dataColumnsAtom); // setDataColumns(columns);
+  // const completedUploadset = useAtomValue(completedDatasetAtom);
+  // const PIPELINE_ID = uploadedData?.pipelineId || completedUploadset?.pipelineId || projectDetail.id;
+  // const PIPELINE_ID = projectDetail;
 
-  const TARGET_VARIABLES = completedUploadset ? completedUploadset.columns.map((col) => col.name) : [];
+  // const TARGET_VARIABLES = completedUploadset ? completedUploadset.columns.map((col) => col.name) : [];
+
+  const TARGET_VARIABLES = Object.keys(dataColumns);
 
   // 상태 관리
   const [selectedModelId, setSelectedModelId] = useState('');
@@ -95,7 +100,8 @@ export const useModeling = () => {
       console.log('학습 시작 요청 데이터:', requestData);
 
       // API 호출 - pipelineId를 별도로 전달
-      const response = await startModelTraining(PIPELINE_ID, requestData);
+      // const response = await startModelTraining(PIPELINE_ID, requestData);
+      const response = await startModelTraining(projectDetail, requestData);
       console.log('학습 시작 응답:', response);
       localStorage.setItem(`modelTrainingStatus`, 'LEARNING');
 
