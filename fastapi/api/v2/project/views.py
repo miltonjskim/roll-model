@@ -790,6 +790,7 @@ async def get_dataset_page(
         page: int = Query(1, description="페이지 번호 (1부터 시작)"),
         size: int = Query(10, description="페이지 크기"),
         filter_condition: Optional[str] = Query(None, description="필터링 조건 (SQL WHERE 절)"),
+        last_idx: Optional[int] = Query(None, description="마지막 인덱스 (idx 컬럼이 있는 경우)"),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
         minio_client: MinioClient = Depends(get_minio_client)
 ):
@@ -805,50 +806,90 @@ async def get_dataset_page(
                 message=f"파이프라인 ID {pipeline_id}를 찾을 수 없습니다."
             )
         
+        # 사용할 데이터셋 객체명 결정 로직 개선
         bucket_name = "datasets"
         object_name = None
-        if pipeline.history is None or len(pipeline.history) == 0:
-            raise CustomAPIException(
-                status_code=404,
-                message=f"전처리된 데이터셋을 찾을 수 없습니다."
-            )
-        if pipeline.history[-1].preprocessing_steps is None or len(pipeline.history[-1].preprocessing_steps) == 0:
+        
+        # 1. 히스토리가 있고 비어있지 않은 경우 확인
+        if pipeline.history and len(pipeline.history) > 0:
+            # 최신 히스토리의 전처리 단계가 있는지 확인
+            latest_history = pipeline.history[-1]
+            if (latest_history.preprocessing_steps and 
+                len(latest_history.preprocessing_steps) > 0):
+                # 최신 전처리된 데이터셋 사용
+                latest_step = latest_history.preprocessing_steps[-1]
+                object_name = latest_step.preprocessed_dataset_object_name
+                
+        # 2. 전처리된 데이터셋이 없으면 원본 데이터셋 사용
+        if not object_name:
             object_name = pipeline.original_dataset_object_name
-        else:
-            object_name = pipeline.history[-1].preprocessing_steps[-1].preprocessed_dataset_object_name
-        bucket_name = "datasets"
 
-        if not bucket_name or not object_name:
+        # 3. 여전히 객체명이 없으면 오류 반환
+        if not object_name:
             return ApiResponse(
                 status_code=404,
                 message="파이프라인에 연결된 데이터셋 정보가 없습니다."
             )
 
+        logger.info(f"사용할 데이터셋: {bucket_name}/{object_name}")
+
         # CSV 리더 생성
         csv_reader = ChunkedCSVReader(
             minio_client=minio_client,
-            bucket_name="datasets",
+            bucket_name=bucket_name,
             object_name=object_name
         )
 
+        # 페이지 크기 검증 및 제한
+        if size <= 0:
+            size = 10
+        elif size > 1000:  # 최대 페이지 크기 제한
+            size = 1000
+
+        # 페이지 번호 검증
+        if page <= 0:
+            page = 1
+
+        # 데이터셋 조회 (필터 조건과 last_idx도 전달)
         result = await csv_reader.query_csv_with_paging(
             page=page,
-            page_size=size
+            page_size=size,
+            last_idx=last_idx,
+            filter_condition=filter_condition
         )
 
-        # 첫 번째 행 출력
+        # 디버그 정보 출력
         if result['data']:
-            print(f"- 첫 번째 행: {result['data'][0]}")
+            logger.info(f"- 첫 번째 행: {result['data'][0]}")
+            logger.info(f"- 총 {len(result['data'])}개 행 반환")
+        else:
+            logger.info("- 반환된 데이터 없음")
+
+        # DatasetPageResponse 모델에 맞는 응답 데이터 구조로 변경
+        response_data = {
+            "data": result['data'],
+            "total": result.get('total', 0),
+            "page": result.get('page', page),
+            "page_size": result.get('page_size', size),
+            "total_pages": result.get('total_pages', 0),
+        }
 
         return ApiResponse(
             status_code=200,
             message="데이터셋 조회 성공",
-            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(result, round_decimals=2)))
+            data=DatasetPageResponse(**jsonable_encoder(replace_nan_values(response_data, round_decimals=2)))
         )
 
-    except Exception as e:
+    except FileNotFoundError as e:
+        logger.error(f"파일을 찾을 수 없음: {str(e)}")
         return ApiResponse(
-            status_code=400,
+            status_code=404,
+            message=f"데이터셋 파일을 찾을 수 없습니다: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"데이터셋 조회 중 오류 발생: {str(e)}", exc_info=True)
+        return ApiResponse(
+            status_code=500,
             message=f"데이터셋 조회 실패: {str(e)}"
         )
     
