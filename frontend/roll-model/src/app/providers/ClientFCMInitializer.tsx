@@ -50,50 +50,50 @@ export default function ClientFCMInitializer() {
     if (document.visibilityState === 'visible') {
       console.log('앱이 포그라운드로 전환됨, 모델 상태 확인');
       // IndexedDB에서 상태 확인
-      checkStateFromIndexedDB();
+      // checkStateFromIndexedDB();
       checkAndUpdateModelStatus();
     }
   };
 
   // IndexedDB에서 상태 확인 함수
-  const checkStateFromIndexedDB = () => {
-    console.log('that?');
+  // const checkStateFromIndexedDB = () => {
+  //   console.log('that?');
 
-    const request = indexedDB.open('RollModelDB', 1);
-    console.log('what?', request);
+  //   const request = indexedDB.open('RollModelDB', 1);
+  //   console.log('what?', request);
 
-    request.onupgradeneeded = function (event) {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('modelStatus')) {
-        db.createObjectStore('modelStatus', { keyPath: 'id' });
-      }
-    };
+  //   request.onupgradeneeded = function (event) {
+  //     const db = (event.target as IDBOpenDBRequest).result;
+  //     if (!db.objectStoreNames.contains('modelStatus')) {
+  //       db.createObjectStore('modelStatus', { keyPath: 'id' });
+  //     }
+  //   };
 
-    request.onsuccess = function (event) {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['modelStatus'], 'readonly');
-      const store = transaction.objectStore('modelStatus');
+  //   request.onsuccess = function (event) {
+  //     const db = (event.target as IDBOpenDBRequest).result;
+  //     const transaction = db.transaction(['modelStatus'], 'readonly');
+  //     const store = transaction.objectStore('modelStatus');
 
-      const getRequest = store.get('currentStatus');
+  //     const getRequest = store.get('currentStatus');
 
-      getRequest.onsuccess = function () {
-        if (getRequest.result && getRequest.result.state) {
-          const state = getRequest.result.state;
-          console.log('IndexedDB에서 상태 확인:', state);
+  //     getRequest.onsuccess = function () {
+  //       if (getRequest.result && getRequest.result.state) {
+  //         const state = getRequest.result.state;
+  //         console.log('IndexedDB에서 상태 확인:', state);
 
-          // localStorage 업데이트
-          localStorage.setItem('modelTrainingStatus', state);
+  //         // localStorage 업데이트
+  //         localStorage.setItem('modelTrainingStatus', state);
 
-          // 상태 변경 이벤트 발생
-          window.dispatchEvent(
-            new CustomEvent('modelStatusUpdate', {
-              detail: { state: state },
-            }),
-          );
-        }
-      };
-    };
-  };
+  //         // 상태 변경 이벤트 발생
+  //         window.dispatchEvent(
+  //           new CustomEvent('modelStatusUpdate', {
+  //             detail: { state: state },
+  //           }),
+  //         );
+  //       }
+  //     };
+  //   };
+  // };
 
   // 모델 상태 확인 및 업데이트 함수
   const checkAndUpdateModelStatus = () => {
