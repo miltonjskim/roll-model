@@ -1,3 +1,4 @@
+import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectCategory } from '@/entities/workspace/model/types';
 
 // 컬럼 정보
@@ -26,6 +27,11 @@ export interface OriginalDatasetType {
 
 // 원본 데이터셋 업로드 응답값
 export interface UploadDatasetResponse {
+  result: UploadDatasetResult;
+  step: Step[];
+}
+
+export interface UploadDatasetResult {
   // 생성된 파이프라인 아이디
   pipelineId: string;
 

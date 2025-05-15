@@ -1,4 +1,4 @@
-import { ColumnConfig, UploadDatasetResponse } from '@/entities/workspace/data-config/model/types';
+import { ColumnConfig, UploadDatasetResponse, UploadDatasetResult } from '@/entities/workspace/data-config/model/types';
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
 
 export interface SampleDatasetResponse {
@@ -16,7 +16,7 @@ export interface SampleDataset {
   columnCount: number;
 }
 
-export interface SampleDatasetUploadResponse extends UploadDatasetResponse {
+export interface SampleDatasetUploadResponse extends UploadDatasetResult {
   datasetId: string;
   sampleInfo: {
     sampleId: number;
