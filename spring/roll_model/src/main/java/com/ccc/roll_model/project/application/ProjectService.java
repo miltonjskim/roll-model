@@ -13,6 +13,7 @@ import com.ccc.roll_model.project.infrastructure.repository.mongo.DatasetReposit
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.VersionRepository;
 import com.ccc.roll_model.project.ui.response.GetMyProjectResponse;
 import com.ccc.roll_model.project.ui.response.GetOpensourceResponse;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class ProjectService {
     private final MemberMapper memberMapper;
     private final PipelineLikeRepository likeRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final VersionRepository versionRepository;
 
     public ProjectEntity createProject(CreateProjectCommand command) {
 
@@ -169,9 +171,12 @@ public class ProjectService {
 
                         logger.info("Constructed project detail for project ID: {}", project.getProjectId());
                         // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
+
+                        VersionEntity version = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+
                         return GetMyProjectResponse.Project.builder()
                                 .id(pipeline.getPipelineId())
-                                .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : null)
+                                .version(version != null ? version.getVersionNum() : null)
                                 .title(project.getTitle())
                                 .category(project.getCategory() != null ? project.getCategory().name() : null)
                                 .status(pipeline.getStatus() != null ? pipeline.getStatus().name() : null)

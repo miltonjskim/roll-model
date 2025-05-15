@@ -3,6 +3,8 @@ package com.ccc.roll_model.fcm.application;
 import com.ccc.roll_model.fcm.application.command.SaveFCMTokenCommand;
 import com.ccc.roll_model.fcm.infrastructure.entity.FCMTokenEntity;
 import com.ccc.roll_model.fcm.infrastructure.repository.mysql.FCMTokenRepository;
+import com.ccc.roll_model.pipeline.application.PipelineService;
+import com.ccc.roll_model.project.application.ProjectVersionService;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.Status;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
@@ -31,6 +33,7 @@ public class FCMService {
     private final FCMTokenRepository fcmTokenRepository;
     private final ProjectRepository projectRepository;
     private final PipelineRepository pipelineRepository;
+    private final ProjectVersionService projectVersionService;
 
     // 토큰 저장
     @Transactional
@@ -82,6 +85,7 @@ public class FCMService {
                 data.put("body", "모델 학습이 성공적으로 완료되었습니다.");
                 data.put("state", "COMPLETED");
                 pipelineRepository.updateStatusByPipelineId(pipelineId, Status.COMPLETED);
+                projectVersionService.savePipelineVersion(pipelineId);
                 break;
             case "fail":
                 data.put("title", projectTitle);

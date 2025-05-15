@@ -29,12 +29,12 @@ public class VersionEntity {
 	private String pipelineId;
 
 	@Column(name = "version_num")
-	private Float versionNum;
+	private String versionNum;
 
 	@Column(name = "parent_version")
-	private Float parentVersion;
+	private String parentVersion;
 
-	VersionEntity(Integer versionId, Integer groupId, String pipelineId, Float versionNum, Float parentVersion) {
+	VersionEntity(Integer versionId, Integer groupId, String pipelineId, String versionNum, String parentVersion) {
 		this.versionId = versionId;
 		this.groupId = groupId;
 		this.pipelineId = pipelineId;
