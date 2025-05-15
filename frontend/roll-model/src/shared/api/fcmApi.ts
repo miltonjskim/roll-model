@@ -10,3 +10,4 @@ export const sendFcmTokenToServer = async (fcmtoken: string) => {
     throw error;
   }
 };
+
