@@ -28,7 +28,7 @@ from schemas.mysql.schemas import ProjectDataset
 import math
 import numpy as np
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
-from schemas.mongo.dataset import ColumnType
+from schemas.mongo.dataset import ColumnType, DatasetModel
 from service.db.pipeline_mysql_service import create_mysql_pipeline
 from service.storage.storage import add_index_to_csv
 import chardet
@@ -76,7 +76,8 @@ async def upload_dataset_and_save_metadata(
         config_json: str,
         background_tasks: BackgroundTasks,
         category: str,
-        domain: str
+        domain: str,
+        is_preprocessed: bool = False,
 ) -> Dict[str, Any]:
     try:
         config = json.loads(config_json)
@@ -134,7 +135,8 @@ async def upload_dataset_and_save_metadata(
             object_name=object_name,
             sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else [],
             category=category,
-            domain=domain
+            domain=domain,
+            is_preprocessed=is_preprocessed
         )
 
         # MongoDB에 파이프라인 생성 (먼저 MongoDB 문서를 생성하여 ObjectID 가져오기)
