@@ -64,7 +64,7 @@ class PreprocessingHandler:
 
         # 4. 전처리 작업 수행
         data_io = io.BytesIO(minio_output)
-        handler = handler_class(data_io, encoding=encoding)
+        handler = handler_class(data_io, encoding="utf-8")
 
         # request 객체에서 필요한 인자 추출
         method_args = {k: getattr(request, k) for k in request.__fields__.keys() if hasattr(request, k)}
