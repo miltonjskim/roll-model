@@ -51,13 +51,17 @@ public class ProjectVersionService {
         VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
         Integer groupId = versionEntity.getGroupId();
         List<VersionEntity> versionEntities =
-                versionRepository.findVersionEntitiesByGroupIdOrderByVersionNumDesc(groupId);
+            versionRepository.findVersionEntitiesByGroupId(groupId); // OrderBy 제거
+
+        // 먼저 버전으로 정렬 (내림차순)
+        versionEntities.sort((v1, v2) -> compareVersions(v2.getVersionNum(), v1.getVersionNum()));
+
         List<PipelineEntity> pipelines = versionEntities.stream()
-                .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
-                .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
-                .toList();
+            .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
+            .filter(Objects::nonNull)
+            .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
+            .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+            .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
         // 3. 파이프라인이 속한 프로젝트 조회
