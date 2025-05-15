@@ -46,35 +46,37 @@ export default function FcmCatStatus() {
     window.addEventListener('modelStatusUpdate', handleStatusUpdate);
     window.addEventListener('storage', handleStorageChange);
 
-    // COMPLETED 또는 FAILED 상태일 때 30초 후 롤링캣으로 돌아가는 타이머
-    // let timer: NodeJS.Timeout | null = null;
-
-    // if (modelStatus === 'COMPLETED' || modelStatus === 'FAILED' || modelStatus === 'LEARNING') {
-    //   console.log(`Cat: ${modelStatus} 상태 감지, 30초 타이머 시작`);
-    //   timer = setTimeout(() => {
-    //     console.log('Cat: 30초 후 기본 상태로 복귀');
-    //     setModelStatus('PREPROCESSED'); // 기본 상태로 복귀
-    //     localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
-    //   }, 30000);
-    // }
-
     // 컴포넌트 언마운트 시 정리
     return () => {
       window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
       window.removeEventListener('storage', handleStorageChange);
-      // if (timer) clearTimeout(timer);
     };
-  }, [modelStatus]); // modelStatus가 변경될 때마다 타이머 재설정
+  }, []); // modelStatus가 변경될 때마다 타이머 재설정
 
   // 현재 모델 상태에 따른 이미지 경로
   const catImage = getCatImage(modelStatus);
 
-  const handleStartLearning = () => {
-    // localStorage 업데이트
-    localStorage.setItem('modelTrainingStatus', 'LEARNING');
-    // 컴포넌트 상태 업데이트
-    setModelStatus('LEARNING');
-    console.log('Cat: 상태를 LEARNING으로 변경');
+  const handleStartLearning = (type: string) => {
+    switch (type) {
+      case '기본':
+        localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
+        setModelStatus('PREPROCESSED');
+        break;
+      case '학습중':
+        localStorage.setItem('modelTrainingStatus', 'LEARNING');
+        setModelStatus('LEARNING');
+        break;
+      case '실패':
+        localStorage.setItem('modelTrainingStatus', 'FAILED');
+        setModelStatus('FAILED');
+        break;
+      case '완료':
+        localStorage.setItem('modelTrainingStatus', 'COMPLETED');
+        setModelStatus('COMPLETED');
+        break;
+    }
+    window.dispatchEvent(new Event('modelStatusUpdate'));
+    console.log(`Cat: 상태를 ${type === '기본' ? 'PREPROCESSED' : type === '학습중' ? 'LEARNING' : type === '실패' ? 'FAILED' : 'COMPLETED'}으로 변경`);
   };
   const handleReset = () => {
     // localStorage 업데이트
@@ -82,14 +84,24 @@ export default function FcmCatStatus() {
       localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
       // 컴포넌트 상태 업데이트
       setModelStatus('PREPROCESSED');
+      window.dispatchEvent(new Event('modelStatusUpdate'));
       console.log('Cat: 상태를 PREPROCESSED로 변경');
     }
   };
 
   return (
-    <div className="fixed bottom-20 left-4 z-50 h-20 w-20">
-      <button className="cursor-pointer" onClick={handleStartLearning}>
-        START
+    <div className="fixed bottom-40 left-4 z-50 h-20 w-30">
+      <button className="bg-[theme(color-mint-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('기본')}>
+        기본
+      </button>
+      <button className="bg-[theme(color-rose-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('학습중')}>
+        학습중
+      </button>
+      <button className="bg-[theme(color-green-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('실패')}>
+        실패
+      </button>
+      <button className="bg-[theme(color-yellow-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('완료')}>
+        완료
       </button>
       <Image src={catImage} alt={`Status Cat (${modelStatus})`} width={80} height={80} className="object-contain" priority unoptimized onClick={handleReset} />
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 import { CLASSIFICATION_MODELS, REGRESSION_MODELS } from '@/shared/api/mocks/modeling/modelingData';
 import { startModelTraining } from '@/shared/api/modelingApi';
@@ -8,9 +8,11 @@ import { useAtomValue } from 'jotai';
 import { completedDatasetAtom, dataColumnsAtom, pipelineIdAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
+import { useRouter } from 'next/navigation';
 
 export const useModeling = () => {
   // const projectDetail = useAtomValue(projectDetailAtom);
+  const router = useRouter();
   const projectDetail = useAtomValue(pipelineIdAtom);
   // 모델 카테고리 (분류 또는 회귀)
   const initialCategory = useAtomValue(projectCategoryAtom);
@@ -108,15 +110,23 @@ export const useModeling = () => {
 
       // 성공 알림
       alert('모델 학습이 시작되었습니다!');
+      router.push('/dashboard');
 
       // 여기에 성공 후 리디렉션 또는 다음 단계로 이동하는 로직을 추가할 수 있습니다.
     } catch (error) {
       console.error('학습 시작 오류:', error);
       alert('모델 학습 시작 중 오류가 발생했습니다. 다시 시도해주세요.');
+      router.push('/dashboard');
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!dataColumns || !dataColumns.length || !projectDetail || !initialCategory) {
+      router.push('/dashboard');
+    }
+  }, [dataColumns, projectDetail, initialCategory, router]);
 
   return {
     modelCategory,
