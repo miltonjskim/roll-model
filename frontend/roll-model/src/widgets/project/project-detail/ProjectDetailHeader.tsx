@@ -6,13 +6,14 @@ import { TiLockClosed } from 'react-icons/ti';
 import { TiLockOpen } from 'react-icons/ti';
 import { deletePipeline, toggePublicPipeline } from '@/shared/api/projectDetailApi';
 import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
 
 export default function ProjectDetailHeader() {
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const { handleAfterSchoolClick, moveToPreprocessing } = useAfterSchool();
   const router = useRouter();
-
-  // 재학습
-  const handleStartRetraining = () => {};
 
   // 파이프라인 삭제
   const handleDeletePipeline = async () => {
@@ -42,7 +43,7 @@ export default function ProjectDetailHeader() {
     });
     try {
       // API 호출
-      await toggePublicPipeline(projectDetail.id , newPipelinePublicYn );
+      await toggePublicPipeline(projectDetail.id, newPipelinePublicYn);
       // 성공 시 알림 (선택사항)
       alert('공개 여부가 변경되었습니다.');
     } catch (e) {
@@ -67,19 +68,38 @@ export default function ProjectDetailHeader() {
     } else if (projectDetail.pipelinePublicYn) {
       // 공개 상태 (노란색)
       return {
-        borderColor: 'border-[theme(--color-yellow-01)]',
-        textColor: 'text-[theme(--color-yellow-01)]',
+        borderColor: 'border-[theme(--color-green-01)]',
+        textColor: 'text-[theme(--color-green-01)]',
       };
     } else {
       // 비공개 상태 (초록색)
       return {
-        borderColor: 'border-[theme(--color-green-01)]',
-        textColor: 'text-[theme(--color-green-01)]',
+        borderColor: 'border-[theme(--color-yellow-01)]',
+        textColor: 'text-[theme(--color-yellow-01)]',
       };
     }
   };
 
   const buttonStyle = getPublicButtonStyle();
+
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const [contentVisible, setContentVisible] = useState(false);
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    if (showDropdown) {
+      timer = setTimeout(() => {
+        setContentVisible(true);
+      }, 200); // 0.6초 후 내용 표시
+    } else {
+      setContentVisible(false);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [showDropdown]);
 
   return (
     <>
@@ -105,19 +125,55 @@ export default function ProjectDetailHeader() {
               </button>
               {/* 공개여부 버튼 */}
               <button
-                className={`flex items-center justify-center rounded-[var(--radius-lg)] bg-[var(--primary-black)] shadow-sm ${buttonStyle.textColor} w-16 cursor-pointer select-none`}
+                className={`flex items-end justify-center rounded-[var(--radius-lg)] bg-[var(--primary-black)] shadow-sm ${buttonStyle.textColor} w-16 cursor-pointer select-none`}
                 onClick={handleTogglePublic}
                 disabled={!projectDetail.projectPublicYn}
               >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${buttonStyle.borderColor}`}>
-                  {!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? <TiLockOpen className="text-xl" /> : <TiLockClosed className="text-xl" />}
+                <div className="mb-2 flex flex-col items-center justify-center">
+                  <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-full border-2 ${buttonStyle.borderColor}`}>
+                    {!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? <TiLockOpen className="text-xl" /> : <TiLockClosed className="text-xl" />}
+                  </div>
+                  <div className="rounded-sm bg-[var(--primary-white)]/10 px-1 text-xs text-white">{!projectDetail.projectPublicYn || projectDetail.pipelinePublicYn ? '공개' : '비공개'}</div>
                 </div>
               </button>
             </>
           )}
-          <button className="w-20 cursor-pointer rounded-[var(--radius-lg)] bg-[var(--primary-black)] p-4 text-white shadow-sm select-none" onClick={handleStartRetraining}>
-            재학습
-          </button>
+
+          <div className="flex h-24">
+            <button
+              className={`h-full cursor-pointer rounded-[var(--radius-lg)] bg-[var(--primary-black)] px-4 text-white shadow-sm transition-all duration-600 ease-in-out select-none ${showDropdown ? 'w-40' : 'w-20'} `}
+              // onClick={() => setShowDropdown(!showDropdown)}
+              onMouseEnter={() => setShowDropdown(true)}
+              onMouseLeave={() => setShowDropdown(false)}
+            >
+              {!showDropdown && <div>재학습</div>}
+
+              {showDropdown && (
+                <div
+                  className="flex flex-col gap-1"
+                  style={{
+                    opacity: contentVisible ? 1 : 0,
+                    transition: 'opacity 0.5s ease-in-out',
+                  }}
+                  onMouseEnter={() => setShowDropdown(true)}
+                  onMouseLeave={() => setShowDropdown(false)}
+                >
+                  <button
+                    className="cursor-pointer rounded-md border border-[var(--color-gray-01)] px-3 py-2 text-sm whitespace-nowrap text-white duration-300 ease-in-out select-none hover:border-[var(--color-rose-02)]"
+                    onClick={() => moveToPreprocessing(projectDetail.id, projectDetail.title)}
+                  >
+                    전처리부터 재학습
+                  </button>
+                  <button
+                    className="cursor-pointer rounded-md border border-[var(--color-gray-01)] px-3 py-2 text-sm whitespace-nowrap text-white duration-300 ease-in-out select-none hover:border-[var(--color-rose-02)]"
+                    onClick={() => handleAfterSchoolClick(projectDetail.id)}
+                  >
+                    모델링부터 재학습
+                  </button>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>

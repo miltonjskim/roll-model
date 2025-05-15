@@ -2,6 +2,7 @@
 'use client';
 
 import { Pipeline } from '@/entities/project-detail/model/versionTypes';
+import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
 import { formatDate } from '@/shared/lib/utils/dateUtils';
 import { getDomainDisplayName } from '@/shared/lib/utils/domainMapping';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
@@ -28,6 +29,11 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
   // 숫자 포맷팅 (천 단위 콤마)
   const formatNumber = (num: number) => {
     return num.toLocaleString();
+  };
+  const tempProject = {
+    id: pipeline.pipelineId,
+    title: projectDetail.title,
+    status: 'COMPLETED',
   };
 
   return (
@@ -79,7 +85,8 @@ export const VersionDetailCard = ({ pipeline, className = '' }: VersionDetailCar
       {!pipeline.deletedYn && pipeline.publicYn ? (
         <div className="flex justify-end space-x-3">
           <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">상세</button>
-          <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">모델 학습</button>
+          {/* <button className="bg-[theme(primary-black)] hover:bg-gray-01 rounded-md px-4 py-2 text-white transition-colors duration-300 ease-in">모델 학습</button> */}
+          <AfterSchoolDropdown project={tempProject} />
         </div>
       ) : (
         <></>

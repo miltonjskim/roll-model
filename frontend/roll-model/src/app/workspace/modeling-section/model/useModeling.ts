@@ -25,8 +25,9 @@ export const useModeling = () => {
   // const PIPELINE_ID = projectDetail;
 
   // const TARGET_VARIABLES = completedUploadset ? completedUploadset.columns.map((col) => col.name) : [];
-
-  const TARGET_VARIABLES = Object.keys(dataColumns);
+  console.log('heres2', dataColumns); // [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}] // {name: 'idx', type: 'integer'}
+  const TARGET_VARIABLES = dataColumns.map((column) => column.name); // {idx: 'NUMERIC', id: 'NUMERIC', age: 'NUMERIC', nameBob: 'NUMERIC', nameJane: 'NUMERIC', …}
+  console.log('heres3', TARGET_VARIABLES);
 
   // 상태 관리
   const [selectedModelId, setSelectedModelId] = useState('');

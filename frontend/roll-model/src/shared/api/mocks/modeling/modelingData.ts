@@ -36,7 +36,7 @@ export const CLASSIFICATION_MODELS = [
         required: false,
       },
       {
-        id: 'c',
+        id: 'C',
         name: '규제 강도(C)',
         type: 'slider',
         min: 0.1,
@@ -71,7 +71,7 @@ export const CLASSIFICATION_MODELS = [
     description: '고차원 공간에서 데이터를 분류하는 모델로 복잡한 패턴을 잘 찾아내며 오버피팅에 강합니다.',
     parameters: [
       {
-        id: 'c',
+        id: 'C',
         name: '마진 오류 패널티(C)',
         type: 'slider',
         min: 0.1,
@@ -180,9 +180,11 @@ export const CLASSIFICATION_MODELS = [
       {
         id: 'maxFeatures',
         name: '최대 특성 수(max_features)',
-        type: 'radio',
-        options: ['sqrt', 'log2', 'auto'],
-        defaultValue: 'sqrt',
+        type: 'slider',
+        min: 1,
+        max: 10,
+        step: 1,
+        defaultValue: 3,
         required: false,
       },
     ],
@@ -260,7 +262,7 @@ export const REGRESSION_MODELS = [
     description: '서포트 벡터 머신의 회귀 버전으로, 비선형 데이터에서도 좋은 성능을 보입니다.',
     parameters: [
       {
-        id: 'c',
+        id: 'C',
         name: '마진 오류 허용도(C)',
         type: 'slider',
         min: 0.1,
@@ -317,9 +319,11 @@ export const REGRESSION_MODELS = [
       {
         id: 'maxFeatures',
         name: '분할 시 사용할 특성 수(max_features)',
-        type: 'radio',
-        options: ['sqrt', 'log2', 'auto'],
-        defaultValue: 'sqrt',
+        type: 'slider',
+        min: 1,
+        max: 10,
+        step: 1,
+        defaultValue: 3,
         required: false,
       },
     ],
