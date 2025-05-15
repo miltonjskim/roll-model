@@ -242,9 +242,7 @@ class MinioClient:
         """
         try:
             # 먼저 CSV 컬럼 확인
-            minio_metadata = self.get_metadata(bucket_name, object_name)
-            encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
-            columns = await self.get_csv_columns(bucket_name, object_name, encoding)
+            columns = await self.get_csv_columns(bucket_name, object_name, "utf-8")
             logger.info(f"CSV 컬럼: {columns}")
             has_idx_column = 'idx' in columns
             logger.info(f"page: {page}, page_size: {page_size}, last_idx: {last_idx}, filter_condition: {filter_condition}")
