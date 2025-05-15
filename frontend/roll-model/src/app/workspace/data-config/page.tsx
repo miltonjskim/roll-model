@@ -119,9 +119,10 @@ const ConfigDataPage = () => {
         onSuccess: (response) => {
           console.log('onSuccessData:', response.data);
 
-          setUploadedDataset(response.data);
           if (response.data) {
-            const data = response.data;
+            const { result } = response.data;
+            setUploadedDataset(result);
+
             // console.log('pipelineId:', data.pipelineId);
             router.push('/workspace/data-preprocess');
             // requestAIPreprocessingRecommendation(data.pipelineId);
