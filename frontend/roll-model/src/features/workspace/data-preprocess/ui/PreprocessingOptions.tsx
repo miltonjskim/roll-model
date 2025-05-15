@@ -142,6 +142,9 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
           body.detection = option.method;
           console.log('option.method:', option.method);
           console.log('body.detection:', body.detection);
+        } else if (categoryId === 'outlier-handle') {
+          body.detection = 'ZSCORE';
+          body.method = option.method;
         } else {
           body.method = option.method;
         }
@@ -210,6 +213,8 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
         optionDescription: option.description,
       });
 
+      setExpanded([]);
+      setSelected({});
       setSelectedColumn(undefined);
     } catch (error) {
       console.error('전처리 요청 실패:', error);
@@ -220,7 +225,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   };
 
   return (
-    <div className="flex max-h-[34rem] flex-col space-y-2 overflow-y-auto pr-2">
+    <div className="flex flex-col space-y-2 overflow-y-auto">
       {preprocessingCategories.map((cat) => {
         const isOpen = expanded.includes(cat.id);
         return (
@@ -242,7 +247,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
               </div>
             )}
 
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} border-t border-[var(--color-gray-04)]`}>
+            <div className={`overflow-y-auto transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'max-h-0 opacity-0'} border-t border-[var(--color-gray-04)]`}>
               {cat.options.map((opt) => {
                 const isSelected = selected[cat.id] === opt.id;
                 const needsTargetColumn = opt.apiEndpoint.includes('/target');
