@@ -16,7 +16,7 @@ from models.preprocessing.preprocessing_request_models import ClassBalancingRequ
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
 from schemas.mysql.schemas import PipelineStatus, Pipeline, Project
-from service.dataset_service import store_dataset_to_mongodb, analyze_dataset, replace_nan_values, upload_dataset_and_save_metadata
+from service.dataset_service import calculate_and_update_statistics, store_dataset_to_mongodb, analyze_dataset, replace_nan_values, upload_dataset_and_save_metadata
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
@@ -337,7 +337,6 @@ async def complete_preprocessing(
         
         if not final_dataset_object_name:
             final_dataset_object_name = pipelineModel.original_dataset_object_name
-            final_dataset_etag = pipelineModel.original_dataset_etag
         
         # MinIO 클라이언트 가져오기
         minio_client = get_minio_client()
@@ -406,7 +405,7 @@ async def complete_preprocessing(
 
             inferred_columns.append({"name": col, "type": inferred_type})
 
-        config: Dict[str, Any] = {
+        config = {
             "delimiter": "comma",
             "customDelimiter": None,
             "encoding":  "UTF-8",
@@ -419,26 +418,21 @@ async def complete_preprocessing(
         # 버퍼 위치를 처음으로 되돌림
         buffer.seek(0)
         
-        preprocessed_file = UploadFile(
-            file=buffer,
-            filename= f"processed_data_{pipeline_id}.csv",
-            headers = Headers({
-                "content-type": "text/csv",
-                "content-disposition": 'form-data; name="file"; filename="data.csv"'
-            })
-        )
+        # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
+        dataset_analysis = await analyze_dataset(buffer, config)
 
-        config_json = json.dumps(config)
-        # 6. 전처리된 데이터셋 통계치 백그라운드 작업
-        result = await upload_dataset_and_save_metadata(
-            db=db,
+        # MongoDB에 전처리된 데이터셋 저장
+        dataset_id: str = await store_dataset_to_mongodb(
             project_id=pipelineModel.project_id,
             member_id=member_id,
-            file=preprocessed_file,
-            config_json=config_json,
-            background_tasks=background_tasks,
-            category=project.category,
-            domain=project.domain,
+            etag=final_dataset_etag,
+            dataset_analysis=dataset_analysis,
+            config=config,
+            file_size=file_size,  # 미리 구한 파일 크기 사용
+            object_name=final_dataset_object_name,
+            sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
+            category = project.category,
+            domain = project.domain,
             is_preprocessed=True,
         )
  
@@ -448,7 +442,7 @@ async def complete_preprocessing(
             new_status=PipelineStatus.PREPROCESSED,
             project_id=pipelineModel.project_id,
             member_id=member_id,
-            preprocessed_dataset_id=result["datasetId"]
+            preprocessed_dataset_id=dataset_id
         )
 
         if not updated_pipeline:
@@ -461,14 +455,21 @@ async def complete_preprocessing(
             raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
 
         # 파이프라인 상태 업데이트
-        pipeline.data_count = len(result["originalDatasets"]["data"]) if result["originalDatasets"]["data"] else 0
+        pipeline.data_count = len(dataset_analysis["data_sample"]["data"]) if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else 0
         pipeline.status = PipelineStatus.PREPROCESSED
         pipeline.modified_at = datetime.now()
-        
+                
         # 변경사항 커밋
         db.commit()
         db.refresh(pipeline)
         
+        background_tasks.add_task(
+            calculate_and_update_statistics,
+            dataset_id=dataset_id,
+            data=dataset_analysis["data_sample"]["data"],
+            columns=inferred_columns,
+        )
+
         # 응답 데이터 구성
         response = {
             "status": 200,
@@ -477,7 +478,7 @@ async def complete_preprocessing(
                 "pipelineId": pipeline_id,
                 "category": project.category,
                 "columns": inferred_columns,
-                "dataset": result["originalDatasets"]["data"][:30]
+                "dataset": dataset_analysis["data_sample"]["data"][:30]
             }
         }
 
