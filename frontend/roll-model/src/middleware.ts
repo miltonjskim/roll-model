@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('access_token')?.value;
+  // TODO: 개발 모드 끝나면 || 1 삭제 (디버깅용으로 추가함)
+  const token = request.cookies.get('access_token')?.value || 1;
 
   const isWorkspaceRoute = request.nextUrl.pathname.startsWith('/workspace');
   const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
