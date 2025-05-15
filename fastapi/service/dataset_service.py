@@ -81,14 +81,13 @@ async def upload_dataset_and_save_metadata(
     try:
         config = json.loads(config_json)
         file_content = await file.read()
-        file_io = io.BytesIO(file_content)
         minio_client = get_minio_client()
         bucket_name = "datasets"
         object_name = f"project_{project_id}/{file.filename}"
 
-        utf_8_bytes = convert_to_utf8_bytes(file_io)
-
-        indexed_data = add_index_to_csv(utf_8_bytes, encoding="UTF-8")
+        utf_8_bytes = convert_to_utf8_bytes(file_content)
+        file_io = io.BytesIO(utf_8_bytes)
+        indexed_data = add_index_to_csv(file_io, encoding="UTF-8")
 
         # MinIO에 파일 업로드
         upload_success = await minio_client.upload_file(
@@ -121,8 +120,8 @@ async def upload_dataset_and_save_metadata(
         logger.info(f"프로젝트 {project_id}의 데이터셋 ETag가 성공적으로 저장되었습니다: {etag}")
 
         # 데이터셋 분석
-        utf_8_bytes.seek(0)
-        dataset_analysis = await analyze_dataset(utf_8_bytes, config)
+        file_io.seek(0)
+        dataset_analysis = await analyze_dataset(file_io, config)
 
         # MongoDB에 데이터셋 정보 저장
         dataset_id = await store_dataset_to_mongodb(
@@ -164,7 +163,7 @@ async def upload_dataset_and_save_metadata(
                 "totalRows": dataset_analysis["total_rows"],
                 "totalColumns": dataset_analysis["total_columns"],
                 "filename": file.filename,
-                "encoding": config.get("UTF-8"),
+                "encoding": "UTF-8",
                 "delimiter": config.get("delimiter", "comma")
             },
             "missingValues": dataset_analysis["missing_values"],
@@ -199,13 +198,13 @@ async def upload_dataset_and_save_metadata(
 이 함수는 나중에 utils/dataset_analyzer.py로 분리 가능
 
 Args:
-    utf_8_bytes: 파일 객체
+    file_io: 파일 객체
     config: 데이터셋 설정
 
 Returns:
     Dict: 분석 결과
 """
-async def analyze_dataset(utf_8_bytes: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
+async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
     try:
         delimiter_map = {
             "comma": ",",
@@ -216,9 +215,9 @@ async def analyze_dataset(utf_8_bytes: BinaryIO, config: Dict[str, Any]) -> Dict
 
         delimiter = delimiter_map.get(config.get("delimiter", "comma"), ",")
         has_header = config.get("hasHeader", False)
-        utf_8_bytes.seek(0)
+        file_io.seek(0)
         df = pd.read_csv(
-            utf_8_bytes,
+            file_io,
             delimiter=delimiter,
             encoding="UTF-8",
             header=0 if has_header else None
