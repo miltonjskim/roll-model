@@ -84,8 +84,6 @@ class MinioClient:
             file_data.seek(0)
 
             # 디버깅: 파일 데이터와 크기 출력
-            print(f"디버깅: 업로드 파일 크기: {file_size} 바이트")
-            print(f"디버깅: 파일 내용 샘플: {file_data.read(100)}")  # 처음 100바이트만 출력
             file_data.seek(0)  # 포인터를 다시 처음으로 이동
 
             # 파일 업로드
@@ -100,21 +98,18 @@ class MinioClient:
             # file_data.close() 호출을 제거 - 호출자가 파일을 닫도록 함
 
             # 디버깅: 업로드 결과 출력 - result 변수 삭제 또는 수정
-            print(f"디버깅: 업로드 성공")
-            print(f"디버깅: 업로드된 파일 정보 - 버킷: {bucket_name}, 객체명: {object_name}")
+            # print(f"디버깅: 업로드 성공")
+            # print(f"디버깅: 업로드된 파일 정보 - 버킷: {bucket_name}, 객체명: {object_name}")
 
             # 업로드 후 파일이 실제로 존재하는지 확인
             try:
                 stat = self.client.stat_object(bucket_name, object_name)
-                print(f"디버깅: 업로드된 파일 상태: {stat.__dict__}")
                 logger.info(f"파일 '{object_name}'이 버킷 '{bucket_name}'에 성공적으로 업로드되었습니다.")
                 return True
             except Exception as stat_err:
-                print(f"디버깅: 파일 상태 확인 실패: {str(stat_err)}")
                 return False
         except S3Error as e:
             logger.error(f"파일 '{object_name}' 업로드 중 오류: {str(e)}")
-            print(f"디버깅: S3 오류 발생: {str(e)}")
             return False
 
     def get_file(self, bucket_name: str, object_name: str) -> Optional[bytes]:
@@ -122,7 +117,6 @@ class MinioClient:
         try:
             response = self.client.get_object(bucket_name, object_name)
             data = response.read()
-            response.close()
             response.release_conn()
             return data
         except S3Error as e:
@@ -248,9 +242,7 @@ class MinioClient:
         """
         try:
             # 먼저 CSV 컬럼 확인
-            minio_metadata = self.get_metadata(bucket_name, object_name)
-            encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
-            columns = await self.get_csv_columns(bucket_name, object_name, encoding)
+            columns = await self.get_csv_columns(bucket_name, object_name, "utf-8")
             logger.info(f"CSV 컬럼: {columns}")
             has_idx_column = 'idx' in columns
             logger.info(f"page: {page}, page_size: {page_size}, last_idx: {last_idx}, filter_condition: {filter_condition}")
