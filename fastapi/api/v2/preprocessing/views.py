@@ -419,7 +419,7 @@ async def complete_preprocessing(
         config = {
             "delimiter": "comma",
             "customDelimiter": None,
-            "encoding":  encoding,
+            "encoding":  "UTF-8",
             "hasHeader": True,
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }
