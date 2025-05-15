@@ -322,21 +322,13 @@ async def upload_project_sample_dataset(
         )
 
         # NaN, INF 수동 인코딩
+        result["originalDatasets"]["data"] = result["originalDatasets"]["data"][:30]
         safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
 
         # 응답 구성
-        response_data = {
-            **safe_result,
-            "sampleInfo": {
-                "sampleId": sample_id,
-                "sampleName": sample_config.name,
-                "sampleDescription": sample_config.description,
-            }
-        }
-
         return ApiResponse(
-            data=convert_dict_to_camel_case(response_data),
-            message=f"샘플 데이터셋 '{sample_config.name}'이 성공적으로 업로드되었습니다.",
+            data={"result":safe_result},
+            message="데이터셋 업로드 및 분석 완료",
             status_code=200
         )
 
