@@ -18,7 +18,7 @@ export default function ClientFCMInitializer() {
           const isLoggedIn = sessionStorage.getItem('token');
           if (isLoggedIn) {
             // 로그인 상태면 자동으로 FCM 토큰 요청 시도
-            const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+            const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q';
             console.log('vapid in initializer : ', vapidKey);
 
             if (vapidKey) {
