@@ -61,6 +61,8 @@ class PreprocessingHandler:
 
         # 3. MinIO에서 데이터 가져오기
         minio_output, encoding = await self._get_data_from_minio(dataset_object_name)
+        
+        encoding = "utf-8"
 
         # 4. 전처리 작업 수행
         data_io = io.BytesIO(minio_output)
