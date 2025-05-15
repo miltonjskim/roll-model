@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -21,10 +21,10 @@ import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 
 const ConfigDataPage = () => {
   const router = useRouter();
-  const projectId = useAtomValue(projectIdAtom);
   const mutation = useUploadDataset();
   const file = useAtomValue(uploadedFileAtom);
   const [projectTitle] = useAtom(projectTitleAtom);
@@ -39,12 +39,14 @@ const ConfigDataPage = () => {
   const [selectedDelimiterOption, setSelectedDelimiterOption] = useState(','); // UI에서 선택된 라디오 옵션
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
   const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
-  const [isLoading, setIsLoading] = useState(false);
+  const setAiRecommendedStepsAtom = useSetAtom(aiRecommendedStepsAtom);
   const projectDescription = useAtomValue(projectDescriptionAtom);
   const projectdomain = useAtomValue(projectDomainAtom);
   const projectCategory = useAtomValue(projectCategoryAtom);
   const projectPublic = useAtomValue(projectPublicAtom);
   const setProjectId = useSetAtom(projectIdAtom);
+  const setGlobalLoading = useSetAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -70,6 +72,9 @@ const ConfigDataPage = () => {
 
   // 프로젝트 생성 요청 함수
   const handleCreateProject = async () => {
+    setGlobalLoading(true);
+    setLoadingMessage('프로젝트를 생성하고 있습니다...');
+
     const payload = {
       title: projectTitle,
       description: projectDescription,
@@ -86,6 +91,9 @@ const ConfigDataPage = () => {
       handleUpload(projectId.toString());
     } catch (err) {
       console.error('프로젝트 생성 실패:', err);
+    } finally {
+      setGlobalLoading(false);
+      setLoadingMessage(null);
     }
   };
 
@@ -113,6 +121,9 @@ const ConfigDataPage = () => {
       })),
     };
 
+    setGlobalLoading(true);
+    setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
+
     mutation.mutate(
       { projectId, config: payload, file },
       {
@@ -120,38 +131,23 @@ const ConfigDataPage = () => {
           console.log('onSuccessData:', response.data);
 
           if (response.data) {
-            const { result } = response.data;
-            setUploadedDataset(result);
+            const data = response.data;
+            setUploadedDataset(data.result);
+            setAiRecommendedStepsAtom(data.step);
 
-            // console.log('pipelineId:', data.pipelineId);
             router.push('/workspace/data-preprocess');
-            // requestAIPreprocessingRecommendation(data.pipelineId);
           }
         },
         onError: (err) => {
           showErrorToast(err.message);
           console.error(err);
         },
+        onSettled: () => {
+          setGlobalLoading(false);
+          setLoadingMessage(null);
+        },
       },
     );
-  };
-
-  // ai기반 전처리 방법 추천 요청하는 함수
-  const requestAIPreprocessingRecommendation = async (pipelineId: string) => {
-    setIsLoading(true);
-
-    try {
-      const response = await axiosInstance(`/api/v1/pipelines/${pipelineId}/preprocessing/recommendation`);
-
-      console.log('ai 추천 response:', response);
-      router.push('/workspace/data-preprocess');
-    } catch (error) {
-      const apiError = error as ApiError;
-      showErrorToast(apiError.message);
-      console.error(apiError);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   // 컬럼 타입 확인하는 함수
@@ -222,17 +218,15 @@ const ConfigDataPage = () => {
     }
   }, [selectedDelimiterOption, customDelimiter]);
 
-  if (isLoading) <div>Loading...</div>;
-
   return (
     <div className="flex flex-col justify-center">
       <div>
-        <h1 className="text-xl font-bold">데이터 설정하기</h1>
-        <h2>업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+        <h1 className="text-lg font-bold">데이터 설정하기</h1>
+        <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
       </div>
 
-      <div className="mx-auto mt-4 flex items-stretch justify-center gap-4">
-        <div className="flex basis-[60rem] flex-col gap-4">
+      <div className="mx-auto mt-4 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
+        <div className="flex max-w-[90%] basis-[60rem] flex-col gap-4">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md">
             <div className="p-6 text-left">
               <div className="mb-3">
@@ -280,9 +274,9 @@ const ConfigDataPage = () => {
                 <p className="text-sm text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
               </div>
 
-              <div className="gap- flex flex-wrap gap-x-12 p-4">
+              <div className="flex flex-wrap gap-x-12 p-4">
                 {header.map((col, idx) => (
-                  <div key={idx} className="my-2 flex items-center gap-2 text-sm">
+                  <div key={idx} className="my-2 flex items-center gap-6 text-sm">
                     <span className="w-32 font-semibold">{col.length === 0 ? `컬럼 ${idx + 1}` : col}</span>
                     <Select
                       value={columnTypes[idx]}

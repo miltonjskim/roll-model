@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAtomValue } from 'jotai';
 import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { OriginalDatasetType } from '@/entities/workspace/data-config/model/types';
+import clsx from 'clsx';
 
 interface PreprocessingTableProps {
   changedCells?: Record<string, boolean>; // 예: { '2:temperature': true }
@@ -25,13 +26,13 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
   // console.log('dynamicColumns:', dynamicColumns);
 
   return (
-    <div className="mt-4 max-h-80 overflow-x-auto overflow-y-auto rounded-md border">
+    <div className="mt-4 max-h-[42vh] overflow-x-auto overflow-y-auto rounded-md border border-gray-200">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center">행</TableHead>
+            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold">행</TableHead>
             {dynamicColumns.map((col) => (
-              <TableHead className="text-bold bg-[theme(color-gray-04)] sticky top-0 z-10 text-center" key={col}>
+              <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold" key={col}>
                 {col}
               </TableHead>
             ))}
@@ -50,8 +51,8 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
                   const value = row[col];
 
                   return (
-                    <TableCell key={col} className={`${isChanged ? 'bg-yellow-100 font-medium' : ''} `}>
-                      {value !== null && value !== undefined ? String(value) : <span className="text-gray-400">null</span>}
+                    <TableCell key={col} className={clsx('text-xs', isChanged && 'border-l-2 border-yellow-300 bg-yellow-50 font-semibold', 'text-center')}>
+                      {value !== null && value !== undefined ? String(value) : <span className="text-gray-400">—</span>}
                     </TableCell>
                   );
                 })}
