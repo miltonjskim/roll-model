@@ -30,6 +30,7 @@ const CallbackPage = () => {
         if (!accessToken) throw new Error('access_token 없음');
 
         sessionStorage.setItem('token', accessToken);
+        document.cookie = `access_token=${accessToken}; path=/;`;
         setUserToken(accessToken);
 
         const { data: apiResponse } = await axiosInstance.get<ApiResponse<UserInfo>>('/api/v1/auth/members/my');
@@ -53,7 +54,10 @@ const CallbackPage = () => {
 
         setUser(apiResponse.data);
         setIsLoggedIn(true);
-        router.push('/');
+        const redirectTo = new URLSearchParams(window.location.search).get('redirectTo');
+        const cleanPath = redirectTo?.split('?')[0];
+
+        router.replace(cleanPath || '/');
       } catch (error) {
         console.error(error);
         setIsLoggedIn(false);

@@ -19,6 +19,7 @@ export const InitAuthProvider = () => {
   }, [setInitUserToken]);
 
   useEffect(() => {
+    if (token === undefined) return;
     if (!token) {
       setIsLoggedIn(false);
       return;

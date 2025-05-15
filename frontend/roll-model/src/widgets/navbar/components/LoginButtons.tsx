@@ -5,21 +5,34 @@ import { socialLogin } from '@/features/auth/service/socialLogin';
 import GoogleIcon from '@/shared/assets/images/google.svg';
 import GithubIcon from '@/shared/assets/images/github.svg';
 
-const LoginButtons = () => (
-  <div className="flex flex-col gap-2">
-    <Button className="hover:bg-[theme(primary-black)] w-full hover:text-[var(--primary-white)]" variant="outline" onClick={() => socialLogin('google')}>
-      <div className="group m-2 flex items-center gap-2">
-        <GoogleIcon className="fill-current" />
-        구글로 로그인
-      </div>
-    </Button>
-    <Button variant="outline" className="group hover:bg-[theme(primary-black)] w-full hover:text-[var(--primary-white)]" onClick={() => socialLogin('github')}>
+interface LoginButtonsProps {
+  type?: 'modal';
+}
+
+const LoginButtons = ({ type }: LoginButtonsProps) => {
+  const isModal = type === 'modal';
+
+  const buttonClassName = isModal
+    ? 'w-full bg-[theme(primary-white)] border border-[var(--color-gray-03)] text-[var(--primary-black)] hover:bg-[theme(primary-black)] hover:text-[var(--primary-white)] hover:border-[var(--primary-black)]'
+    : 'w-full hover:bg-[theme(primary-black)] hover:text-[var(--primary-white)] ';
+
+  const variant = 'outline';
+
+  const ButtonItem = ({ provider, label, Icon }: { provider: 'google' | 'github'; label: string; Icon: typeof GoogleIcon }) => (
+    <Button variant={variant} size={isModal ? 'lg' : 'default'} className={`group ${buttonClassName}`} onClick={() => socialLogin(provider)}>
       <div className="flex items-center gap-2">
-        <GithubIcon className="fill-current" />
-        깃허브로 로그인
+        <Icon className="fill-current" />
+        {label}
       </div>
     </Button>
-  </div>
-);
+  );
+
+  return (
+    <div className={isModal ? 'flex gap-2' : 'flex flex-col gap-2'}>
+      <ButtonItem provider="google" label="구글로 로그인" Icon={GoogleIcon} />
+      <ButtonItem provider="github" label="깃허브로 로그인" Icon={GithubIcon} />
+    </div>
+  );
+};
 
 export default LoginButtons;
