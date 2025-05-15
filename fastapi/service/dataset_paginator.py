@@ -40,13 +40,8 @@ class ChunkedCSVReader:
     async def _detect_encoding(self):
         """MinIO metadata에서 인코딩 정보를 가져오고, 없으면 기본값 사용"""
         try:
-            minio_metadata = self.minio_client.get_metadata(self.bucket_name, self.object_name)
-            encoding = minio_metadata.get("metadata", {}).get("X-Amz-Meta-Encoding")
+            self.encoding = "utf-8"
 
-            if encoding:
-                self.encoding = encoding
-                logger.info(f"Using encoding from metadata: {self.encoding}")
-                return
         except Exception as e:
             logger.warning(f"Error getting metadata: {e}")
 

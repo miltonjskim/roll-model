@@ -356,8 +356,6 @@ async def complete_preprocessing(
         # 3. 최종 데이터셋 데이터 가져오기
         logger.info(f"required object name : {final_dataset_object_name}")
         minio_output = minio_client.get_file(bucket_name, final_dataset_object_name)
-        minio_metadata = minio_client.get_metadata(bucket_name, final_dataset_object_name)
-        encoding = minio_metadata.get("metadata").get("X-Amz-Meta-Encoding")
         if not minio_output:
             raise HTTPException(status_code=404, detail="최종 데이터셋을 찾을 수 없습니다")
 
@@ -371,7 +369,7 @@ async def complete_preprocessing(
         buffer.seek(0)               # 파일 처음으로 다시 이동
 
         # 타입 추론
-        df = pd.read_csv(buffer, encoding=encoding)
+        df = pd.read_csv(buffer, encoding="utf-8")
         columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
         logger.info(df.head)
 

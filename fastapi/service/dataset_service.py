@@ -31,6 +31,7 @@ from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import ColumnType
 from service.db.pipeline_mysql_service import create_mysql_pipeline
 from service.storage.storage import add_index_to_csv
+import chardet
 
 logger = logging.getLogger()
 
@@ -85,7 +86,9 @@ async def upload_dataset_and_save_metadata(
         bucket_name = "datasets"
         object_name = f"project_{project_id}/{file.filename}"
 
-        indexed_data = add_index_to_csv(file_io, encoding=config.get("encoding"))
+        utf_8_bytes = convert_to_utf8_bytes(file_io)
+
+        indexed_data = add_index_to_csv(utf_8_bytes, encoding="UTF-8")
 
         # MinIO에 파일 업로드
         upload_success = await minio_client.upload_file(
@@ -93,7 +96,7 @@ async def upload_dataset_and_save_metadata(
             object_name=object_name,
             file_data=indexed_data,
             content_type=file.content_type,
-            encoding=config.get("encoding")
+            encoding=config.get("UTF-8")
         )
 
         if not upload_success:
@@ -118,8 +121,8 @@ async def upload_dataset_and_save_metadata(
         logger.info(f"프로젝트 {project_id}의 데이터셋 ETag가 성공적으로 저장되었습니다: {etag}")
 
         # 데이터셋 분석
-        file_io.seek(0)
-        dataset_analysis = await analyze_dataset(file_io, config)
+        utf_8_bytes.seek(0)
+        dataset_analysis = await analyze_dataset(utf_8_bytes, config)
 
         # MongoDB에 데이터셋 정보 저장
         dataset_id = await store_dataset_to_mongodb(
@@ -161,7 +164,7 @@ async def upload_dataset_and_save_metadata(
                 "totalRows": dataset_analysis["total_rows"],
                 "totalColumns": dataset_analysis["total_columns"],
                 "filename": file.filename,
-                "encoding": config.get("encoding", "UTF-8"),
+                "encoding": config.get("UTF-8"),
                 "delimiter": config.get("delimiter", "comma")
             },
             "missingValues": dataset_analysis["missing_values"],
@@ -196,13 +199,13 @@ async def upload_dataset_and_save_metadata(
 이 함수는 나중에 utils/dataset_analyzer.py로 분리 가능
 
 Args:
-    file_io: 파일 객체
+    utf_8_bytes: 파일 객체
     config: 데이터셋 설정
 
 Returns:
     Dict: 분석 결과
 """
-async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
+async def analyze_dataset(utf_8_bytes: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
     try:
         delimiter_map = {
             "comma": ",",
@@ -212,13 +215,12 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         }
 
         delimiter = delimiter_map.get(config.get("delimiter", "comma"), ",")
-        encoding = config.get("encoding", "UTF-8")
         has_header = config.get("hasHeader", False)
-        file_io.seek(0)
+        utf_8_bytes.seek(0)
         df = pd.read_csv(
-            file_io,
+            utf_8_bytes,
             delimiter=delimiter,
-            encoding=encoding,
+            encoding="UTF-8",
             header=0 if has_header else None
         )
 
@@ -406,7 +408,7 @@ async def store_dataset_to_mongodb(
                 "missing_value_count": missing_value_count,
                 "delimiter": delimiter,
                 "custom_delimiter": custom_delimiter,
-                "encoding": config.get("encoding", "UTF-8"),
+                "encoding": "UTF-8",
                 "has_header": config.get("hasHeader", False),
                 "statistics": {} # 틀에만 추가
             }
@@ -538,3 +540,47 @@ async def calculate_and_update_statistics(
     except Exception as e:
         # 오류 발생 시 상태 업데이트
         logger.error(f"데이터셋 {dataset_id}의 통계 계산 중 오류 발생: {str(e)}")
+
+
+import chardet
+
+
+def convert_to_utf8_bytes(data: bytes) -> bytes:
+    """
+    바이트 데이터를 UTF-8 바이트로 변환
+    """
+    # 1. 원본 인코딩 감지
+    detected = chardet.detect(data)
+    encoding = detected['encoding'] or 'utf-8'
+
+    # 2. 유니코드 문자열로 디코딩
+    try:
+        text = data.decode(encoding)
+    except UnicodeDecodeError:
+        text = fallback_decode(data)
+
+    # 3. UTF-8로 인코딩
+    return text.encode('utf-8')
+
+def convert_to_utf8_string(data: bytes) -> str:
+    """
+    바이트 데이터를 UTF-8로 디코딩한 문자열로 변환
+    """
+    # UTF-8 바이트로 변환 후 디코딩
+    utf8_bytes = convert_to_utf8_bytes(data)
+    return utf8_bytes.decode('utf-8')
+
+def fallback_decode(data: bytes) -> str:
+    """
+    여러 인코딩을 순서대로 시도
+    """
+    encodings = ['utf-8', 'euc-kr', 'cp949', 'iso-8859-1']
+
+    for encoding in encodings:
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+
+    # 모든 방법 실패 시 에러 무시하고 디코딩
+    return data.decode('utf-8', errors='ignore')
