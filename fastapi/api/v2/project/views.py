@@ -13,7 +13,7 @@
  -> 업로드된 데이터셋을 분석하고 추후 전처리 작업의 기반이 되는 정보 제공
 """
 from typing import Optional
-from wsgiref.headers import Headers
+from starlette.datastructures import Headers
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks,HTTPException
 from fastapi.encoders import jsonable_encoder
@@ -26,15 +26,9 @@ import time
 from typing import Dict, List, Any, Optional
 from openai import OpenAI
 import pandas as pd
-
-from pydantic import BaseModel
 import re
-import aiohttp
-import asyncio
-import os
 import math
 
-from core.exception import CustomAPIException
 from core.security import verify_token
 from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
@@ -309,10 +303,10 @@ async def upload_project_sample_dataset(
         sample_file = UploadFile(
             file=file_obj,
             filename=filename,
-            headers=Headers([
-                ("content-type", "text/csv"),
-                ("content-disposition", 'form-data; name="file"; filename="data.csv"')
-            ])
+            headers = Headers({
+                "content-type": "text/csv",
+                "content-disposition": 'form-data; name="file"; filename="data.csv"'
+            })
         )
 
         # 데이터셋 업로드 및 분석 (기존 함수 재사용)
@@ -402,7 +396,7 @@ async def reload_recent_workspace(
         
         # MongoDB에서 파이프라인 상세 정보 조회
         pipeline_id = latest_pipeline.pipeline_id
-        pipeline_details:PipelineModel = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
+        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
         
         if not pipeline_details:
             return ApiResponse(

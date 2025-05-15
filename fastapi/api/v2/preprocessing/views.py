@@ -1,8 +1,10 @@
 import io
 from datetime import datetime
-from fastapi import APIRouter, Depends, Path, HTTPException
+import json
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, HTTPException, UploadFile, background
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
+from starlette.datastructures import Headers
 from sqlalchemy.orm import Session
 
 from core.api_response import ApiResponse
@@ -14,12 +16,12 @@ from models.preprocessing.preprocessing_request_models import ClassBalancingRequ
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
 from schemas.mysql.schemas import PipelineStatus, Pipeline, Project
-from service.dataset_service import store_dataset_to_mongodb, analyze_dataset, replace_nan_values
+from service.dataset_service import store_dataset_to_mongodb, analyze_dataset, replace_nan_values, upload_dataset_and_save_metadata
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
-from typing import Annotated, Optional
+from typing import Annotated, Any, Dict, Optional
 import pandas as pd
 import logging
 
@@ -308,6 +310,7 @@ async def delete_preprocessing(
 
 @router.post('/complete')
 async def complete_preprocessing(
+    background_tasks: BackgroundTasks,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     member_id: int = Depends(verify_pipeline_ownership),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
@@ -318,22 +321,23 @@ async def complete_preprocessing(
     """
     try:
         # 1. 파이프라인 정보 가져오기
-        pipeline:PipelineModel = await pipeline_service.get_pipeline(pipeline_id)
+        pipelineModel:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id)
         
-        if pipeline is None:
+        if pipelineModel is None:
             raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다")
         
         # 2. 최종 전처리된 데이터셋 object name 확인
         final_dataset_object_name = None
         final_dataset_etag = None
-        if pipeline.history and len(pipeline.history) > 0:
-            latest_history = pipeline.history[-1]
+        if pipelineModel.history and len(pipelineModel.history) > 0:
+            latest_history = pipelineModel.history[-1]
             if latest_history.preprocessing_steps and len(latest_history.preprocessing_steps) > 0:
                 final_dataset_object_name = latest_history.preprocessing_steps[-1].preprocessed_dataset_object_name
                 final_dataset_etag = latest_history.preprocessing_steps[-1].preprocessed_dataset_etag
         
         if not final_dataset_object_name:
-            final_dataset_object_name = pipeline.original_dataset_object_name
+            final_dataset_object_name = pipelineModel.original_dataset_object_name
+            final_dataset_etag = pipelineModel.original_dataset_etag
         
         # MinIO 클라이언트 가져오기
         minio_client = get_minio_client()
@@ -402,7 +406,7 @@ async def complete_preprocessing(
 
             inferred_columns.append({"name": col, "type": inferred_type})
 
-        config = {
+        config: Dict[str, Any] = {
             "delimiter": "comma",
             "customDelimiter": None,
             "encoding":  "UTF-8",
@@ -410,26 +414,31 @@ async def complete_preprocessing(
             "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
         }
 
-        project = db.query(Project).filter(Project.project_id == pipeline.project_id).first()
+        project = db.query(Project).filter(Project.project_id == pipelineModel.project_id).first()
 
         # 버퍼 위치를 처음으로 되돌림
         buffer.seek(0)
         
-        # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
-        dataset_analysis = await analyze_dataset(buffer, config)
+        preprocessed_file = UploadFile(
+            file=buffer,
+            filename= f"processed_data_{pipeline_id}.csv",
+            headers = Headers({
+                "content-type": "text/csv",
+                "content-disposition": 'form-data; name="file"; filename="data.csv"'
+            })
+        )
 
-        # MongoDB에 전처리된 데이터셋 저장
-        dataset_id: str = await store_dataset_to_mongodb(
-            project_id=pipeline.project_id,
+        config_json = json.dumps(config)
+        # 6. 전처리된 데이터셋 통계치 백그라운드 작업
+        result = await upload_dataset_and_save_metadata(
+            db=db,
+            project_id=pipelineModel.project_id,
             member_id=member_id,
-            etag=final_dataset_etag,
-            dataset_analysis=dataset_analysis,
-            config=config,
-            file_size=file_size,  # 미리 구한 파일 크기 사용
-            object_name=final_dataset_object_name,
-            sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
-            category = project.category,
-            domain = project.domain,
+            file=preprocessed_file,
+            config_json=config_json,
+            background_tasks=background_tasks,
+            category=project.category,
+            domain=project.domain,
             is_preprocessed=True,
         )
  
@@ -437,9 +446,9 @@ async def complete_preprocessing(
         updated_pipeline = await pipeline_service.update_pipeline_status(
             pipeline_id=pipeline_id,
             new_status=PipelineStatus.PREPROCESSED,
-            project_id=pipeline.project_id,
+            project_id=pipelineModel.project_id,
             member_id=member_id,
-            preprocessed_dataset_id=dataset_id
+            preprocessed_dataset_id=result["datasetId"]
         )
 
         if not updated_pipeline:
@@ -452,7 +461,7 @@ async def complete_preprocessing(
             raise HTTPException(status_code=404, detail="해당하는 파이프라인을 찾을 수 없습니다.")
 
         # 파이프라인 상태 업데이트
-        pipeline.data_count = len(dataset_analysis["data_sample"]["data"]) if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else 0
+        pipeline.data_count = len(result["originalDatasets"]["data"]) if result["originalDatasets"]["data"] else 0
         pipeline.status = PipelineStatus.PREPROCESSED
         pipeline.modified_at = datetime.now()
         
@@ -468,6 +477,7 @@ async def complete_preprocessing(
                 "pipelineId": pipeline_id,
                 "category": project.category,
                 "columns": inferred_columns,
+                "dataset": result["originalDatasets"]["data"][:30]
             }
         }
 
