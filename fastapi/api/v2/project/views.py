@@ -15,13 +15,24 @@
 from typing import Optional
 from wsgiref.headers import Headers
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks
+from fastapi import APIRouter, Depends, File, Form, UploadFile, Path, BackgroundTasks,HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query, Header
 from sqlalchemy.orm import Session
 import logging
 import json
 import io
+import time
+from typing import Dict, List, Any, Optional
+from openai import OpenAI
+import pandas as pd
+
+from pydantic import BaseModel
+import re
+import aiohttp
+import asyncio
+import os
+import math
 
 from core.exception import CustomAPIException
 from core.security import verify_token
@@ -40,11 +51,14 @@ from service.pipeline_fork_service import save_new_pipeline, prepare_response_da
 from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
     create_new_pipeline_model
 from utils.snake_to_camel import convert_dict_to_camel_case
+from core.config import get_settings
+settings = get_settings()
 
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+logger = logging.getLogger()
 router = APIRouter()
 sample_router = APIRouter()
 pipeline_router = APIRouter()
-logger = logging.getLogger()
 
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
@@ -54,6 +68,7 @@ async def upload_project_dataset(
     dataFile: UploadFile = File(..., description="CSV 파일"),
     db: Session = Depends(get_mysql_db),
 ):
+   
     """
     프로젝트에 원본 데이터셋 업로드
 
@@ -75,6 +90,7 @@ async def upload_project_dataset(
     6. MongoDB에 데이터셋 정보 저장
     7. 분석 결과 및 생성된 ID 반환
     """
+    recommendations = []
     try:
         # 설정 유효성 검사
         try:
@@ -122,9 +138,26 @@ async def upload_project_dataset(
                 error_message="프로젝트를 찾을 수 없습니다"
             )
 
+        project_info = {
+                "title": project.title,
+                "description": project.description,
+                "domain": project.domain,
+                "category": project.category
+        }
         member_id = project.member_id
         category = project.category
         domain = project.domain
+        contents = await dataFile.read()
+        dataFile.file.seek(0) 
+        analysis_result = []
+        try:
+
+            df = pd.read_csv(io.BytesIO(contents))
+            analysis_result = analyze_csv(df)
+            analysis_result = clean_for_json(analysis_result)  
+
+        except Exception as e:
+            analysis_result = []
 
         # 데이터셋 업로드 및 분석
         result = await upload_dataset_and_save_metadata(
@@ -139,10 +172,17 @@ async def upload_project_dataset(
         )
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
+    
+        
+        try:
+            recommendations = await generate_preprocessing_recommendations(analysis_result, project_info)
+        except Exception as rec_e:
+            logger.warning(f"전처리 추천 실패. 빈 리스트로 대체합니다: {rec_e}")
+            recommendations = []
 
         # 응답 구성
         return ApiResponse(
-            data=safe_result,
+            data={"result":safe_result,"step":recommendations},
             message="데이터셋 업로드 및 분석 완료",
             status_code=200
         )
@@ -811,3 +851,379 @@ async def get_dataset_page(
             status_code=400,
             message=f"데이터셋 조회 실패: {str(e)}"
         )
+    
+
+async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+   
+    """OpenAI API를 사용하여 전처리 추천을 생성합니다."""
+    recommendations=[]
+    prompt = f"""
+    CSV 파일 분석 결과: {json.dumps(safe_result, ensure_ascii=False)}
+
+    프로젝트 정보: {json.dumps(project_info, ensure_ascii=False) if project_info else "정보 없음"}
+
+    위 데이터를 분석하고 적절한 데이터 전처리 단계를 추천해주세요. 다음 JSON 형식으로 응답해주세요:
+
+    [
+      {{
+        "active": true,
+        "categoryId": "전처리 카테고리 ID",
+        "optionId": "옵션 ID",
+        "optionName": "옵션 이름",
+        "optionDescription": "옵션 설명",
+        "order": 숫자(타임스탬프),
+        "parameters": {{
+          필요한 매개변수들
+        }},
+        "type": "카테고리 ID와 동일"
+      }}
+    ]
+
+    사용 가능한 전처리 카테고리와 옵션:
+    {json.dumps(PREPROCESSING_CATEGORIES, ensure_ascii=False)}
+
+    참고사항:
+    1. 결측치 처리 시 필요한 매개변수: columnId, method, fillValue 등
+    2. 이상치 탐지 시 필요한 매개변수: columnId, detection, minThreshold, maxThreshold, outlierIndices 등
+    3. 결측치나 이상치 등에 필요한 매개 변수의 값들을 소수점 2자리까지만 나오게 채워주세요.
+    4. order는 타임스탬프 형식으로 현재 시간을 밀리초로 변환한 값을 사용하세요.
+    5. 위에 응답 형식을 정확하게 지켜주세요.
+    6. 추천하는 전처리 순서를 정확하게 지켜서 보내주세요.
+    7. 만약 전처리할 필요가 없다면 step 배열안에 null로 보내주세요.
+    """
+
+    try:
+        logger.info("OpenAI API 호출 시작")
+        start = time.time()
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "당신은 데이터 분석 전문가입니다."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=2000
+        )
+        
+        duration = (time.time() - start) * 1000
+        logger.info(f"OpenAI 응답 수신 완료 - 소요 시간: {duration:.2f}ms")
+
+        response_text = response.choices[0].message.content
+
+        if not response_text:
+            logger.error("GPT 응답이 비어 있습니다! 응답 객체 전체:\n%s", response)
+            return []
+
+        logger.info(f"GPT 응답 본문:\n{response_text}")
+        try:
+            recommendations = parse_openai_response(response_text)
+        except Exception :
+            logger.error("GPT 응답 파싱 실패, 빈 리스트 반환")
+            return []
+           
+        #recommendations = parse_openai_response(response_text)
+        #recommendations = json.loads(response_text)
+        logger.info(f"파싱된 전처리 추천 개수: {len(recommendations)}")
+
+        return recommendations
+
+    except Exception as e:
+        logger.error("OpenAI API 호출 중 예외 발생", exc_info=True)
+        logger.info("기본 추천 로직으로 대체합니다.")
+        return generate_default_recommendations(safe_result)
+
+def generate_default_recommendations(safe_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """기본 전처리 추천을 생성합니다 (API 호출 실패 시)."""
+    recommendations = []
+
+    # 결측치 처리
+    missing_values = safe_result.get("missing_values", {})
+    for col, count in missing_values.items():
+        if count > 0 and col in safe_result.get("numeric_columns", []):
+            # 결측치가 있는 수치형 열은 평균값으로 대체
+            mean_value = safe_result.get("stats", {}).get(col, {}).get("mean", 0)
+            recommendations.append({
+                "active": True,
+                "categoryId": "missing-values",
+                "optionId": "mean",
+                "optionName": "평균값으로 대체",
+                "optionDescription": "결측치를 평균값으로 대체",
+                "order": int(time.time() * 1000),
+                "parameters": {
+                    "columnId": col,
+                    "fillValue": mean_value,
+                    "method": "MEAN"
+                },
+                "type": "MISSING-VALUES"
+            })
+
+    # 이상치 탐지 (최대 1개 열에 대해)
+    for col in safe_result.get("numeric_columns", [])[:1]:
+        stats = safe_result.get("stats", {}).get(col, {})
+        if stats:
+            # Z-점수 기반 이상치 탐지 (임의의 값)
+            recommendations.append({
+                "active": True,
+                "categoryId": "outlier-detection",
+                "optionId": "z-score",
+                "optionName": "Z-점수 기반 탐지",
+                "optionDescription": "Z-점수로 이상치 탐지",
+                "order": int(time.time() * 1000) + 1,
+                "parameters": {
+                    "columnId": col,
+                    "detection": "ZSCORE",
+                    "minThreshold": -3,
+                    "maxThreshold": 3,
+                    "method": "ZSCORE",
+                    "outlierIndices": []
+                },
+                "type": "OUTLIER-DETECTION"
+            })
+
+    return recommendations
+
+PREPROCESSING_CATEGORIES = {
+    "missing-values": {
+        "id": "missing-values",
+        "name": "결측치 처리",
+        "icon": "❓",
+        "description": "빠진 데이터를 채우거나 삭제할 수 있습니다.",
+        "options": [
+            {
+                "id": "mean",
+                "name": "평균값으로 대체",
+                "description": "결측치를 평균값으로 대체",
+                "apiEndpoint": "/missing-values/imputation",
+                "method": "MEAN"
+            },
+            {
+                "id": "median",
+                "name": "중앙값으로 대체",
+                "description": "결측치를 중앙값으로 대체",
+                "apiEndpoint": "/missing-values/imputation",
+                "method": "MEDIAN"
+            },
+            {
+                "id": "mode",
+                "name": "최빈값으로 대체",
+                "description": "결측치를 최빈값으로 대체",
+                "apiEndpoint": "/missing-values/imputation",
+                "method": "MODE"
+            },
+            {
+                "id": "drop-rows",
+                "name": "결측치가 있는 행 제거",
+                "description": "결측치가 있는 행 제거",
+                "apiEndpoint": "/missing-values/remove",
+                "method": "ROW_REMOVE"
+            },
+            {
+                "id": "drop-columns",
+                "name": "결측치가 있는 열 제거",
+                "description": "결측치가 있는 열 제거",
+                "apiEndpoint": "/missing-values/remove",
+                "method": "COL_REMOVE"
+            },
+        ]
+    },
+    "outlier-detection": {
+        "id": "outlier-detection",
+        "name": "이상치 탐지",
+        "icon": "🔍",
+        "description": "데이터의 이상값을 탐지합니다.",
+        "options": [
+            {
+                "id": "z-score",
+                "name": "Z-점수 기반 탐지",
+                "description": "Z-점수로 이상치 탐지",
+                "apiEndpoint": "/outliers/detection",
+                "method": "ZSCORE"
+            },
+            {
+                "id": "iqr",
+                "name": "IQR 기반 탐지",
+                "description": "IQR로 이상치 탐지",
+                "apiEndpoint": "/outliers/detection",
+                "method": "IQR"
+            },
+        ]
+    },
+    "outlier-handle": {
+        "id": "outlier-handle",
+        "name": "이상치 처리",
+        "icon": "🛠️",
+        "description": "탐지된 이상치를 제거하거나 대체합니다.",
+        "options": [
+            {
+                "id": "replace",
+                "name": "이상치 대체",
+                "description": "이상치를 대체합니다.",
+                "apiEndpoint": "/outliers/imputation"
+            },
+            {
+                "id": "remove-rows",
+                "name": "행 제거",
+                "description": "이상치가 있는 행을 제거합니다.",
+                "apiEndpoint": "/outliers/remove",
+                "method": "ROW_REMOVE"
+            },
+            {
+                "id": "remove-cols",
+                "name": "열 제거",
+                "description": "이상치가 있는 열을 제거합니다.",
+                "apiEndpoint": "/outliers/remove",
+                "method": "COL_REMOVE"
+            },
+        ]
+    },
+    "data-transformation": {
+        "id": "data-transformation",
+        "name": "데이터 변환",
+        "icon": "🔁",
+        "description": "데이터를 정규화 및 변환합니다.",
+        "options": [
+            {
+                "id": "z-score",
+                "name": "Z-점수 정규화",
+                "description": "Z-score 정규화 적용",
+                "apiEndpoint": "/transform/z-score"
+            },
+            {
+                "id": "min-max",
+                "name": "Min-Max 정규화",
+                "description": "Min-Max 정규화 적용",
+                "apiEndpoint": "/transform/min-max"
+            },
+            {
+                "id": "log",
+                "name": "로그 변환",
+                "description": "로그 변환 적용",
+                "apiEndpoint": "/transform/log"
+            },
+            {
+                "id": "sqrt",
+                "name": "제곱근 변환",
+                "description": "제곱근 변환 적용",
+                "apiEndpoint": "/transform/sqrt"
+            },
+        ]
+    },
+    "encoding": {
+        "id": "encoding",
+        "name": "인코딩",
+        "icon": "🧮",
+        "description": "범주형 데이터 인코딩",
+        "options": [
+            {
+                "id": "one-hot",
+                "name": "원핫 인코딩",
+                "description": "One-hot 인코딩",
+                "apiEndpoint": "/encoding/one-hot"
+            },
+            {
+                "id": "label",
+                "name": "레이블 인코딩",
+                "description": "Label 인코딩",
+                "apiEndpoint": "/encoding/label"
+            },
+            {
+                "id": "target",
+                "name": "타겟 인코딩",
+                "description": "Target 인코딩",
+                "apiEndpoint": "/encoding/target"
+            },
+        ]
+    },
+    "class-balancing": {
+        "id": "class-balancing",
+        "name": "클래스 불균형 처리",
+        "icon": "⚖️",
+        "description": "클래스 불균형 문제 해결",
+        "options": [
+            {
+                "id": "over",
+                "name": "오버샘플링",
+                "description": "Over Sampling 적용",
+                "apiEndpoint": "/class-balancing",
+                "method": "OVER"
+            },
+            {
+                "id": "under",
+                "name": "언더샘플링",
+                "description": "Under Sampling 적용",
+                "apiEndpoint": "/class-balancing",
+                "method": "UNDER"
+            },
+        ]
+    }
+}
+
+def parse_openai_response(response_text: str):
+    try:
+        # 마크다운 블록 제거
+        cleaned_text = re.sub(r"^```(?:json)?|```$", "", response_text.strip(), flags=re.MULTILINE).strip()
+    
+        cleaned_text = re.sub(r"//.*", "", cleaned_text)
+        logger.info(f"마크다운 제거 후:\n{cleaned_text}")
+
+        return json.loads(cleaned_text)
+    except Exception as e:
+        logger.error("GPT 응답 파싱 실패", exc_info=True)
+        raise
+def clean_for_json(obj):
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(i) for i in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    return obj
+
+def safe_float(val):
+    if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+        return None
+    return float(val)
+
+def analyze_csv(df: pd.DataFrame) -> Dict[str, Any]:
+    """CSV 파일을 분석하여 기본 통계 및 특성을 반환합니다."""
+    analysis = {
+        "shape": df.shape,
+        "columns": list(df.columns),
+        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
+        "missing_values": {col: int(df[col].isna().sum()) for col in df.columns},
+        "numeric_columns": list(df.select_dtypes(include=['number']).columns),
+        "categorical_columns": list(df.select_dtypes(include=['object', 'category']).columns),
+        "datetime_columns": list(df.select_dtypes(include=['datetime']).columns),
+        "stats": {}
+    }
+
+    # 수치형 열에 대한 기본 통계
+    for col in analysis["numeric_columns"]:
+        try:
+            analysis["stats"][col] = {
+                "mean": safe_float(df[col].mean()),
+                "median": safe_float(df[col].median()),
+                "std": safe_float(df[col].std()),
+                "min": safe_float(df[col].min()),
+                "max": safe_float(df[col].max()),
+                "q1": safe_float(df[col].quantile(0.25)),
+                "q3": safe_float(df[col].quantile(0.75))
+            }
+        except:
+            pass
+
+    # 범주형 열에 대한 기본 통계
+    for col in analysis["categorical_columns"]:
+        try:
+            value_counts = df[col].value_counts().to_dict()
+            analysis["stats"][col] = {
+                "unique_values": len(value_counts),
+                "top_values": dict(sorted(value_counts.items(), key=lambda x: x[1], reverse=True)[:5])
+            }
+        except:
+            pass
+
+    return analysis
