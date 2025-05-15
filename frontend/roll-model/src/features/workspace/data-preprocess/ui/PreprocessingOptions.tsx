@@ -102,14 +102,14 @@ const preprocessingCategories: PreprocessingCategory[] = [
 
 interface PreprocessingOptionsProps {
   pipelineId?: string;
-  column?: string;
   onChangeCells?: (cells: Record<string, boolean>) => void;
   onAddStep?: (step: Step) => void;
 }
 
-const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: PreprocessingOptionsProps) => {
+const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: PreprocessingOptionsProps) => {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [selectedColumn, setSelectedColumn] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [uploadedDataset, setUploadedDataset] = useAtom(uploadedDatasetAtom);
   const [targetColumn, setTargetColumn] = useState('');
@@ -126,51 +126,31 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
     setLoading(true);
 
     try {
-      const detection = 'ZSCORE';
-
       const baseUrl = `/api/v2/pipelines/${pipelineId}/preprocessing`;
       const url = `${baseUrl}${option.apiEndpoint}`;
+      const column = selectedColumn ?? null;
 
-      const body: Record<string, string | number | undefined | null> = {};
+      const body: Record<string, string | number | undefined | null> = {
+        column,
+      };
 
-      if (categoryId !== 'class-imbalance') {
-        body.column = column ?? null;
-      }
+      if (option.method) {
+        console.log('option:', option);
 
-      switch (categoryId) {
-        case 'missing-values':
-          body.method = option.method;
-          break;
+        if (categoryId === 'outlier-detection') {
+          console.log('categoryId:', categoryId);
 
-        case 'outlier-detection':
           body.detection = option.method;
-          break;
-
-        case 'outlier-handle':
-          body.method = option.method || 'MEAN';
-          body.detection = detection;
-          break;
-
-        case 'data-transformation':
-          if (option.id === 'log') {
-            body.offset = offset;
-          }
-          break;
-
-        case 'encoding':
-          console.log('option id:', option.id);
-
-          if (option.id === 'target') {
-            body.targetColumn = targetColumn;
-          }
-          break;
-
-        case 'class-balancing':
-          body.column = column;
-          body.method = option.method || 'OVER';
-          body.samplingRatio = samplingRatio;
-          break;
+          console.log('option.method:', option.method);
+          console.log('body.detection:', body.detection);
+        } else {
+          body.method = option.method;
+        }
       }
+
+      if (option.apiEndpoint.includes('log')) body.offset = offset;
+      if (option.apiEndpoint.includes('target')) body.targetColumn = targetColumn;
+      if (option.apiEndpoint.includes('class-balancing')) body.samplingRatio = samplingRatio;
 
       const response = await axiosInstance.post(url, body);
       const result = response.data.data.data.result;
@@ -181,25 +161,21 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
       console.log('result:', result);
 
       const changed: Record<string, boolean> = {};
-
       if (result.originalRows && result.imputedRows) {
         result.imputedRows.forEach((newRow: ImputedRow, i: number) => {
           const oldRow = result.originalRows[i];
-          if (!oldRow) return;
           const rowIdx = newRow.idx ?? i;
           for (const key in newRow) {
-            if (key !== 'idx' && String(newRow[key]) !== String(oldRow[key])) {
+            if (key !== 'idx' && String(newRow[key]) !== String(oldRow?.[key])) {
               changed[`${rowIdx}:${key}`] = true;
             }
           }
         });
       }
 
-      if (result.outlierCount > 0 && Array.isArray(result.outlierIndices)) {
+      if (result.outlierCount && result.outlierIndices && selectedColumn) {
         result.outlierIndices.forEach((idx: number) => {
-          if (column) {
-            changed[`${idx}:${column}`] = true;
-          }
+          changed[`${idx}:${selectedColumn}`] = true;
         });
       }
 
@@ -217,41 +193,25 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
             }
           : prev,
       );
+      onAddStep?.({
+        type: categoryId.toUpperCase(),
+        parameters: {
+          columnId: selectedColumn ?? 'ALL',
+          ...(categoryId === 'outlier-detection' && option.method && { detection: option.method }),
+          ...(categoryId !== 'outlier-detection' && option.method && { method: option.method }),
+          ...(option.apiEndpoint.includes('log') && { offset }),
+          ...(option.apiEndpoint.includes('target') && { targetColumn }),
+          ...(option.apiEndpoint.includes('class-balancing') && { samplingRatio }),
+        },
+        order: Date.now(),
+        active: true,
+        categoryId,
+        optionId: option.id,
+        optionName: option.name,
+        optionDescription: option.description,
+      });
 
-      if (onAddStep && column) {
-        const parameters: Record<string, string | number | number[]> = { columnId: column };
-        if (option.method) parameters.method = option.method;
-        if (option.apiEndpoint.includes('outliers')) parameters.detection = detection;
-        if (option.apiEndpoint.includes('log')) parameters.offset = offset;
-        if (option.apiEndpoint.includes('target')) parameters.targetColumn = targetColumn;
-        if (option.apiEndpoint.includes('class-balancing')) parameters.samplingRatio = samplingRatio;
-
-        if (option.apiEndpoint.includes('detection')) {
-          parameters.minThreshold = result.minThreshold;
-          parameters.maxThreshold = result.maxThreshold;
-          parameters.outlierIndices = result.outlierIndices;
-        }
-
-        if (option.apiEndpoint.includes('missing-values')) {
-          parameters.fillValue = result.fillValue;
-        }
-
-        if (option.apiEndpoint.includes('imputation')) {
-          parameters.minThreshold = result.minThreshold;
-          parameters.maxThreshold = result.maxThreshold;
-        }
-
-        onAddStep({
-          type: categoryId.toUpperCase(),
-          parameters,
-          order: Date.now(),
-          active: true,
-          categoryId,
-          optionId: option.id,
-          optionName: option.name,
-          optionDescription: option.description,
-        });
-      }
+      setSelectedColumn(undefined);
     } catch (error) {
       console.error('전처리 요청 실패:', error);
     } finally {
@@ -267,10 +227,10 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
         return (
           <div key={cat.id} className="rounded-md border border-[var(--color-gray-02)] transition-shadow duration-200">
             <div
-              className={`flex cursor-pointer items-center justify-between rounded-t-md p-3 transition-colors duration-200 ${isOpen ? 'bg-[theme(color-gray-04)]' : 'hover:bg-[theme(color-gray-04)]'}`}
+              className={`flex cursor-pointer items-start justify-between rounded-t-md p-3 transition-colors duration-200 ${isOpen ? 'bg-[theme(color-gray-04)]' : 'hover:bg-[theme(color-gray-04)]'}`}
               onClick={() => toggle(cat.id)}
             >
-              <div className="flex items-center">
+              <div className="flex items-start">
                 <span className="font-tossface mr-2">{cat.icon}</span>
                 <span className="text-[0.95rem] font-medium">{cat.name}</span>
               </div>
@@ -278,7 +238,7 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
             </div>
 
             {isOpen && (
-              <div className="flex items-center">
+              <div className="flex items-start">
                 <p className="mx-4 my-2 text-xs text-[var(--color-gray-01)]">{cat.description}</p>
               </div>
             )}
@@ -290,84 +250,73 @@ const PreprocessingOptions = ({ pipelineId, column, onChangeCells, onAddStep }: 
                 const needsOffset = opt.apiEndpoint.includes('/log');
                 const needsSampling = cat.id === 'class-balancing';
 
-                const isColumnRequired = opt.requireColumn ?? false;
-                const isColumnMissing = isColumnRequired && !column;
-                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined) && !isColumnMissing;
+                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
 
                 return (
                   <div
                     key={opt.id}
-                    onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))}
-                    className={`flex items-center justify-between p-3 pl-4 text-sm transition-colors duration-200 ${selected[cat.id] === opt.id ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
+                    className={`group flex flex-col gap-3 border-b border-gray-200 p-4 transition-colors duration-200 ${isSelected ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
                   >
-                    <div className="cursor-pointer" onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))}>
-                      <div className="mb-2">
-                        <p className="text-sm font-semibold">{opt.name}</p>
-                        <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
-                      </div>
+                    {/* 항목 상단: 이름과 설명 */}
+                    <button onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))} className="text-left">
+                      <p className="text-sm font-semibold">{opt.name}</p>
+                      <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
+                    </button>
 
-                      {isSelected && (
-                        <div className="">
-                          {isColumnRequired && (
-                            <div>
-                              <label className="block text-sm font-medium">전처리 컬럼</label>
-                              <Select value={column} onValueChange={(val) => {}}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="선택하세요" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {columnNames.map((col) => (
-                                    <SelectItem key={col} value={col}>
-                                      {col}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {isColumnMissing && <p className="mt-1 text-xs text-red-500">컬럼을 선택해 주세요.</p>}
-                            </div>
-                          )}
-                          {needsTargetColumn && (
-                            <div>
-                              <label className="block text-sm font-medium">타겟 컬럼</label>
-                              <Select value={targetColumn} onValueChange={setTargetColumn}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="선택하세요" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {columnNames.map((col) => (
-                                    <SelectItem key={col} value={col}>
-                                      {col}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                          {needsOffset && (
-                            <div>
-                              <label className="block text-sm font-medium">Offset</label>
-                              <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} />
-                            </div>
-                          )}
-                          {needsSampling && (
-                            <div>
-                              <label className="block text-sm font-medium">Sampling Ratio (%)</label>
-                              <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
+                    {/* 조건부 렌더링: 폼 */}
                     {isSelected && (
-                      <div className="mt-2">
-                        <Button
-                          variant="black"
-                          size="sm"
-                          disabled={!isValid || loading}
-                          onClick={() => handleApply(cat.id, opt)}
-                          className={`ml-2 rounded-sm ${!isValid || loading ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-800'}`}
-                        >
+                      <div className="space-y-3">
+                        {/** 컬럼 선택 */}
+                        <div>
+                          <label className="block text-left text-xs font-medium">적용 컬럼</label>
+                          <Select value={opt.requireColumn ? selectedColumn || '' : (selectedColumn ?? '__ALL__')} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="전처리할 컬럼을 선택하세요." className="text-left text-sm" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {!opt.requireColumn && <SelectItem value="__ALL__">전체 컬럼</SelectItem>}
+                              {columnNames.map((col) => (
+                                <SelectItem key={col} value={col}>
+                                  {col}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {needsTargetColumn && (
+                          <div>
+                            <label className="block text-left text-xs font-medium">타겟 컬럼</label>
+                            <Select value={targetColumn} onValueChange={setTargetColumn}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="선택하세요" className="text-left text-sm" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {columnNames.map((col) => (
+                                  <SelectItem key={col} value={col}>
+                                    {col}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {needsOffset && (
+                          <div>
+                            <label className="block text-xs font-medium">Offset</label>
+                            <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} className="w-full" />
+                          </div>
+                        )}
+
+                        {needsSampling && (
+                          <div>
+                            <label className="block text-xs font-medium">Sampling Ratio (%)</label>
+                            <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} className="w-full" />
+                          </div>
+                        )}
+
+                        <Button variant="black" size="sm" onClick={() => handleApply(cat.id, opt)} disabled={!isValid || loading} className="mt-2 w-full">
                           적용
                         </Button>
                       </div>
