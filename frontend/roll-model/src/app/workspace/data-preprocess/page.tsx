@@ -102,21 +102,28 @@ const PreprocessDataPage = () => {
   };
 
   return (
-    <div className="mx-auto w-full overflow-x-auto px-4">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
+    <div className="mx-auto h-[calc(100vh-6rem)] w-full overflow-hidden px-4">
+      {/* 상단 제목 */}
+      <div className="mb-4">
+        <h1 className="text-xl font-bold">전처리 설정하기</h1>
+        <h2>필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
+      </div>
+
+      {/* 콘텐츠 영역 */}
+      <div className="flex h-[calc(100%-4.5rem)] gap-4 xl:flex-row xl:gap-6">
         {/* 좌측 영역 */}
-        <div className="max-w-[20rem] min-w-[16rem] flex-1 xl:basis-[20%]">
+        <div className="flex max-w-[20rem] min-w-[16rem] flex-col overflow-y-auto xl:basis-[20%]">
           {/* 프로젝트 정보 */}
-          <div className="bg-[theme(primary-white)] rounded-md p-4">
+          <div className="bg-[theme(primary-white)] mb-4 rounded-lg p-4">
             <h3 className="text-lg font-semibold">
               <span className="font-tossface">📌</span> {projectTitle}
             </h3>
           </div>
 
-          {/* 전처리 기능 목록 */}
-          <div className="bg-[theme(primary-white)] mt-4 rounded-md p-4">
+          {/* 전처리 기능 */}
+          <div className="bg-[theme(primary-white)] flex flex-1 flex-col rounded-lg p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="mt-4 mb-10 transition-shadow duration-300">
+            <div className="mt-4 mb-6 flex-1 overflow-y-auto">
               <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
             </div>
             <div className="text-center text-xs">
@@ -129,31 +136,38 @@ const PreprocessDataPage = () => {
         </div>
 
         {/* 우측 영역 */}
-        <div className="flex flex-1 flex-col gap-4 xl:min-w-0 xl:basis-[80%]">
-          {/* 파이프라인 + 요약 */}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1 xl:basis-[80%]">
+          {/* 데이터 요약 & 적용된 단계 */}
           <div className="flex flex-col gap-4 md:flex-row">
-            {/* 내 데이터 요약 */}
-            <div className="bg-[theme(primary-white)] rounded-md p-4 md:w-1/3">
-              <h4 className="text-[1.07rem] font-semibold">내 데이터 요약</h4>
+            <div className="bg-[theme(primary-white)] rounded-md p-4 md:w-1/4">
+              <h4 className="text-left text-[1.07rem] font-semibold">내 데이터 요약</h4>
               <p className="text-sm text-[var(--color-gray-01)]">전처리로 결측치와 이상치를 수정할 수 있습니다.</p>
               <PreprocessingSummary />
             </div>
 
-            {/* 적용된 단계 */}
-            <div className="bg-[theme(primary-white)] overflow-x-auto rounded-md p-4 md:w-2/3">
+            <div className="bg-[theme(primary-white)] overflow-x-auto rounded-md p-4 md:w-3/4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-[1.07rem] font-semibold">적용한 전처리 단계</h4>
-                  <p className="text-sm text-[var(--color-gray-01)]">전처리 과정을 확인할 수 있습니다.</p>
+                  <h4 className="text-left text-[1.07rem] font-semibold">AI 추천 전처리 단계</h4>
+                  <p className="text-sm text-[var(--color-gray-01)]">AI가 추천하는 전처리 단계를 확인할 수 있습니다.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleRemoveStep} disabled={steps.length === 0}>
-                  - 최근 단계 삭제
-                </Button>
               </div>
-              <PreprocessingPipeline steps={steps} />
+              <PreprocessingPipeline steps={recommendedSteps} />
             </div>
           </div>
 
+          <div className="bg-[theme(primary-white)] overflow-x-auto rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-left text-[1.07rem] font-semibold">적용한 전처리 단계</h4>
+                <p className="text-sm text-[var(--color-gray-01)]">전처리 과정을 확인할 수 있습니다.</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRemoveStep} disabled={steps.length === 0}>
+                - 최근 단계 삭제
+              </Button>
+            </div>
+            <PreprocessingPipeline steps={steps} />
+          </div>
           {/* 데이터 미리보기 */}
           <div className="bg-[theme(primary-white)] overflow-x-auto rounded-md p-4">
             <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
@@ -162,9 +176,11 @@ const PreprocessDataPage = () => {
           </div>
 
           {/* 전처리 완료 버튼 */}
-          <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
-            전처리 결과 확인
-          </Button>
+          <div className="mt-auto">
+            <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
+              전처리 결과 확인
+            </Button>
+          </div>
         </div>
       </div>
     </div>

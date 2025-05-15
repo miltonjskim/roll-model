@@ -220,7 +220,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   };
 
   return (
-    <div className="flex max-h-[34rem] flex-col space-y-2 overflow-y-auto pr-2">
+    <div className="flex max-h-[42rem] flex-col space-y-2 overflow-y-auto pr-2">
       {preprocessingCategories.map((cat) => {
         const isOpen = expanded.includes(cat.id);
         return (
