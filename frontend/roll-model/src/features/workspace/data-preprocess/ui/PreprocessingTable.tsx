@@ -29,9 +29,9 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10">행</TableHead>
+            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center">행</TableHead>
             {dynamicColumns.map((col) => (
-              <TableHead className="text-bold bg-[theme(color-gray-04)] sticky top-0 z-10" key={col}>
+              <TableHead className="text-bold bg-[theme(color-gray-04)] sticky top-0 z-10 text-center" key={col}>
                 {col}
               </TableHead>
             ))}

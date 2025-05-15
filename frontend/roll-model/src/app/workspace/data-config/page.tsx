@@ -20,6 +20,7 @@ import { EncodingSelector } from '@/features/workspace/data-upload/ui/components
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
+import BackButton from '@/shared/ui/BackButton';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -118,10 +119,11 @@ const ConfigDataPage = () => {
         onSuccess: (response) => {
           console.log('onSuccessData:', response.data);
 
-          setUploadedDataset(response.data);
           if (response.data) {
-            const data = response.data;
-            console.log('pipelineId:', data.pipelineId);
+            const { result } = response.data;
+            setUploadedDataset(result);
+
+            // console.log('pipelineId:', data.pipelineId);
             router.push('/workspace/data-preprocess');
             // requestAIPreprocessingRecommendation(data.pipelineId);
           }
@@ -223,15 +225,15 @@ const ConfigDataPage = () => {
   if (isLoading) <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="flex flex-col justify-center">
       <div>
         <h1 className="text-xl font-bold">데이터 설정하기</h1>
         <h2>업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
       </div>
 
-      <div className="mx-auto mt-4 flex gap-4">
-        <div className="max-w-[60rem] basis-[60rem]">
-          <div className="bg-[theme(primary-white)] rounded-md">
+      <div className="mx-auto mt-4 flex items-stretch justify-center gap-4">
+        <div className="flex basis-[60rem] flex-col gap-4">
+          <div className="bg-[theme(primary-white)] flex-1 rounded-md">
             <div className="p-6 text-left">
               <div className="mb-3">
                 <h3 className="font-semibold">데이터 구조 확인</h3>
@@ -270,7 +272,7 @@ const ConfigDataPage = () => {
           </div>
 
           {header.length > 0 && (
-            <div className="bg-[theme(primary-white)] mt-4 rounded-md p-6 text-left">
+            <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
               <div>
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
@@ -308,8 +310,8 @@ const ConfigDataPage = () => {
           )}
         </div>
 
-        <div className="w-full flex-1">
-          <div className="bg-[theme(primary-white)] flex flex-col gap-4 rounded-md p-6 text-left">
+        <div className="flex basis-[24rem] flex-col justify-between">
+          <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
             <div>
               <h3 className="font-semibold">
                 <span className="text-[color:var(--color-error-text)]">*</span>구분자 선택
@@ -321,12 +323,12 @@ const ConfigDataPage = () => {
                 <br />
                 올바른 구분자를 선택해 주세요.
               </p>
-              <div className="mt-2 space-y-2">
+              <div>
                 <DelimiterSelector selected={selectedDelimiterOption} customValue={customDelimiter} onDelimiterChange={setSelectedDelimiterOption} onCustomChange={setCustomDelimiter} />
               </div>
             </div>
 
-            <div>
+            <div className="mt-6">
               <div>
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>인코딩 선택
@@ -344,7 +346,10 @@ const ConfigDataPage = () => {
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="pt-4">
+            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-4 h-12 w-full">
+              ← 이전 단계로
+            </BackButton>
             <Button variant="black" size="lg" className="h-12 w-full" onClick={handleCreateProject}>
               전처리 단계로 넘어가기 →
             </Button>
