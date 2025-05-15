@@ -24,7 +24,7 @@ import { createProject } from '@/features/workspace/service/createProject';
 const ConfigDataPage = () => {
   const router = useRouter();
   const projectId = useAtomValue(projectIdAtom);
-  const mutation = useUploadDataset(projectId);
+  const mutation = useUploadDataset();
   const file = useAtomValue(uploadedFileAtom);
   const [projectTitle] = useAtom(projectTitleAtom);
   const [csvData, setCsvData] = useState<string[][] | null>(null);
@@ -82,14 +82,14 @@ const ConfigDataPage = () => {
       const projectId = response.data.id;
       setProjectId(projectId.toString());
 
-      handleUpload();
+      handleUpload(projectId.toString());
     } catch (err) {
       console.error('프로젝트 생성 실패:', err);
     }
   };
 
   // 원본 데이터셋 업로드 함수
-  const handleUpload = () => {
+  const handleUpload = (projectId: string) => {
     if (!file) return;
 
     const delimiterMap: Record<string, UploadDatasetRequest['delimiter']> = {
@@ -113,7 +113,7 @@ const ConfigDataPage = () => {
     };
 
     mutation.mutate(
-      { config: payload, file },
+      { projectId, config: payload, file },
       {
         onSuccess: (response) => {
           console.log('onSuccessData:', response.data);
