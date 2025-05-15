@@ -82,7 +82,8 @@ class EncodingHandler:
             "categories": categories,
             "newColumns": new_columns,
             "affectedRows": affected_rows,
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": affected_rows[0] if affected_rows else 0 
         }
 
     def encode_label(self, column):
@@ -132,7 +133,8 @@ class EncodingHandler:
             "column": column,
             "mapping": label_mapping,
             "affectedRows": affected_rows,
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": affected_rows[0] if affected_rows else 0 
         }
 
     def encode_target(self, column, target_column):
@@ -209,5 +211,6 @@ class EncodingHandler:
             "targetColumn": target_column,
             "mapping": {k: float(v) for k, v in target_encoding.items()},
             "affectedRows": affected_rows,
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": affected_rows[0] if affected_rows else 0 
         }

@@ -132,7 +132,7 @@ async def upload_dataset_and_save_metadata(
             config=config,
             file_size=file_size,
             object_name=object_name,
-            sample_data = dataset_analysis["data_sample"]["data"][:10] if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else [],
+            sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis["data_sample"] and "data" in dataset_analysis["data_sample"] else [],
             category=category,
             domain=domain
         )
@@ -256,10 +256,9 @@ async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str
         #     "data": df.to_dict(orient="records")  # 전체 데이터셋 반환
         # }
 
-        # 30행만 포함하도록 수정
         data_sample = {
             "columns": df.columns.tolist(),
-            "data": df.head(30).to_dict(orient="records")  # 30행만 반환
+            "data": df.to_dict(orient="records")  # 지정된 행 수만 반환
         }
 
         return {

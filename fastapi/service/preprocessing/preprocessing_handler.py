@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from pandas import DataFrame
-
+import logging
 from core.exception import CustomAPIException
 from core.storage import get_minio_client
 from schemas.mongo.pipeline import PipelineHistoryItem, PreprocessingStep
@@ -13,6 +13,7 @@ from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from utils.snake_to_camel import convert_dict_to_camel_case
 
+logger = logging.getLogger()
 
 class PreprocessingHandler:
     """전처리 작업을 위한 공통 핸들러 클래스"""
@@ -81,7 +82,7 @@ class PreprocessingHandler:
         df: DataFrame = handler.df if hasattr(handler, "df") else result.get("data")
         if df is None:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
-        print(f"인코딩: {encoding}")
+
         object_name, etag = await self._save_to_minio(pipeline_id, df, encoding)
 
         # 6. 파이프라인 히스토리 업데이트
@@ -192,12 +193,22 @@ class PreprocessingHandler:
     def _create_response(self, pipeline_id, result, dataset):
         """결과 응답 생성"""
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
+        logger.info(f"result: {result}")
+        page_size = 30
+        start_point = result.get("startPoint", 0)
+        result.pop("startPoint", None)  # startPoint는 응답에서 제거
+        aligned_start = (start_point // page_size) * page_size
         # 기본 응답 구조
         response = {
             "data": {
                 "pipelineId": pipeline_id,
-                "result": convert_dict_to_camel_case(result),  # result 구조에 따라 조정
-                "dataset": dataset[:30]  # 전처리된 데이터셋을 여기에 추가
+                "result": result,  # result 구조에 따라 조정
+                "dataset": dataset[aligned_start:aligned_start + page_size],
+                "total": len(dataset),
+                "page": (aligned_start // page_size) + 1,
+                "pageSize": page_size,
+                "totalPages": (len(dataset) + page_size - 1) // page_size,
+                "startPoint": aligned_start
             }
         }
         return jsonable_encoder(replace_nan_values(response, round_decimals=2))

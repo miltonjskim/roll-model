@@ -117,7 +117,7 @@ class PipelineService:
     def __init__(self):
         pass
 
-    async def get_pipeline(self, pipeline_id: str, project_id: int = None, member_id: int = None) -> Optional[
+    async def get_pipeline(self, pipeline_id: str, project_id: int | None = None, member_id: int | None = None) -> Optional[
         PipelineModel]:
         """MongoDB에서 파이프라인을 조회합니다."""
         logger.info(f"파이프라인 조회: {pipeline_id}, {project_id}, {member_id}")
@@ -405,7 +405,8 @@ class PipelineService:
         pipeline: PipelineModel,
         minio_client: MinioClient,
         n_rows: Optional[int] = 30,
-        return_full: bool = False
+        return_full: bool = False,
+        start_point: Optional[int] = 0
     ) -> list[dict] | None:
         """
         파이프라인에서 가장 최근 데이터셋을 가져옵니다.
@@ -457,7 +458,7 @@ class PipelineService:
                 
             # 행 수 제한
             if not return_full and n_rows is not None:
-                df = df.head(n_rows)
+                df = df[start_point:start_point+n_rows]
                 
             # Dictionary 형태로 변환
             dataset = df.to_dict(orient="records")

@@ -134,7 +134,8 @@ class MissingValueHandler:
             "missingIndices": missing_indices,
             "originalRows": original_rows.to_dict('records'),
             "imputedRows": imputed_rows.to_dict('records'),
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": missing_indices[0] if missing_indices else 0 
         }
 
         return result
@@ -232,7 +233,8 @@ class MissingValueHandler:
             "missingIndices": missing_indices,
             "removedRows": removed_rows,
             "removedColumns": removed_columns,
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": missing_indices[0] if missing_indices else 0 
         }
 
         return result
