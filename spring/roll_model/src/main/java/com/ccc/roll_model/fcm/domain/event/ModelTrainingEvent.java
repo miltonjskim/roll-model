@@ -31,5 +31,8 @@ public class ModelTrainingEvent {
     @JsonProperty("model_path")
     private String modelPath;
 
+    @JsonProperty("error_message")
+    private String errorMessage;
+
     private String status;
 }
