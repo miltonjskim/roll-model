@@ -27,6 +27,10 @@ from kserve_utils import (
     sanitize_k8s_name,
     deploy_model_with_virtual_service
 )
+from kong_utils import (
+    setup_model_api_gateway,
+    save_api_info_by_pipeline_id
+)
 
 # Celery 앱 설정 (RabbitMQ 브로커 사용)
 app = Celery('ml_worker',
@@ -513,6 +517,48 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 memory_limit=model_memory_limit
             )
 
+            # KServe 배포 성공 후 Kong API Gateway 설정
+            if deployment_success and service_url:
+                # Kong API Gateway 설정
+                try:
+                    print(f"[Task] Kong API Gateway 설정 시작 (모델: {pipeline_id})")
+
+                    # 서비스 URL 구성
+                    api_service_url = service_url
+                    if not api_service_url.startswith('http'):
+                        api_service_url = f"http://{api_service_url}"
+
+                    # Kong API Gateway 설정 실행 (모델별 1:1 소비자 및 ACL 그룹 생성)
+                    kong_result = setup_model_api_gateway(
+                        pipeline_id=pipeline_id,
+                        service_url=api_service_url,
+                        paths=[f"/model/{pipeline_id}"]
+                    )
+
+                    if kong_result and kong_result["status"] == "success":
+                        print(f"[Task] Kong API Gateway 설정 완료")
+
+                        # MongoDB에 API 정보 저장
+                        if pipeline_id:
+                            api_info = {
+                                "api_key": kong_result.get("api_key"),
+                                "api_endpoint": kong_result.get("api_endpoint"),
+                                "consumer": kong_result.get("consumer")
+                            }
+                            save_result = save_api_info_by_pipeline_id(pipeline_id, api_info)
+                            if save_result:
+                                print(f"[Task] API 정보를 MongoDB에 저장 완료")
+                            else:
+                                print(f"[Task] API 정보 MongoDB 저장 실패")
+
+                            # API 엔드포인트를 모델 메타데이터에 추가
+                            model_metadata["api_endpoint"] = kong_result.get("api_endpoint")
+
+                    else:
+                        print(f"[Task] Kong API Gateway 설정 실패: {kong_result.get('message', '알 수 없는 오류')}")
+                except Exception as kong_error:
+                    print(f"[Task] Kong API Gateway 설정 중 오류 발생: {kong_error}")
+
         # 결과 생성
         result = {
             "status": "success",
@@ -538,6 +584,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 "member_id": member_id,
                 "model_type": model_type,
                 "model_path": s3_model_path,
+                "error_message": None,
                 "status": "success"
             }
 
@@ -581,6 +628,8 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 "pipeline_id": pipeline_id,
                 "project_id": project_id,
                 "member_id": member_id,
+                "model_type": model_type,
+                "model_path": None,
                 "error_message": str(e),
                 "status": "fail"
             }
