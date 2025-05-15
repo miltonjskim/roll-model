@@ -284,7 +284,7 @@ class MinioClient:
 
             count_data = ""
             for d in count_response.stream():
-                count_data += d.decode(encoding)
+                count_data += d.decode("utf-8")
 
             total_records = int(count_data.split('\n')[0])
 
@@ -340,7 +340,7 @@ class MinioClient:
             new_last_idx = last_idx
 
             if data:
-                df = pd.read_csv(BytesIO(data), encoding=encoding)
+                df = pd.read_csv(BytesIO(data), encoding="utf-8")
                 if not df.empty and has_idx_column:
                     # 현재 페이지의 마지막 idx 값 저장
                     new_last_idx = df['idx'].max()
