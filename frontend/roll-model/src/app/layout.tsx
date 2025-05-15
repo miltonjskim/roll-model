@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import Navbar from '@/widgets/navbar/Navbar';
 import ClientFCMInitializer from '@/app/providers/ClientFCMInitializer';
 import FcmCatStatus from '@/widgets/fcmCat/FcmCatStatus';
+import GlobalLoading from '@/shared/ui/GlobalLoading';
 
 export const metadata: Metadata = {
   title: 'Roll model',
@@ -30,7 +31,10 @@ export default function RootLayout({
             <Navbar />
           </header>
           <main className="flex flex-1 items-center justify-center px-4">
-            <div className="w-full max-w-[80vw] rounded-md text-center">{children}</div>
+            <div className="w-full max-w-[80vw] rounded-md text-center">
+              <GlobalLoading />
+              {children}
+            </div>
           </main>
 
           <FcmCatStatus />

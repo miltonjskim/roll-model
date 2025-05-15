@@ -21,6 +21,7 @@ import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -39,12 +40,13 @@ const ConfigDataPage = () => {
   const [customDelimiter, setCustomDelimiter] = useState(''); // 사용자가 입력한 값
   const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
   const setAiRecommendedStepsAtom = useSetAtom(aiRecommendedStepsAtom);
-  const [isLoading, setIsLoading] = useState(false);
   const projectDescription = useAtomValue(projectDescriptionAtom);
   const projectdomain = useAtomValue(projectDomainAtom);
   const projectCategory = useAtomValue(projectCategoryAtom);
   const projectPublic = useAtomValue(projectPublicAtom);
   const setProjectId = useSetAtom(projectIdAtom);
+  const setGlobalLoading = useSetAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -70,6 +72,9 @@ const ConfigDataPage = () => {
 
   // 프로젝트 생성 요청 함수
   const handleCreateProject = async () => {
+    setGlobalLoading(true);
+    setLoadingMessage('프로젝트를 생성하고 있습니다...');
+
     const payload = {
       title: projectTitle,
       description: projectDescription,
@@ -86,6 +91,9 @@ const ConfigDataPage = () => {
       handleUpload(projectId.toString());
     } catch (err) {
       console.error('프로젝트 생성 실패:', err);
+    } finally {
+      setGlobalLoading(false);
+      setLoadingMessage(null);
     }
   };
 
@@ -113,6 +121,9 @@ const ConfigDataPage = () => {
       })),
     };
 
+    setGlobalLoading(true);
+    setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
+
     mutation.mutate(
       { projectId, config: payload, file },
       {
@@ -130,6 +141,10 @@ const ConfigDataPage = () => {
         onError: (err) => {
           showErrorToast(err.message);
           console.error(err);
+        },
+        onSettled: () => {
+          setGlobalLoading(false);
+          setLoadingMessage(null);
         },
       },
     );
@@ -202,8 +217,6 @@ const ConfigDataPage = () => {
       setDelimiter(selectedDelimiterOption);
     }
   }, [selectedDelimiterOption, customDelimiter]);
-
-  if (isLoading) <div>Loading...</div>;
 
   return (
     <div className="flex flex-col justify-center">
