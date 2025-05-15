@@ -172,6 +172,7 @@ public class ProjectVersionService {
                 .build();
     }
 
+    @Transactional
     public void savePipelineVersion(String pipelineId) {
         String newVersion;
         VersionEntity version;

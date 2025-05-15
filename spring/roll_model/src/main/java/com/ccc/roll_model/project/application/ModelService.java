@@ -2,6 +2,7 @@ package com.ccc.roll_model.project.application;
 
 import com.ccc.roll_model.global.exception.ApiException;
 import com.ccc.roll_model.global.exception.ErrorCode;
+import com.ccc.roll_model.pipeline.domain.model.vo.ModelPerformanceSummary;
 import com.ccc.roll_model.project.application.command.ExportModelCommand;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
@@ -14,6 +15,7 @@ import io.minio.messages.Item;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.actuate.logging.LoggersEndpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,7 @@ public class ModelService {
     public ModelService(
             ModelRepository modelRepository,
             @Qualifier("modelMinioClient") MinioClient minioClient,
-            PipelineRepository pipelineRepository) {
+            PipelineRepository pipelineRepository, LoggersEndpoint loggersEndpoint) {
         this.modelRepository = modelRepository;
         this.minioClient = minioClient;
         this.pipelineRepository = pipelineRepository;
@@ -181,4 +183,38 @@ public class ModelService {
         }
         return modelFilePath;
     }
+
+    @Transactional(readOnly = true)
+    public ModelPerformanceSummary getModelPerformanceSummary(String pipelineId) {
+        ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
+
+        return ModelPerformanceSummary.builder()
+            .modelId(String.valueOf(modelDocument.getId()))
+            .learningDuration(modelDocument.getLearningDuration())
+            .result(extractPerformanceResult(modelDocument))
+            .build();
+    }
+
+    private Double extractPerformanceResult(ModelDocument model) {
+        if (model.getPerformance() == null) {
+            log.info("Not Found Performance Data : {}", model.getId());
+            return null;
+        }
+
+        // Classification 모델인 경우 accuracy 추출
+        if ("CLASSIFICATION".equals(model.getModelType()) &&
+            model.getPerformance().getClassification() != null) {
+            return model.getPerformance().getClassification().getAccuracy();
+        }
+
+        // Regression 모델인 경우 r_squared 추출
+        if ("REGRESSION".equals(model.getModelType()) &&
+            model.getPerformance().getRegression() != null) {
+            return model.getPerformance().getRegression().getRSquared();
+        }
+
+        log.info("Not Found ModelType : {}", model.getModelType());
+        return null;
+    }
+
 }

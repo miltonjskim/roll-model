@@ -2,7 +2,7 @@ package com.ccc.roll_model.project.infrastructure.repository.mysql;
 
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.Status;
-import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -47,4 +47,9 @@ public interface PipelineRepository extends JpaRepository<PipelineEntity, String
 
     @Modifying
     @Query("UPDATE PipelineEntity p SET p.status = :status WHERE p.pipelineId = :pipelineId")
-    Integer updateStatusByPipelineId(@Param("pipelineId") String pipelineId, @Param("status") Status status);}
+    void updateStatusByPipelineId(@Param("pipelineId") String pipelineId, @Param("status") Status status);
+
+    @Query("update PipelineEntity p set p.status = :status, p.result = :result where p.pipelineId = :pipelineId")
+    @Modifying
+    void updateStatusAndResultByPipelineId(Status status, Double result, String pipelineId);
+}
