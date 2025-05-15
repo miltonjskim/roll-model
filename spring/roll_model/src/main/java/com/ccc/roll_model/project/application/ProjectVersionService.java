@@ -1,9 +1,10 @@
 package com.ccc.roll_model.project.application;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.ccc.roll_model.project.infrastructure.entity.mysql.*;
+
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,7 @@ public class ProjectVersionService {
     private final MemberRepository memberRepository;
     private final VersionRepository versionRepository;
 
-    float ROOT_VERSION = 0.1f;
+    String ROOT_VERSION = "1.0";
 
     @Transactional(readOnly = true)
     public GetProjectVersionsResponse getProjectVersions(GetProjectVersionsCommand command) {
@@ -50,13 +51,17 @@ public class ProjectVersionService {
         VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
         Integer groupId = versionEntity.getGroupId();
         List<VersionEntity> versionEntities =
-                versionRepository.findVersionEntitiesByGroupIdOrderByVersionNumDesc(groupId);
+            versionRepository.findVersionEntitiesByGroupId(groupId); // OrderBy 제거
+
+        // 먼저 버전으로 정렬 (내림차순)
+        versionEntities.sort((v1, v2) -> compareVersions(v2.getVersionNum(), v1.getVersionNum()));
+
         List<PipelineEntity> pipelines = versionEntities.stream()
-                .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
-                .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
-                .toList();
+            .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
+            .filter(Objects::nonNull)
+            .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
+            .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+            .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
         // 3. 파이프라인이 속한 프로젝트 조회
@@ -167,8 +172,8 @@ public class ProjectVersionService {
                 .build();
     }
 
-    public void savePipeline(String pipelineId) {
-        float newVersion;
+    public void savePipelineVersion(String pipelineId) {
+        String newVersion;
         VersionEntity version;
 
         // 현재 파이프라인의 부모 정보 조회
@@ -187,11 +192,12 @@ public class ProjectVersionService {
                 .build();
         } else {
             // 같은 그룹의 모든 버전들을 조회 (내림차순 정렬)
-            List<VersionEntity> pipelineGroups = versionRepository
-                .findVersionEntitiesByGroupIdOrderByVersionNumDesc(parentVersion.getGroupId());
+            List<VersionEntity> pipelineGroup = versionRepository
+                .findVersionEntitiesByGroupId(parentVersion.getGroupId());
 
+            pipelineGroup.sort((v1, v2) -> compareVersions(v2.getVersionNum(), v1.getVersionNum()));
             // 새로운 버전 생성
-            newVersion = createNewVersion(parentVersion.getVersionNum(), pipelineGroups);
+            newVersion = createNewVersion(parentVersion.getVersionNum(), pipelineGroup);
 
             version = VersionEntity.builder()
                 .pipelineId(pipelineId)
@@ -204,40 +210,79 @@ public class ProjectVersionService {
         versionRepository.save(version);
     }
 
-    private float createNewVersion(Float parentVersion, List<VersionEntity> pipelineGroups) {
+    private String createNewVersion(String parentVersion, List<VersionEntity> pipelineGroup) {
         if (parentVersion == null) {
             return ROOT_VERSION;
         }
 
-        if (pipelineGroups.isEmpty()) {
+        if (pipelineGroup.isEmpty()) {
             throw new ApiException(ErrorCode.PIPELINE_NOT_FOUND);
         }
 
-        // pipelineGroups는 버전 내림차순으로 정렬됨
-        float highestIntegerVersion = pipelineGroups.get(0).getVersionNum();
+        String highestVersion = pipelineGroup.get(0).getVersionNum();
 
-        if (parentVersion == ROOT_VERSION) {
+        if (parentVersion.equals(ROOT_VERSION)) {
             // 정수 버전 중 가장 높은 버전 찾기
-            return Math.round(highestIntegerVersion) + 1.0f;
+            String[] parts = highestVersion.split("\\.");
+            int majorVersion = Integer.parseInt(parts[0]);
+            return (majorVersion + 1) + ".0";
         } else {
             // 해당 메이저 버전의 소수점 버전 중 가장 높은 버전 찾기
-            int majorVersion = (int) Math.floor(parentVersion);
-            float highestMinorVersion = majorVersion;
-
-            for (VersionEntity group : pipelineGroups) {
-                float version = group.getVersionNum();
-                // 같은 메이저 버전인지 확인
-                if (Math.floor(version) == majorVersion && version > highestMinorVersion) {
-                    highestMinorVersion = version;
-                }
-            }
-
-            // 0.1 증가
-            return highestMinorVersion + 0.1f;
+            String[] parentParts = parentVersion.split("\\.");
+            int majorVersion = Integer.parseInt(parentParts[0]);
+            return calculateMinorVersion(pipelineGroup, majorVersion);
         }
     }
 
+    @NotNull
+    private static String calculateMinorVersion(List<VersionEntity> pipelineGroup, int majorVersion) {
+        String highestMinorVersion = majorVersion + ".0";
+
+        for (VersionEntity group : pipelineGroup) {
+            String version = group.getVersionNum();
+            String[] parts = version.split("\\.");
+            int versionMajor = Integer.parseInt(parts[0]);
+
+            // 같은 메이저 버전인지 확인
+            if (versionMajor == majorVersion) {
+                if (compareVersions(version, highestMinorVersion) > 0) {
+                    highestMinorVersion = version;
+                }
+            }
+        }
+
+        // String을 파싱해서 마이너 버전 증가
+        String[] parts = highestMinorVersion.split("\\.");
+        int major = Integer.parseInt(parts[0]);
+        int minor = Integer.parseInt(parts[1]);
+
+        // 마이너 버전 증가
+        minor += 1;
+
+        return major + "." + minor;
+    }
+
+    // 버전 문자열 비교 메서드
+    private static int compareVersions(String v1, String v2) {
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+
+        // 메이저 버전 비교
+        int major1 = Integer.parseInt(parts1[0]);
+        int major2 = Integer.parseInt(parts2[0]);
+
+        if (major1 != major2) {
+            return Integer.compare(major1, major2);
+        }
+
+        // 마이너 버전 비교
+        int minor1 = Integer.parseInt(parts1[1]);
+        int minor2 = Integer.parseInt(parts2[1]);
+
+        return Integer.compare(minor1, minor2);
+    }
+
     private Integer generateNewGroupId() {
-        return versionRepository.findHighestGroupId().orElse(1);
+        return versionRepository.findHighestGroupId().orElse(0) + 1;  // +1 추가
     }
 }

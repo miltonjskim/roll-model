@@ -22,4 +22,6 @@ public interface VersionRepository extends JpaRepository<VersionEntity, Integer>
 
 	@Query("SELECT MAX(v.groupId) FROM VersionEntity v")
 	Optional<Integer> findHighestGroupId();
+
+	List<VersionEntity> findVersionEntitiesByGroupId(Integer groupId);
 }
