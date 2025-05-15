@@ -1,22 +1,92 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { pipelineIdAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { SampleDataset, SampleDatasetResponse, SampleDatasetUploadResponse } from '@/entities/workspace/data-selection/model/type';
+import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { SampleColumnModal } from '@/features/workspace/data-selection/ui/SampleColumnModal';
 import { FileUploadDialog } from '@/features/workspace/data-upload/ui/FileUploadDialog';
+import { createProject } from '@/features/workspace/service/createProject';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import BackButton from '@/shared/ui/BackButton';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const SelectDataPage = () => {
-  const [isHover, setIsHover] = useState(false);
+  const router = useRouter();
+  const [showSampleMenu, setshowSampleMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [samples, setSamples] = useState<SampleDataset[]>([]);
+  const [selectedSample, setSelectedSample] = useState<SampleDataset | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const setProjectId = useSetAtom(projectIdAtom);
+  const projectTitle = useAtomValue(projectTitleAtom);
+  const projectDescription = useAtomValue(projectDescriptionAtom);
+  const projectCategory = useAtomValue(projectCategoryAtom);
+  const projectDomain = useAtomValue(projectDomainAtom);
+  const projectPublic = useAtomValue(projectPublicAtom);
+  const setPipelineId = useSetAtom(pipelineIdAtom);
+  const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
 
   const fetchSampleDatasetList = async () => {
     setIsLoading(true);
     try {
       const { data } = await axiosInstance.get(`/api/v2/datasets/samples`);
       console.log('response:', data);
+      setSamples(data.data.samples);
+      setshowSampleMenu(true);
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (sampleId: number) => {
+    const payload = {
+      title: projectTitle,
+      description: projectDescription,
+      domain: projectDomain,
+      type: projectCategory,
+      isPublic: projectPublic,
+    };
+    try {
+      const response = await createProject(payload);
+
+      const projectId = response.data.id;
+      setProjectId(projectId.toString());
+
+      uploadSampleDataset(projectId, sampleId);
+    } catch (err) {
+      console.error('프로젝트 생성 실패:', err);
+    }
+  };
+
+  const uploadSampleDataset = async (projectId: number, sampleId: number) => {
+    setIsLoading(true);
+    try {
+      const { data } = await axiosInstance.post(`/api/v2/projects/${projectId}/datasets/samples/${sampleId}`);
+
+      console.log('샘플 데이터 업로드 data:', data);
+
+      const sampleDataResponse: SampleDatasetUploadResponse = data.data;
+      const pipelineId = sampleDataResponse.datasetId;
+
+      setUploadedDataset({
+        pipelineId: sampleDataResponse.datasetId,
+        summary: sampleDataResponse.summary,
+        missingValues: sampleDataResponse.missingValues,
+        originalDatasets: sampleDataResponse.originalDatasets,
+      });
+
+      setPipelineId(pipelineId);
+
+      router.push('/workspace/data-preprocess');
     } catch (error) {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
@@ -31,12 +101,18 @@ const SelectDataPage = () => {
     fetchSampleDatasetList();
   };
 
-  const handleUseRegressionData = () => {
-    console.log('회귀 선택');
+  const handleSelectSample = (dataset: SampleDataset) => {
+    console.log('선택한 샘플 데이터:', dataset);
+    const sampleId = dataset.id;
+    handleCreateProject(sampleId);
   };
 
-  const handleUseClassificationData = () => {
-    console.log('분류 선택');
+  const regressionSamples = samples.filter((s) => s.category === 'REGRESSION');
+  const classificationSamples = samples.filter((s) => s.category === 'CLASSIFICATION');
+
+  const handlePreviewColumns = (sample: SampleDataset) => {
+    setSelectedSample(sample);
+    setShowPreviewModal(true);
   };
 
   return (
@@ -49,36 +125,87 @@ const SelectDataPage = () => {
       <div className="mx-auto mt-4 max-w-[70rem] select-none">
         <div className="bg-[theme(primary-white)] flex h-120 justify-center gap-4 rounded-lg p-4">
           <FileUploadDialog />
-          <div className="h-full flex-1/2 cursor-pointer rounded-lg border border-[var(--color-gray-03)]" onClick={handleUseSampleData}>
-            {isHover ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="flex h-full w-full flex-col">
-                  <div className="rounded-t-lg border-b border-[var(--color-gray-04)] p-3">
-                    <p className="text-base font-semibold">
-                      <span className="font-tossface mr-2">📊</span>샘플 데이터 사용하기
-                    </p>
-                  </div>
-                  <div className="flex flex-1 flex-col text-center">
-                    {/* TODO: 각 데이터에 해당하는 설명 추가 */}
-                    <div
-                      className="hover:bg-[theme(primary-black)] flex flex-1 flex-col justify-center border-b border-[var(--color-gray-04)] p-4 hover:text-[var(--primary-white)]"
-                      onClick={handleUseRegressionData}
-                    >
-                      <p className="font-bold">회귀 (연속형 변수)</p>
-                      <p>데이터 설명 설명 설명</p>
-                      <p>데이터 설명 설명 설명 데이터 설명</p>
-                    </div>
+          <div
+            className="h-full flex-1/2 cursor-pointer rounded-lg border border-[var(--color-gray-03)]"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleUseSampleData();
+            }}
+          >
+            {showSampleMenu ? (
+              <div className="flex h-full flex-col overflow-y-auto p-2">
+                <h3 className="pb-2 text-base font-semibold">📊 샘플 데이터 선택</h3>
 
-                    <div className="hover:bg-[theme(primary-black)] flex flex-1 flex-col justify-center rounded-b-lg p-4 hover:text-[var(--primary-white)]" onClick={handleUseClassificationData}>
-                      <p className="font-bold">분류 (범주형 변수)</p>
-                      <p>데이터 설명 설명 설명</p>
-                      <p>데이터 설명 설명 설명 데이터 설명</p>
+                <div>
+                  <h4 className="mt-2 text-sm font-bold">📈 회귀</h4>
+                  {regressionSamples.map((sample) => (
+                    <div key={sample.id} className="mt-2 cursor-pointer rounded-md border border-gray-200 p-3">
+                      <p className="text-sm font-medium">{sample.name}</p>
+                      <p className="text-xs text-gray-500">{sample.description}</p>
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviewColumns(sample);
+                          }}
+                        >
+                          컬럼 미리보기
+                        </Button>
+                        <Button
+                          variant="black"
+                          size="sm"
+                          className="mt-2 ml-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectSample(sample);
+                          }}
+                        >
+                          선택
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+
+                <div>
+                  <h4 className="mt-4 text-sm font-bold">🧮 분류</h4>
+                  {classificationSamples.map((sample) => (
+                    <div key={sample.id} className="mt-2 cursor-pointer rounded-md border border-gray-200 p-3">
+                      <p className="text-sm font-medium">{sample.name}</p>
+                      <p className="text-xs text-gray-500">{sample.description}</p>
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviewColumns(sample);
+                          }}
+                        >
+                          컬럼 미리보기
+                        </Button>
+                        <Button
+                          variant="black"
+                          size="sm"
+                          className="mt-2 ml-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectSample(sample);
+                          }}
+                        >
+                          선택
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex h-full cursor-pointer items-center justify-center" onClick={fetchSampleDatasetList}>
                 <p className="text-md font-semibold">
                   <span className="font-tossface mr-2">📊</span>샘플 데이터 사용하기
                 </p>
@@ -87,6 +214,16 @@ const SelectDataPage = () => {
           </div>
         </div>
       </div>
+      <SampleColumnModal
+        open={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        dataset={selectedSample}
+        onSelect={(dataset) => {
+          handleSelectSample(dataset);
+          setShowPreviewModal(false);
+        }}
+      />
+
       <BackButton size="lg" className="mt-4 w-70">
         이전 단계로
       </BackButton>
