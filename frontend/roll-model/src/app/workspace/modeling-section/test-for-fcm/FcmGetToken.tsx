@@ -22,7 +22,7 @@ export default function FcmGetToken() {
       }
 
       // fcm토큰없거나 만료시
-      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY; //인증키 가져옴
+      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q'; //인증키 가져옴
       if (!vapidKey) {
         console.error('vapid키 없음');
         return;
@@ -69,7 +69,7 @@ export default function FcmGetToken() {
       if (e.key === 'modelTrainingStatus') {
         handleStatusUpdate();
       }
-    }); // 백그라운드 전용 리스너 
+    }); // 백그라운드 전용 리스너
     // 클린업 함수
     return () => {
       window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
