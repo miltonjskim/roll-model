@@ -24,7 +24,6 @@ const PreprocessDataPage = () => {
   const projectTitle = useAtomValue(projectTitleAtom);
   const optionRef = useRef<HTMLDivElement>(null);
   const [highlight, setHighlight] = useState(false);
-  const [selectedColumn, setSelectedColumn] = useState<string | undefined>(undefined);
   const columnNames = uploadedData?.originalDatasets.columns;
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedSteps, setRecommendedSteps] = useState<Step[]>([]);
@@ -114,103 +113,66 @@ const PreprocessDataPage = () => {
   };
 
   return (
-    <div className="mx-auto select-none">
-      <div>
-        <h1 className="text-xl font-bold">전처리 설정하기</h1>
-        <h2>필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
-      </div>
-
-      <div className="mt-4 flex w-[100%] justify-center gap-4">
-        <div className="flex flex-1 basis-[40rem] flex-col gap-4">
-          {/* 프로젝트 이름 섹션 */}
+    <div className="mx-auto w-full overflow-x-auto px-4">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
+        {/* 좌측 영역 */}
+        <div className="max-w-[20rem] min-w-[16rem] flex-1 xl:basis-[20%]">
+          {/* 프로젝트 정보 */}
           <div className="bg-[theme(primary-white)] rounded-md p-4">
             <h3 className="text-lg font-semibold">
-              <span className="font-tossface">📌</span>
-              <span className="ml-2">{projectTitle}</span>
+              <span className="font-tossface">📌</span> {projectTitle}
             </h3>
           </div>
 
-          {/* 전처리 기능 선택 섹션 */}
-          <div className="bg-[theme(primary-white)] rounded-md p-4 text-left">
+          {/* 전처리 기능 목록 */}
+          <div className="bg-[theme(primary-white)] mt-4 rounded-md p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="mt-2 mb-4">
-              <label htmlFor="column-select" className="text-sm font-medium">
-                전처리할 컬럼 선택
-              </label>
-              <Select value={selectedColumn ?? '__ALL__'} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="컬럼을 선택하지 않으면 전체 컬럼에 적용됩니다." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__ALL__">전체 컬럼</SelectItem>
-                  {columnNames?.map((col) => (
-                    <SelectItem key={col} value={col}>
-                      {col}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
+              <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
             </div>
-            <div className="">
-              {/* 전처리 기능 목록 섹션 */}
-              <div className="${ highlight ? 'shadow-accent' : '' mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
-                <PreprocessingOptions pipelineId={pipelineId} column={selectedColumn} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
-              </div>
-
-              {/* AI 추천 버튼 */}
-              <div className="mb-auto flex flex-col">
-                <div className="text-center text-xs">
-                  <span className="text-[var(--color-error-text)]">*</span>
-                  <span className="">추천 결과 적용 시 기본 설정값이 자동으로 입력됩니다.</span>
-                </div>
-
-                <Button variant="black" size="lg" onClick={requestAISuggestion}>
-                  AI 추천 결과 적용하기
-                </Button>
-              </div>
+            <div className="text-center text-xs">
+              <span className="text-[var(--color-error-text)]">*</span> 추천 결과 적용 시 기본 설정값이 자동으로 입력됩니다.
             </div>
+            <Button variant="black" size="lg" onClick={requestAISuggestion} className="mt-2 w-full">
+              AI 추천 결과 적용하기
+            </Button>
           </div>
         </div>
 
-        <div className="flex max-w-[90%] flex-1/3 shrink-0 basis-[35rem] flex-col gap-4 text-left">
-          <div className="flex gap-4">
-            {/* 내 데이터 요약 섹션 */}
-            <div className="bg-[theme(primary-white)] flex-1/5 basis-[23rem] rounded-md p-4">
-              <div>
-                <h4 className="text-[1.07rem] font-semibold">내 데이터 요약</h4>
-                <p className="text-sm text-[var(--color-gray-01)]">전처리로 결측치와 이상치를 수정할 수 있습니다.</p>
-              </div>
-
+        {/* 우측 영역 */}
+        <div className="flex flex-1 flex-col gap-4 xl:min-w-0 xl:basis-[80%]">
+          {/* 파이프라인 + 요약 */}
+          <div className="flex flex-col gap-4 md:flex-row">
+            {/* 내 데이터 요약 */}
+            <div className="bg-[theme(primary-white)] rounded-md p-4 md:w-1/3">
+              <h4 className="text-[1.07rem] font-semibold">내 데이터 요약</h4>
+              <p className="text-sm text-[var(--color-gray-01)]">전처리로 결측치와 이상치를 수정할 수 있습니다.</p>
               <PreprocessingSummary />
             </div>
 
-            {/* 적용된 전처리 단계 파이프라인 섹션 */}
-            <div className="bg-[theme(primary-white)] max-w-full flex-4/5 overflow-x-auto rounded-md p-4">
-              <div className="flex items-end justify-between">
+            {/* 적용된 단계 */}
+            <div className="bg-[theme(primary-white)] overflow-x-auto rounded-md p-4 md:w-2/3">
+              <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-[1.07rem] font-semibold">적용한 전처리 단계</h4>
-                  <p className="text-sm text-[var(--color-gray-01)]">현재까지 적용한 전처리 과정을 확인할 수 있습니다.</p>
-                  <p className="text-sm leading-[0.9] text-[var(--color-gray-01)]">단계를 삭제하거나 추가할 수 있습니다.</p>
+                  <p className="text-sm text-[var(--color-gray-01)]">전처리 과정을 확인할 수 있습니다.</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleRemoveStep} disabled={steps.length === 0}>
                   - 최근 단계 삭제
                 </Button>
               </div>
-
               <PreprocessingPipeline steps={steps} />
             </div>
           </div>
 
-          {/* 전처리된 데이터 미리보기 섹션 */}
-          <div className="bg-[theme(primary-white)] rounded-md p-4">
-            <div>
-              <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
-              <p className="text-sm text-[var(--color-gray-01)]">적용된 전처리 결과를 미리 확인할 수 있으며, 변경된 데이터는 하이라이트로 표시됩니다.</p>
-            </div>
+          {/* 데이터 미리보기 */}
+          <div className="bg-[theme(primary-white)] overflow-x-auto rounded-md p-4">
+            <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
+            <p className="text-sm text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
             <PreprocessingTable changedCells={changedCells} />
           </div>
 
-          {/* 전처리 종료 버튼 */}
+          {/* 전처리 완료 버튼 */}
           <Button variant="black" size="lg" className="w-full p-6" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
             전처리 결과 확인
           </Button>
