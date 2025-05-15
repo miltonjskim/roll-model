@@ -17,11 +17,20 @@ export default function FcmCatStatus() {
     if (status === 'LEARNING') return '/rollingCat.gif';
     return '/ready.png'; // PREPROCESSED 또는 기타 상태
   };
+  // 이미지 경로를 상태로 관리하여 강제 리렌더링 보장
+  const [catImageSrc, setCatImageSrc] = useState<string>('/ready.png');
+
+  useEffect(() => {
+    // 상태가 변경될 때마다 이미지 경로 업데이트
+    setCatImageSrc(getCatImage(modelStatus));
+  }, [modelStatus]);
 
   useEffect(() => {
     // console.log('Cat: 컴포넌트 마운트, 현재 상태:', modelStatus);
     const savedStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
-    setModelStatus(savedStatus);
+    if (savedStatus) {
+      setModelStatus(savedStatus);
+    }
 
     // 모델 상태 업데이트(새로고침) 이벤트 리스너
     const handleStatusUpdate = () => {
@@ -57,27 +66,35 @@ export default function FcmCatStatus() {
   const catImage = getCatImage(modelStatus);
 
   const handleStartLearning = (type: string) => {
+    console.log(`handleStartLearning 호출됨: ${type}`);
+    let newStatus: ModelStatus;
+
     switch (type) {
       case '기본':
-        localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
-        setModelStatus('PREPROCESSED');
+        newStatus = 'PREPROCESSED';
         break;
       case '학습중':
-        localStorage.setItem('modelTrainingStatus', 'LEARNING');
-        setModelStatus('LEARNING');
+        newStatus = 'LEARNING';
         break;
       case '실패':
-        localStorage.setItem('modelTrainingStatus', 'FAILED');
-        setModelStatus('FAILED');
+        newStatus = 'FAILED';
         break;
       case '완료':
-        localStorage.setItem('modelTrainingStatus', 'COMPLETED');
-        setModelStatus('COMPLETED');
+        newStatus = 'COMPLETED';
         break;
+      default:
+        newStatus = 'PREPROCESSED';
     }
+    // localStorage와 상태 모두 업데이트
+    localStorage.setItem('modelTrainingStatus', newStatus);
+    setModelStatus(newStatus);
+
+    // 커스텀 이벤트 발생
     window.dispatchEvent(new Event('modelStatusUpdate'));
-    console.log(`Cat: 상태를 ${type === '기본' ? 'PREPROCESSED' : type === '학습중' ? 'LEARNING' : type === '실패' ? 'FAILED' : 'COMPLETED'}으로 변경`);
+
+    console.log(`Cat: 상태를 ${newStatus}으로 변경`);
   };
+
   const handleReset = () => {
     // localStorage 업데이트
     if (modelStatus === 'COMPLETED') {
@@ -103,7 +120,7 @@ export default function FcmCatStatus() {
       <button className="bg-[theme(color-yellow-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('완료')}>
         완료
       </button>
-      <Image src={catImage} alt={`Status Cat (${modelStatus})`} width={80} height={80} className="object-contain" priority unoptimized onClick={handleReset} />
+      <Image src={catImageSrc} alt={`Status Cat (${modelStatus})`} width={80} height={80} className="object-contain" priority unoptimized onClick={handleReset} />
     </div>
   );
 }

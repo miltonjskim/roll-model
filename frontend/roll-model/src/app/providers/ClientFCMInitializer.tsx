@@ -6,9 +6,7 @@ export default function ClientFCMInitializer() {
   useEffect(() => {
     const initFCM = async () => {
       try {
-        // 이미 저장된 유효한 토큰이 있는지 확인
         const token = getFCMTokenFromStorage();
-
         // 토큰이 있으면 FCM 초기화
         if (token) {
           console.log('FCM 초기화 (기존 토큰 사용)');
@@ -30,8 +28,16 @@ export default function ClientFCMInitializer() {
             }
           }
         }
+
+        // visibilitychange 이벤트 리스너 추가
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // 초기 상태 확인 및 업데이트
+        checkAndUpdateModelStatus();
         // 클린업 함수
-        return () => {};
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
       } catch (error) {
         console.error('FCM 초기화 중 오류:', error);
       }
@@ -39,7 +45,69 @@ export default function ClientFCMInitializer() {
 
     initFCM();
   }, []);
+  // 가시성 변경 핸들러
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      console.log('앱이 포그라운드로 전환됨, 모델 상태 확인');
+      // IndexedDB에서 상태 확인
+      checkStateFromIndexedDB();
+      checkAndUpdateModelStatus();
+    }
+  };
 
+  // IndexedDB에서 상태 확인 함수
+  const checkStateFromIndexedDB = () => {
+    console.log('that?');
+
+    const request = indexedDB.open('RollModelDB', 1);
+    console.log('what?', request);
+
+    request.onupgradeneeded = function (event) {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('modelStatus')) {
+        db.createObjectStore('modelStatus', { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = function (event) {
+      const db = (event.target as IDBOpenDBRequest).result;
+      const transaction = db.transaction(['modelStatus'], 'readonly');
+      const store = transaction.objectStore('modelStatus');
+
+      const getRequest = store.get('currentStatus');
+
+      getRequest.onsuccess = function () {
+        if (getRequest.result && getRequest.result.state) {
+          const state = getRequest.result.state;
+          console.log('IndexedDB에서 상태 확인:', state);
+
+          // localStorage 업데이트
+          localStorage.setItem('modelTrainingStatus', state);
+
+          // 상태 변경 이벤트 발생
+          window.dispatchEvent(
+            new CustomEvent('modelStatusUpdate', {
+              detail: { state: state },
+            }),
+          );
+        }
+      };
+    };
+  };
+
+  // 모델 상태 확인 및 업데이트 함수
+  const checkAndUpdateModelStatus = () => {
+    const currentStatus = localStorage.getItem('modelTrainingStatus');
+    if (currentStatus) {
+      console.log('저장된 모델 상태 확인:', currentStatus);
+      // 상태 변경 이벤트 발생
+      window.dispatchEvent(
+        new CustomEvent('modelStatusUpdate', {
+          detail: { state: currentStatus },
+        }),
+      );
+    }
+  };
   // 통합된 FCM 리스너 설정 함수
   const setupFCMGlobalListeners = () => {
     // 1. 포그라운드 메시지 리스너 (fcmInit.ts에서 가져옴)
