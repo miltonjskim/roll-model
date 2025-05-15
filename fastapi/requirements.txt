@@ -92,4 +92,4 @@ scipy
 imblearn==0.0
 scikit-learn
 aiohttp>=3.8.0
-openai>=1.0.0
+openai>=1.16.0
