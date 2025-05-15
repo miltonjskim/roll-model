@@ -75,7 +75,8 @@ class TransformationHandler:
                     "columns_processed": numeric_columns,
                     "details": results
                 },
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "startPoint": 0 
             }
         else:
             # 특정 컬럼에만 적용
@@ -129,7 +130,8 @@ class TransformationHandler:
                 "mean": float(mean_val),
                 "std": float(std_val)
             },
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": 0
         }
 
     def scale_minmax(self, column=None, min_value=0, max_value=1):
@@ -237,7 +239,9 @@ class TransformationHandler:
                 "min": min_value,
                 "max": max_value
             },
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": 0
+            
         }
 
     def transform_log(self, column, offset=1.0):
@@ -304,7 +308,8 @@ class TransformationHandler:
             "offset": float(offset),
             "transformedIndices": transformed_indices,
             "negativeValues": int(negative_count),
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": 0
         }
 
     def transform_sqrt(self, column):
@@ -366,5 +371,6 @@ class TransformationHandler:
             "column": column,
             "transformedIndices": transformed_indices,
             "negativeValues": 0,  # 음수가 없어야 변환이 가능하므로 항상 0
-            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "startPoint": 0
         }
