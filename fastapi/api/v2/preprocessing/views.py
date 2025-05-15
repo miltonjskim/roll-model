@@ -1,8 +1,6 @@
 import io
 from datetime import datetime
-import math
-import time
-from fastapi import APIRouter, Depends, Path, HTTPException, UploadFile, Form, BackgroundTasks, File
+from fastapi import APIRouter, Depends, Path, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from sqlalchemy.orm import Session
@@ -11,7 +9,7 @@ from core.api_response import ApiResponse
 from core.security import verify_token, verify_pipeline_ownership
 from core.storage import get_minio_client, MinioClient
 from db.mysql_config import get_mysql_db
-from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, TargetEncodingRequest, \
+from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, OutlierDetectionRequest, OutlierImputationRequest, OutlierRemoveRequest, TargetEncodingRequest, \
     LabelEncodingRequest, OneHotEncodingRequest, SqrtTransformRequest, LogTransformRequest, MinMaxScalingRequest, \
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
@@ -21,7 +19,7 @@ from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
-from typing import Dict, Optional
+from typing import Annotated, Optional
 import pandas as pd
 import logging
 
@@ -29,15 +27,8 @@ from service.preprocessing.outlier_handler import OutlierHandler
 from service.preprocessing.preprocessing_handler import PreprocessingHandler, get_preprocessing_handler
 from service.preprocessing.transform_handler import TransformationHandler
 from utils.snake_to_camel import convert_dict_to_camel_case
-
-import numpy as np
-from typing import Dict, List, Any, Optional, Tuple, Set
-import json
-from fastapi.responses import JSONResponse
+from typing import Optional
 from openai import OpenAI
-from dotenv import load_dotenv
-from pydantic import BaseModel
-import os
 from core.config import get_settings
 settings = get_settings()
 
@@ -82,7 +73,7 @@ async def imputate_missing_values(
 
 @router.post('/outliers/detection')
 async def detect_outlier(
-    request: LabelEncodingRequest,
+    request: OutlierDetectionRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
@@ -99,7 +90,7 @@ async def detect_outlier(
 
 @router.post('/outliers/imputation')
 async def impute_outlier(
-    request: LabelEncodingRequest,
+    request: OutlierImputationRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
@@ -116,7 +107,7 @@ async def impute_outlier(
 
 @router.post('/outliers/remove')
 async def remove_outlier(
-    request: LabelEncodingRequest,
+    request: OutlierRemoveRequest,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
     member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
@@ -270,12 +261,11 @@ async def balance_class(
 @router.post('/delete', response_class=ApiResponse)
 async def delete_preprocessing(
     pipeline_id: str = Path(..., description="파이프라인 ID"),
-    step_index: Optional[int] = Query(
-        None, 
+    step_index: Annotated[Optional[int], Query(
         alias="stepIndex",
         description="되돌아갈 스텝 인덱스. None이면 마지막 스텝 제거, -1이면 모든 스텝 제거",
         ge=-1
-    ),
+    )] = None,
     member_id: int = Depends(verify_pipeline_ownership),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
     minio_client: MinioClient = Depends(get_minio_client),
@@ -437,7 +427,7 @@ async def complete_preprocessing(
             config=config,
             file_size=file_size,  # 미리 구한 파일 크기 사용
             object_name=final_dataset_object_name,
-            sample_data = dataset_analysis["data_sample"]["data"][:10] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
+            sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
             category = project.category,
             domain = project.domain,
             is_preprocessed=True,
