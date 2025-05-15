@@ -72,9 +72,9 @@ const SelectDataPage = () => {
     try {
       const { data } = await axiosInstance.post(`/api/v2/projects/${projectId}/datasets/samples/${sampleId}`);
 
-      console.log('샘플 데이터 업로드 data:', data);
+      const sampleDataResponse: SampleDatasetUploadResponse = data.data.result;
+      console.log('sampleDataResponse:', sampleDataResponse);
 
-      const sampleDataResponse: SampleDatasetUploadResponse = data.data;
       const pipelineId = sampleDataResponse.datasetId;
 
       setUploadedDataset({
@@ -97,12 +97,10 @@ const SelectDataPage = () => {
   };
 
   const handleUseSampleData = () => {
-    console.log('샘플 데이터 사용');
     fetchSampleDatasetList();
   };
 
   const handleSelectSample = (dataset: SampleDataset) => {
-    console.log('선택한 샘플 데이터:', dataset);
     const sampleId = dataset.id;
     handleCreateProject(sampleId);
   };
