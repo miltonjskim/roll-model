@@ -22,9 +22,6 @@ const PreprocessDataPage = () => {
   const uploadedData = useAtomValue(uploadedDatasetAtom);
   const pipelineId = uploadedData?.pipelineId;
   const projectTitle = useAtomValue(projectTitleAtom);
-  const optionRef = useRef<HTMLDivElement>(null);
-  const [highlight, setHighlight] = useState(false);
-  const columnNames = uploadedData?.originalDatasets.columns;
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedSteps, setRecommendedSteps] = useState<Step[]>([]);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
@@ -46,14 +43,6 @@ const PreprocessDataPage = () => {
       console.log('원본 데이터셋 업로드 응답값:', uploadedData);
     }
   }, [uploadedData, router]);
-
-  const handleAddClick = () => {
-    if (optionRef.current) {
-      optionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setHighlight(true);
-      setTimeout(() => setHighlight(false), 1000);
-    }
-  };
 
   const handleAddStep = (newStep: Step) => {
     setSteps((prev) => [...prev, newStep]);
@@ -127,7 +116,7 @@ const PreprocessDataPage = () => {
           {/* 전처리 기능 목록 */}
           <div className="bg-[theme(primary-white)] mt-4 rounded-md p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="mt-4 mb-10 transition-shadow duration-300" ref={optionRef}>
+            <div className="mt-4 mb-10 transition-shadow duration-300">
               <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
             </div>
             <div className="text-center text-xs">
