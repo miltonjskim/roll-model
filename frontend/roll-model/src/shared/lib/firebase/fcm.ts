@@ -12,8 +12,8 @@ const firebaseConfig = {
   messagingSenderId: '536369286103',
   appId: '1:536369286103:web:84f1eba1a5731b23991992',
   measurementId: 'G-QJWBSXRMRF',
-  vapidKey: 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q',
 };
+// vapidKey: 'BEPr0IW8hR5D8BHgKlBQD9BzlTxa_G8owaqbZANbikIXzqZB_uzQOZuP3w-nUBKM2bUMSJ0jIh6vFDozXoUYY_Q',
 // const firebaseConfig = {
 //   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 //   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
