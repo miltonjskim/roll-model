@@ -7,7 +7,7 @@ class BasePreprocessingRequest(BaseModel):
 
 # 결측치 제거 요청
 class MissingValueRemoveRequest(BasePreprocessingRequest):
-    column: str = Field(..., description="처리할 컬럼 이름")
+    column: str | None = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="제거 방법 ('ROW_REMOVE' 또는 'COL_REMOVE')")
 
 # 결측치 대체 요청
@@ -28,16 +28,16 @@ class OutlierImputationRequest(BasePreprocessingRequest):
 
 
 class OutlierDetectionRequest(BasePreprocessingRequest):
-    column: str = Field(..., description="처리할 컬럼 이름")
+    column: str | None = Field(..., description="처리할 컬럼 이름")
     detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
 
 # Z-Score 표준화 요청
 class ZScoreRequest(BasePreprocessingRequest):
-    column: str = Field(..., description="표준화할 컬럼 이름")
+    column: str | None = Field(..., description="표준화할 컬럼 이름")
 
 # Min-Max 스케일링 요청
 class MinMaxScalingRequest(BasePreprocessingRequest):
-    column: str = Field(..., description="스케일링할 컬럼 이름")
+    column: str | None = Field(..., description="스케일링할 컬럼 이름")
 
 # 로그 변환 요청
 class LogTransformRequest(BasePreprocessingRequest):
