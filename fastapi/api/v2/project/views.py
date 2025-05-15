@@ -322,6 +322,7 @@ async def upload_project_sample_dataset(
         )
 
         # NaN, INF 수동 인코딩
+        result["originalDatasets"]["data"] = result["originalDatasets"]["data"][:30]
         safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
 
         # 응답 구성
