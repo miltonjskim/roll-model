@@ -182,14 +182,14 @@ public class ProjectVersionService {
         String newVersion;
         VersionEntity version;
 
-        // 현재 파이프라인의 부모 정보 조회
-        PipelineEntity parentPipeline = pipelineRepository.findByPipelineId(pipelineId)
-            .orElse;
+        // 현재 파이프라인 정보 조회
+        PipelineEntity pipeline = pipelineRepository.findByPipelineId(pipelineId)
+            .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
 
-        // 부모 파이프라인 ID로 버전 Entity 찾기
-
-        if (parentVersion == null) {
-            // 부모가 없으면 새로운 그룹 생성
+        //부모가 없다 == 자기 자신이라면
+        String parentPipelineId = pipeline.getParentPipelineId();
+        if (parentPipelineId.equals(pipelineId)) {
+            // 새로운 버전의 1.0 할듯함
             newVersion = ROOT_VERSION;
             Integer newGroupId = generateNewGroupId();
 
@@ -197,10 +197,15 @@ public class ProjectVersionService {
                 .pipelineId(pipelineId)
                 .versionNum(newVersion)
                 .groupId(newGroupId)
-                .parentVersion(null)
+                .parentVersion(newVersion)
                 .build();
         } else {
+            VersionEntity parentVersion = versionRepository.findVersionEntityByPipelineId(parentPipelineId);
+
             // 같은 그룹의 모든 버전들을 조회 (내림차순 정렬)
+            if (parentVersion == null) {
+                throw new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND);
+            }
             List<VersionEntity> pipelineGroup = versionRepository
                 .findVersionEntitiesByGroupId(parentVersion.getGroupId());
 
