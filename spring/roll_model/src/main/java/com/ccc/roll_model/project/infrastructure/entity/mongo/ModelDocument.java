@@ -149,7 +149,7 @@ public class ModelDocument {
             private Double rmse; // 평균 제곱근 오차
 
             @Field("residual_plot")
-            private Plot residualPlot; // 잔차 플롯 데이터
+            private ResidualPlot residualPlot; // 잔차 플롯 데이터
             @Field("scatter_plot")
             private Plot scatterPlot; // 실제값 vs 예측값 스캐터 플롯 데이터
 
@@ -162,6 +162,18 @@ public class ModelDocument {
                 private List<Double> predicted; // 예측값 (x축)
                 private List<Double> actual; // 실제값 (y축) 또는 잔차 값
             }
+            @Getter
+            @Setter
+            @AllArgsConstructor
+            @NoArgsConstructor
+            @Builder
+            public static class ResidualPlot {
+                private List<Double> predicted;
+
+                @Field("residuals")
+                private List<Double> residuals;
+            }
+
         }
     }
 
