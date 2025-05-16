@@ -61,6 +61,9 @@ MONGODB_COLLECTION = os.environ.get('MONGODB_COLLECTION')
 # MLflow 설정
 MLFLOW_TRACKING_URI = os.environ.get('MLFLOW_TRACKING_URI')
 
+# Kubernetes NodePort 설정
+NODEPORT_HOST = os.environ.get('NODEPORT_HOST')
+
 def get_absolute_path(path):
     """상대 경로를 절대 경로로 변환"""
     if path is None:

@@ -41,7 +41,14 @@ def create_service(service_name, service_url):
             "url": service_url
         }
 
+        logger.info(f"Kong 서비스 생성 요청 URL: {url}")
+        logger.info(f"Kong 서비스 생성 요청 페이로드: {json.dumps(payload, ensure_ascii=False)}")
+
         response = requests.post(url, json=payload)
+
+        logger.info(f"Kong 응답 상태 코드: {response.status_code}")
+        logger.info(f"Kong 응답 헤더: {response.headers}")
+        logger.info(f"Kong 응답 내용: {response.text}")
 
         # 이미 존재하는 서비스인 경우 처리
         if response.status_code == 409:

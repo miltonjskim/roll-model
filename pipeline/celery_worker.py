@@ -18,7 +18,8 @@ from config import (
     MINIO_DATASETS_BUCKET,
     MINIO_MODELS_BUCKET,
     KAFKA_PRODUCER_CONFIG,
-    KAFKA_STATUS_TOPIC
+    KAFKA_STATUS_TOPIC,
+    NODEPORT_HOST
 )
 from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
@@ -517,6 +518,16 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 memory_limit=model_memory_limit
             )
 
+            # 배포 결과 한글 로깅
+            if deployment_success:
+                print(f"[Task] 모델 배포 성공:")
+                print(f"  - 서비스 이름: {service_name}")
+                print(f"  - 서비스 URL: {service_url}")
+                print(f"  - 배포 메시지: {deployment_message}")
+            else:
+                print(f"[Task] 모델 배포 실패:")
+                print(f"  - 실패 메시지: {deployment_message}")
+
             # KServe 배포 성공 후 Kong API Gateway 설정
             if deployment_success and service_url:
                 # Kong API Gateway 설정
@@ -526,7 +537,7 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                     # 서비스 URL 구성
                     api_service_url = service_url
                     if not api_service_url.startswith('http'):
-                        api_service_url = f"http://{api_service_url}"
+                        api_service_url = f"http://{NODEPORT_HOST}{api_service_url}"
 
                     # Kong API Gateway 설정 실행 (모델별 1:1 소비자 및 ACL 그룹 생성)
                     kong_result = setup_model_api_gateway(
