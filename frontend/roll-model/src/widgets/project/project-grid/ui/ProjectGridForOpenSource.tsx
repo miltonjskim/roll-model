@@ -1,5 +1,5 @@
-import { OpenSourceProject } from "@/entities/open-source/model/types";
-import { ProjectCardForOpenSource } from "@/entities/open-source/ui/ProjectCardForOpenSource";
+import { OpenSourceProject } from '@/entities/open-source/model/types';
+import { ProjectCardForOpenSource } from '@/entities/open-source/ui/ProjectCardForOpenSource';
 
 interface ProjectGridProps {
   projects: OpenSourceProject[];
@@ -7,13 +7,15 @@ interface ProjectGridProps {
 
 export const ProjectGridForOpenSource = ({ projects }: ProjectGridProps) => {
   if (projects.length === 0) {
-    return <div className="text-center py-10">프로젝트가 없습니다.</div>;
+    return <div className="py-10 text-center">프로젝트가 없습니다.</div>;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="flex flex-wrap justify-center">
       {projects.map((project) => (
-        <ProjectCardForOpenSource key={project.id} project={project} />
+        <div key={project.id} className="w-[24rem] p-4">
+          <ProjectCardForOpenSource project={project} />
+        </div>
       ))}
     </div>
   );
