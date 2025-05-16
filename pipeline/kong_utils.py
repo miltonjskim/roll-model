@@ -166,10 +166,19 @@ def enable_key_auth_plugin(route_name):
         url = f"{KONG_ADMIN_URL}/routes/{route_name}/plugins"
         payload = {
             "name": "key-auth",
-            "config.key_names": ["apikey"]
+            "config": {
+                "key_names": ["apikey"]
+            }
         }
 
+        logger.info(f"key-auth 플러그인 활성화 요청 URL: {url}")
+        logger.info(f"key-auth 플러그인 활성화 요청 페이로드: {json.dumps(payload)}")
+
         response = requests.post(url, json=payload)
+
+        logger.info(f"Kong 응답 상태 코드: {response.status_code}")
+        logger.info(f"Kong 응답 헤더: {response.headers}")
+        logger.info(f"Kong 응답 내용: {response.text}")
 
         # 이미 플러그인이 활성화된 경우
         if response.status_code == 409:
@@ -182,6 +191,9 @@ def enable_key_auth_plugin(route_name):
         return response.json()
     except Exception as e:
         logger.error(f"key-auth 플러그인 활성화 오류: {e}")
+        if hasattr(e, 'response'):
+            logger.error(f"응답 상태 코드: {e.response.status_code}")
+            logger.error(f"응답 내용: {e.response.text}")
         return None
 
 def enable_acl_plugin(route_name, group_name):
@@ -190,7 +202,9 @@ def enable_acl_plugin(route_name, group_name):
         url = f"{KONG_ADMIN_URL}/routes/{route_name}/plugins"
         payload = {
             "name": "acl",
-            "config.allow": [group_name]
+            "config": {
+                "allow": [group_name]
+            }
         }
 
         response = requests.post(url, json=payload)
