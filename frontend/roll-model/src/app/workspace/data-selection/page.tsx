@@ -75,10 +75,10 @@ const SelectDataPage = () => {
       const sampleDataResponse: SampleDatasetUploadResponse = data.data.result;
       console.log('sampleDataResponse:', sampleDataResponse);
 
-      const pipelineId = sampleDataResponse.datasetId;
+      const pipelineId = sampleDataResponse.pipelineId;
 
       setUploadedDataset({
-        pipelineId: sampleDataResponse.datasetId,
+        pipelineId: pipelineId,
         summary: sampleDataResponse.summary,
         missingValues: sampleDataResponse.missingValues,
         originalDatasets: sampleDataResponse.originalDatasets,

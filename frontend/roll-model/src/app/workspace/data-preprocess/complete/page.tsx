@@ -23,7 +23,7 @@ const categoryMap: Record<string, { label: string; description: string }> = {
 
 const columnTypeMap: Record<string, string> = {
   integer: '정수',
-  float: '소수',
+  double: '소수',
   string: '문자열',
   boolean: '참/거짓',
   datetime: '날짜/시간',

@@ -9,6 +9,7 @@ import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceA
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 
 interface PreprocessingOption {
   id: string;
@@ -109,7 +110,8 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   const [expanded, setExpanded] = useState<string[]>([]);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [selectedColumn, setSelectedColumn] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useAtom(globalLoadingAtom);
+  const setLoadingmessage = useSetAtom(globalLoadingMessageAtom);
   const [uploadedDataset, setUploadedDataset] = useAtom(uploadedDatasetAtom);
   const [targetColumn, setTargetColumn] = useState('');
   const [offset, setOffset] = useState(1.0);
@@ -123,7 +125,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
 
   const handleApply = async (categoryId: string, option: PreprocessingOption) => {
     setLoading(true);
-
+    setLoadingmessage('요청하신 전처리 옵션을 진행하고 있습니다.');
     try {
       const baseUrl = `/api/v2/pipelines/${pipelineId}/preprocessing`;
       const url = `${baseUrl}${option.apiEndpoint}`;
@@ -220,6 +222,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
       console.error('전처리 요청 실패:', error);
     } finally {
       setLoading(false);
+      setLoadingmessage(null);
       setSelected({});
     }
   };
@@ -332,12 +335,6 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
           </div>
         );
       })}
-
-      {loading && (
-        <div className="mt-2 flex justify-center">
-          <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-gray-900" />
-        </div>
-      )}
     </div>
   );
 };
