@@ -29,7 +29,9 @@ import pandas as pd
 import re
 import math
 
-from ....core.exception import CustomAPIException
+from utils.execution_time_checker import execution_time
+
+from core.exception import CustomAPIException
 from core.security import verify_token
 from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
@@ -45,7 +47,7 @@ from service.pipeline_fork_service import save_new_pipeline, prepare_response_da
 
 from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
     create_new_pipeline_model
-from ....service.preprocessing.preprocessing_handler import PreprocessingHandler
+from service.preprocessing.preprocessing_handler import PreprocessingHandler
 from utils.snake_to_camel import convert_dict_to_camel_case
 from core.config import get_settings
 settings = get_settings()
@@ -56,6 +58,7 @@ router = APIRouter()
 sample_router = APIRouter()
 pipeline_router = APIRouter()
 
+@execution_time
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
     background_tasks: BackgroundTasks,
@@ -908,7 +911,7 @@ async def get_dataset_page(
             message=f"데이터셋 조회 실패: {str(e)}"
         )
     
-
+@execution_time
 async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
    
     """OpenAI API를 사용하여 전처리 추천을 생성합니다."""
@@ -989,6 +992,7 @@ async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], pr
         logger.info("기본 추천 로직으로 대체합니다.")
         return generate_default_recommendations(safe_result)
 
+@execution_time
 def generate_default_recommendations(safe_result: Dict[str, Any]) -> List[Dict[str, Any]]:
     """기본 전처리 추천을 생성합니다 (API 호출 실패 시)."""
     recommendations = []
@@ -1215,6 +1219,7 @@ PREPROCESSING_CATEGORIES = {
     }
 }
 
+@execution_time
 def parse_openai_response(response_text: str):
     try:
         # 마크다운 블록 제거
@@ -1227,6 +1232,8 @@ def parse_openai_response(response_text: str):
     except Exception as e:
         logger.error("GPT 응답 파싱 실패", exc_info=True)
         raise
+
+@execution_time
 def clean_for_json(obj):
     if isinstance(obj, dict):
         return {k: clean_for_json(v) for k, v in obj.items()}
@@ -1243,6 +1250,7 @@ def safe_float(val):
         return None
     return float(val)
 
+@execution_time
 def analyze_csv(df: pd.DataFrame) -> Dict[str, Any]:
     """CSV 파일을 분석하여 기본 통계 및 특성을 반환합니다."""
     analysis = {
