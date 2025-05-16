@@ -19,7 +19,7 @@ async def get_source_pipeline(db, pipeline_id, pipeline_service: PipelineService
     원본 파이프라인과 상세 정보를 조회합니다.
     """
     # MySQL에서 기본 파이프라인 정보 조회
-    source_pipeline = db.query(Pipeline) \
+    source_pipeline:Pipeline = db.query(Pipeline) \
         .filter(Pipeline.pipeline_id == pipeline_id) \
         .filter(Pipeline.deleted_yn == False) \
         .first()
@@ -32,7 +32,7 @@ async def get_source_pipeline(db, pipeline_id, pipeline_service: PipelineService
         )
 
     # MongoDB에서 파이프라인 상세 정보 조회
-    source_pipeline_details = await pipeline_service.get_pipeline(pipeline_id)
+    source_pipeline_details: PipelineModel = await pipeline_service.get_pipeline(pipeline_id)
     logger.info(f"source_pipeline_detailsssssssssssssssssssssssss: {source_pipeline_details}")
     if not source_pipeline_details:
         return None, None, ApiResponse(
