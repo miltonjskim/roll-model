@@ -8,7 +8,7 @@ import { NewProjectButton } from '@/features/dashboard/NewProjectButton';
 import { useDashboard } from '@/app/dashboard/model/useDashboard';
 
 export default function Page() {
-  const { dashboardData, isLoading, error, filteredProjects, selectedCategory, handleCategoryChange, handleSearch } = useDashboard();
+  const { dashboardData, isLoading, error, filteredProjects, selectedCategory, handleCategoryChange, handleSearch, selectedStatus, handleStatusChange } = useDashboard();
 
   if (isLoading) {
     return <div className="flex min-h-screen items-center justify-center">로딩중 ...</div>;
@@ -33,7 +33,7 @@ export default function Page() {
       </div>
 
       {/* 통계 요약 섹션 */}
-      <StatsGrid summary={dashboardData.summary} />
+      <StatsGrid summary={dashboardData.summary} selectedStatus={selectedStatus} onStatusChange={handleStatusChange} />
 
       {/* 프로젝트 검색 및 필터 */}
       <div className="bg-[theme(primary-white)] mb-6 flex flex-col items-start justify-between rounded-md px-2 py-2 md:flex-row md:items-center">
