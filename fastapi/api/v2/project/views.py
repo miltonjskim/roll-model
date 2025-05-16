@@ -953,8 +953,6 @@ async def get_dataset_page(
         )
     
 @execution_time
-async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
-
 async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
    
     """OpenAI API를 사용하여 전처리 추천을 생성합니다."""
@@ -1034,9 +1032,8 @@ async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any]
     except Exception as e:
         logger.error("OpenAI API 호출 중 예외 발생", exc_info=True)
         logger.info("기본 추천 로직으로 대체합니다.")
-        return generate_default_recommendations(safe_result)
+        return generate_default_recommendations(analysis_result)
 
-@execution_time
 def generate_default_recommendations(safe_result: Dict[str, Any]) -> List[Dict[str, Any]]:
     """기본 전처리 추천을 생성합니다 (API 호출 실패 시)."""
     recommendations = []
@@ -1241,7 +1238,6 @@ PREPROCESSING_CATEGORIES = {
     }
 }
 
-@execution_time
 def parse_openai_response(response_text: str):
     try:
         # 마크다운 블록 제거
@@ -1280,28 +1276,12 @@ def parse_openai_response(response_text: str):
     except Exception as e:
         logger.error(f"GPT 응답 파싱 실패: {str(e)}", exc_info=True)
         raise
-
-@execution_time
-def clean_for_json(obj):
-    if isinstance(obj, dict):
-        return {k: clean_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [clean_for_json(i) for i in obj]
-    elif isinstance(obj, float):
-        if math.isnan(obj) or math.isinf(obj):
-            return None
-        return obj
-    return obj
-
     
 def safe_float(val):
     if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
         return None
     return float(val)
 
-@execution_time
-def analyze_csv(df: pd.DataFrame) -> Dict[str, Any]:
-    """CSV 파일을 분석하여 기본 통계 및 특성을 반환합니다."""
 def get_sample_rows(df: pd.DataFrame, max_rows: int = 2) -> List[Dict]:
     """DataFrame에서 최소한의 샘플 행을 추출하여 반환합니다."""
     sample = df.head(max_rows).fillna("NA")
