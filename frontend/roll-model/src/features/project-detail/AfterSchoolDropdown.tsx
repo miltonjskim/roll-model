@@ -33,7 +33,7 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
       )}
       {showDropdown && (
         <div
-          className="absolute right-0 bottom-full mt-1 mb-1 flex flex-col gap-1 rounded-md border border-gray-200 bg-white p-1 shadow-md"
+          className="absolute right-0 bottom-full flex flex-col gap-1 rounded-md border border-gray-200 bg-white p-1 shadow-md"
           onMouseEnter={() => setShowDropdown(true)}
           onMouseLeave={() => setShowDropdown(false)}
         >
