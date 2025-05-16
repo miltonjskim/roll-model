@@ -16,6 +16,7 @@ from models.preprocessing.preprocessing_request_models import ClassBalancingRequ
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
 from schemas.mysql.schemas import PipelineStatus, Pipeline, Project
+from service.column_type_inferer import process_columns_with_inference
 from service.dataset_service import calculate_and_update_statistics, store_dataset_to_mongodb, analyze_dataset, replace_nan_values, upload_dataset_and_save_metadata
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
@@ -28,6 +29,7 @@ import logging
 from service.preprocessing.outlier_handler import OutlierHandler
 from service.preprocessing.preprocessing_handler import PreprocessingHandler, get_preprocessing_handler
 from service.preprocessing.transform_handler import TransformationHandler
+from utils.execution_time_checker import execution_time
 from utils.snake_to_camel import convert_dict_to_camel_case
 from typing import Optional
 from openai import OpenAI
@@ -309,6 +311,7 @@ async def delete_preprocessing(
         )
 
 @router.post('/complete')
+@execution_time
 async def complete_preprocessing(
     background_tasks: BackgroundTasks,
     pipeline_id: str = Path(..., description="파이프라인 ID"),
@@ -359,67 +362,40 @@ async def complete_preprocessing(
 
         # 타입 추론
         df = pd.read_csv(buffer, encoding="utf-8")
-        columns = df.columns.tolist()  # 데이터프레임의 컬럼명 리스트 가져오기
-        logger.info(df.head)
+        logger.info(f"Original dataframe shape: {df.shape}")
+        logger.info(df.head())
 
-        # 데이터 타입 추론
-        inferred_columns = []
-        for col in columns:
-            # 해당 열에 NaN 값이 있는지 확인
-            has_nan = df[col].isna().any()
-
-            # 데이터 타입 추론 로직
-
-            # 기본값 설정
-            inferred_type = "string"
-
-            if len(df[col]) > 0:
-                is_datetime = False
-
-                # 문자열인 경우만 날짜 확인 시도
-
-                if df[col].dtype == 'object':  # 문자열 컬럼인 경우
-                    try:
-                        # 모든 값을 날짜로 변환 시도
-                        parsed_dates = df[col].apply(lambda x: pd.to_datetime(x, errors='coerce'))
-                        # 모든 값이 성공적으로 날짜로 변환되었는지 확인
-                        is_datetime = parsed_dates.notna().all()
-                    except (ValueError, TypeError) as e:
-                        is_datetime = False
-                if is_datetime:
-                    inferred_type = "datetime"
-                # 숫자 형식 확인
-                elif pd.api.types.is_numeric_dtype(df[col]):
-                    # NaN이 있으면서 정수 같은 값들이라면 float으로 처리
-                    if has_nan and all(df[col].apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
-                        inferred_type = "double"
-                    # NaN이 없고 모든 값이 정수처럼 보이면 integer
-                    elif not has_nan and all(
-                            df[col].apply(lambda x: x.is_integer() if isinstance(x, float) else True)):
-                        inferred_type = "integer"
-                    else:
-                        inferred_type = "double"
-                # 불리언 값 확인
-                elif all(df[col].isin([True, False, "True", "False", "true", "false", 0, 1])):
-                    inferred_type = "boolean"
-
-            inferred_columns.append({"name": col, "type": inferred_type})
+        # 최적화된 컬럼 타입 추론 및 필터링
+        df_filtered, inferred_columns, valid_columns = process_columns_with_inference(
+            df, 
+            exclude_types=["string", "datetime"],
+            sample_size=1000
+        )
+        
+        if df_filtered.empty:
+            raise HTTPException(status_code=400, detail="유효한 컬럼이 없습니다.")
+        
+        logger.info(f"총 {len(df.columns)}개 컬럼 중 {len(valid_columns)}개 컬럼 유지")
+        logger.info(f"제거된 컬럼: {len(df.columns) - len(valid_columns)}개")
+        logger.info(f"Filtered dataframe shape: {df_filtered.shape}")
 
         config = {
             "delimiter": "comma",
             "customDelimiter": None,
             "encoding":  "UTF-8",
             "hasHeader": True,
-            "columns": inferred_columns  # 추론된 컬럼 정보로 업데이트
+            "columns": inferred_columns  # 정리된 컬럼 정보
         }
 
         project = db.query(Project).filter(Project.project_id == pipelineModel.project_id).first()
 
-        # 버퍼 위치를 처음으로 되돌림
-        buffer.seek(0)
+        # 수정된 데이터프레임을 다시 CSV로 변환하여 buffer에 저장
+        updated_buffer = io.BytesIO()
+        df_filtered.to_csv(updated_buffer, index=False, encoding='utf-8')
+        updated_buffer.seek(0)
         
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
-        dataset_analysis = await analyze_dataset(buffer, config)
+        dataset_analysis = await analyze_dataset(updated_buffer, config)
 
         # MongoDB에 전처리된 데이터셋 저장
         dataset_id: str = await store_dataset_to_mongodb(
@@ -428,7 +404,7 @@ async def complete_preprocessing(
             etag=final_dataset_etag,
             dataset_analysis=dataset_analysis,
             config=config,
-            file_size=file_size,  # 미리 구한 파일 크기 사용
+            file_size=len(updated_buffer.getvalue()),  # 수정된 파일 크기 사용
             object_name=final_dataset_object_name,
             sample_data = dataset_analysis["data_sample"]["data"][:30] if dataset_analysis.get("data_sample") and "data" in dataset_analysis["data_sample"] else [],
             category = project.category,
