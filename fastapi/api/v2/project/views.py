@@ -1215,19 +1215,37 @@ def parse_openai_response(response_text: str):
         # 주석 제거
         cleaned_text = re.sub(r"//.*", "", cleaned_text)
         
-        # JSON 객체/배열의 끝을 찾아서 그 이후 텍스트는 모두 제거
-        json_pattern = re.compile(r'(\[.*?\]|\{.*?\})', re.DOTALL)
-        json_match = json_pattern.search(cleaned_text)
+        # JSON 데이터가 시작되는 위치와 끝나는 위치를 찾습니다
+        start_index = cleaned_text.find('[')
+        if start_index == -1:
+            start_index = cleaned_text.find('{')
         
-        if json_match:
-            cleaned_text = json_match.group(1)
+        if start_index != -1:
+            # 괄호 매칭 알고리즘으로 JSON 끝 위치 찾기
+            stack = []
+            end_index = -1
+            
+            for i, char in enumerate(cleaned_text[start_index:]):
+                if char in '[{':
+                    stack.append(char)
+                elif char in ']}':
+                    if (char == ']' and stack[-1] == '[') or (char == '}' and stack[-1] == '{'):
+                        stack.pop()
+                        if not stack:  # 스택이 비어있으면 매칭된 괄호를 모두 찾은 것
+                            end_index = start_index + i + 1
+                            break
+            
+            if end_index != -1:
+                cleaned_text = cleaned_text[start_index:end_index]
         
-        logger.info(f"마크다운 제거 후:\n{cleaned_text}")
-
+        logger.info(f"파싱 준비된 JSON:\n{cleaned_text}")
+        
+        # JSON 데이터 로드
         return json.loads(cleaned_text)
     except Exception as e:
-        logger.error("GPT 응답 파싱 실패", exc_info=True)
+        logger.error(f"GPT 응답 파싱 실패: {str(e)}", exc_info=True)
         raise
+    
 def safe_float(val):
     if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
         return None
