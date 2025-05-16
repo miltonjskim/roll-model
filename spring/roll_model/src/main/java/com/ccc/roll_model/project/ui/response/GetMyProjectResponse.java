@@ -43,7 +43,7 @@ public class GetMyProjectResponse {
         private Double rSquared;
         private String target;
         private int dataCount;
-        private int runningDuration;
+        private Double runningDuration;
         private int likeCount;
         private int downloadCount;
         private boolean publicYn;

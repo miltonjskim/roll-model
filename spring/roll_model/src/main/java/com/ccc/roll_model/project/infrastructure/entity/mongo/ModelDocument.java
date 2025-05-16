@@ -53,7 +53,7 @@ public class ModelDocument {
     private Map<String, Double> featureImportance; // 각 특성 중요도
 
     @Field("learning_duration")
-    private Integer learningDuration; // 학습 소요 시간 (초 단위)
+    private Double learningDuration; // 학습 소요 시간 (초 단위)
     @Field("model_file_path")
     private String modelFilePath; // 모델 파일 저장 경로
     @Field("api_endpoint")
