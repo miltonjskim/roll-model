@@ -98,44 +98,64 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
   return (
     <div className="mt-4">
       <div
-        className={clsx('rounded-md border border-[var(--color-gray-04)] p-2', cardStyle === 'small' ? 'flex max-h-[80%] flex-col gap-3 overflow-y-auto' : 'flex flex-nowrap gap-3 overflow-x-auto')}
+        className={clsx(
+          'rounded-md border border-[var(--color-gray-04)] p-2',
+          cardStyle === 'small' ? 'flex max-h-[80%] flex-col items-center gap-3 overflow-y-auto' : 'flex flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto',
+        )}
       >
-        {!steps || steps.filter(Boolean).length === 0 ? (
-          <p className="text-sm text-gray-500">{cardStyle === 'small' ? 'AI 추천 전처리 단계가 없습니다.' : '적용된 전처리 단계가 없습니다.'}</p>
-        ) : (
-          steps
-            .filter((step): step is Step => step != null)
-            .map((step, idx) => {
-              return (
-                <div
-                  key={idx}
-                  ref={idx === steps.length - 1 ? lastStepRef : null}
-                  className={clsx(cardBaseClass, cardStyle === 'large' && idx === steps.length - 1 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}
-                >
-                  <p className="mb-1 font-semibold text-[var(--color-blue-01)]">
-                    {idx + 1}. {getStepLabel(step.type)}
-                  </p>
-                  <p className="text-xs font-medium text-gray-800">{step.optionName}</p>
-                  <p className="mb-2 text-xs text-gray-500">{getStepSubLabel(step)}</p>
+        {/* 단계 수 표시 (large일 때만) */}
+        {cardStyle === 'large' && steps && steps.length > 0 && <p className="mb-2 w-full text-right text-xs text-gray-400">총 단계: {steps.filter(Boolean).length}단계</p>}
 
-                  <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
-                    {step.type === 'OUTLIER-DETECTION' && (
-                      <>
-                        {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
-                        {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
-                        {Array.isArray(step.parameters.outlierIndices) && (
-                          <li>
-                            이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
-                            {step.parameters.outlierIndices.length > 5 && '...'}
-                          </li>
-                        )}
-                      </>
-                    )}
-                    {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
-                  </ul>
-                </div>
-              );
-            })
+        {cardStyle === 'small' && steps && steps.length > 0 && <p className="mb-2 w-full text-right text-xs text-gray-400">총 단계: {steps.filter(Boolean).length}단계</p>}
+
+        {/* 단계 없음 메시지 */}
+        {!steps || steps.filter(Boolean).length === 0 ? (
+          <p className="text-center text-sm text-gray-500">
+            {cardStyle === 'small' ? (
+              <>
+                <span className="font-tossface">🤖</span> AI가 추천한 전처리 단계가 없습니다.
+              </>
+            ) : (
+              <>
+                <span className="font-tossface">🛠️</span> 아직 적용된 전처리 단계가 없어요.
+                <br />
+                필요한 기능을 선택해 데이터를 다듬어보세요.
+              </>
+            )}
+          </p>
+        ) : (
+          [...steps]
+            .filter((step): step is Step => step != null)
+            .reverse() // 최신 단계를 맨 앞에
+            .map((step, idx) => (
+              <div key={idx} ref={idx === 0 ? lastStepRef : null} className={clsx(cardBaseClass, cardStyle === 'large' && idx === 0 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}>
+                <p className="mb-1 font-semibold text-[var(--color-blue-01)]">
+                  {steps.length - idx}. {getStepLabel(step.type)}
+                </p>
+                <p className="line-clamp-1 text-xs font-medium text-gray-800" title={step.optionName}>
+                  {step.optionName}
+                </p>
+                <p className="mb-2 line-clamp-2 text-xs text-gray-500" title={getStepSubLabel(step)}>
+                  {getStepSubLabel(step)}
+                </p>
+
+                <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
+                  {step.type === 'OUTLIER-DETECTION' && (
+                    <>
+                      {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
+                      {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
+                      {Array.isArray(step.parameters.outlierIndices) && (
+                        <li>
+                          이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
+                          {step.parameters.outlierIndices.length > 5 && '...'}
+                        </li>
+                      )}
+                    </>
+                  )}
+                  {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
+                </ul>
+              </div>
+            ))
         )}
       </div>
     </div>

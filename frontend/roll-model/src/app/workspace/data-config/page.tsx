@@ -87,13 +87,14 @@ const ConfigDataPage = () => {
 
       const projectId = response.data.id;
       setProjectId(projectId.toString());
+      setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
 
       handleUpload(projectId.toString());
     } catch (err) {
       console.error('프로젝트 생성 실패:', err);
     } finally {
-      setGlobalLoading(false);
-      setLoadingMessage(null);
+      // setGlobalLoading(false);
+      // setLoadingMessage(null);
     }
   };
 
@@ -120,9 +121,6 @@ const ConfigDataPage = () => {
         type: columnTypes[idx] as UploadDatasetRequest['columns'][number]['type'], // 캐스팅
       })),
     };
-
-    setGlobalLoading(true);
-    setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
 
     mutation.mutate(
       { projectId, config: payload, file },
