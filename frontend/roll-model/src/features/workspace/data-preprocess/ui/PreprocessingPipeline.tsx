@@ -124,38 +124,39 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
             )}
           </p>
         ) : (
-          [...steps]
-            .filter((step): step is Step => step != null)
-            .reverse() // 최신 단계를 맨 앞에
-            .map((step, idx) => (
-              <div key={idx} ref={idx === 0 ? lastStepRef : null} className={clsx(cardBaseClass, cardStyle === 'large' && idx === 0 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}>
-                <p className="mb-1 font-semibold text-[var(--color-blue-01)]">
-                  {steps.length - idx}. {getStepLabel(step.type)}
-                </p>
-                <p className="line-clamp-1 text-xs font-medium text-gray-800" title={step.optionName}>
-                  {step.optionName}
-                </p>
-                <p className="mb-2 line-clamp-2 text-xs text-gray-500" title={getStepSubLabel(step)}>
-                  {getStepSubLabel(step)}
-                </p>
+          (cardStyle === 'large' ? [...steps].filter((step): step is Step => step != null).reverse() : [...steps].filter((step): step is Step => step != null)).map((step, idx, arr) => (
+            <div
+              key={idx}
+              ref={cardStyle === 'large' && idx === 0 ? lastStepRef : null}
+              className={clsx(cardBaseClass, cardStyle === 'large' && idx === 0 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}
+            >
+              <p className="mb-1 text-sm font-bold text-[var(--color-blue-01)]">
+                {cardStyle === 'large' ? arr.length - idx : idx + 1}. {getStepLabel(step.type)}
+              </p>
+              <p className="line-clamp-1 text-sm font-semibold text-gray-800" title={step.optionName}>
+                {step.optionName}
+              </p>
+              <p className="mb-2 line-clamp-2 text-xs font-semibold text-gray-500" title={getStepSubLabel(step)}>
+                {getStepSubLabel(step)}
+              </p>
 
-                <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
-                  {step.type === 'OUTLIER-DETECTION' && (
-                    <>
-                      {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
-                      {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
-                      {Array.isArray(step.parameters.outlierIndices) && (
-                        <li>
-                          이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
-                          {step.parameters.outlierIndices.length > 5 && '...'}
-                        </li>
-                      )}
-                    </>
-                  )}
-                  {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
-                </ul>
-              </div>
-            ))
+              <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
+                {step.type === 'OUTLIER-DETECTION' && (
+                  <>
+                    {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
+                    {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
+                    {Array.isArray(step.parameters.outlierIndices) && (
+                      <li>
+                        이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
+                        {step.parameters.outlierIndices.length > 5 && '...'}
+                      </li>
+                    )}
+                  </>
+                )}
+                {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
+              </ul>
+            </div>
+          ))
         )}
       </div>
     </div>
