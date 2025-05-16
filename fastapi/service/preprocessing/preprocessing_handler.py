@@ -251,7 +251,7 @@ class PreprocessingHandler:
                 "pageSize": page_size,
                 "totalPages": (len(dataset) + page_size - 1) // page_size,
                 "startPoint": aligned_start,
-                "dataset_summary": dataset_summary
+                "summary": dataset_summary
             }
         }
         return jsonable_encoder(replace_nan_values(response, round_decimals=2))
