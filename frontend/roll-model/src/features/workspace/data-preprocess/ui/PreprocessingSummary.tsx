@@ -31,7 +31,7 @@ const PreprocessingSummary = () => {
   return (
     <>
       <div className="mt-2 text-sm">
-        <div className="flex justify-between text-xs text-[var(--primary-black)]">
+        <div className="flex justify-between text-sm text-[var(--primary-black)]">
           <p>
             <span className="font-tossface mr-1">📊</span>총 {summary.rowCount.toLocaleString()}행 · {summary.columnCount}열
           </p>
