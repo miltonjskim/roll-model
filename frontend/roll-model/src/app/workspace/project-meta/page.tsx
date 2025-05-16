@@ -57,9 +57,15 @@ const InputProjectMetaDataPage = () => {
 
           <div className="flex items-center gap-2 select-none">
             <label htmlFor="project-description" className="flex-1/5 font-semibold">
-              목표 변수 설정
+              프로젝트 목적
             </label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="" className="flex-4/5 font-medium" id="project-description" />
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="예측하고자 하는 것(목표 변수)을 입력해주세요."
+              className="flex-4/5 font-medium"
+              id="project-description"
+            />
           </div>
 
           <div className="flex items-center gap-2 select-none">
@@ -82,7 +88,7 @@ const InputProjectMetaDataPage = () => {
 
           <div className="flex items-center gap-2 select-none">
             <label htmlFor="project-category" className="flex-1/5 font-semibold">
-              모델 종류 선택
+              예측 방식 선택
             </label>
             <Select value={type} onValueChange={(val) => setType(val as projectCategory)}>
               <SelectTrigger className="flex-4/5 font-medium">
