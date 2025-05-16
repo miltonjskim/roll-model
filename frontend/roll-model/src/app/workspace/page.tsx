@@ -12,6 +12,7 @@ const Workspace = () => {
 
   useEffect(() => {
     registerInitProjectSteps();
+    startGuide();
   }, []);
 
   const handleCreateProject = () => {
@@ -27,7 +28,7 @@ const Workspace = () => {
       <div>
         <h1 className="text-xl font-bold">시작하기</h1>
         <h2>시작할 프로젝트를 선택하세요.</h2>
-        <Button onClick={startGuide}>가이드 시작하기</Button>
+        {/* <Button onClick={startGuide}>가이드 시작하기</Button> */}
       </div>
       <div className="mx-auto mt-4 max-w-[70rem]">
         <div className="bg-[theme(primary-white)] flex h-120 justify-center gap-4 rounded-md p-4">
