@@ -65,6 +65,11 @@ public class ModelingService {
 		PipelineEntity pipeline = pipelineRepository.findById(command.getPipelineId())
 				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
 
+		// PREPROCESSED 인 경우마 모델링 가능 (정상 절차 실행 시 PREPROCESSED가 됨)
+		if (pipeline.getStatus() != Status.PREPROCESSED) {
+			throw new ApiException(ErrorCode.INVALID_MODELING_STATUS);
+		}
+
 		// 파이프라인 존재 여부 확인 : mongo
 		System.out.println(command.getModelingInfo());
 		PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(command.getPipelineId()))
