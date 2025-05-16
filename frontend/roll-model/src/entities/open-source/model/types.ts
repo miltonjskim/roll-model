@@ -16,7 +16,7 @@ export interface OpenSourceProject {
   rSquared: number | null; // 회귀일때의 정확도
   target: string; // 목표변수
   dataCount: number; // 데이터수
-  runnungDuration: number; // 학습시간
+  runningDuration: number; // 학습시간
   likeCount: number; // 좋아요
   downloadCount: number; // 다운로드
   likeYn: boolean; // 내가 좋아함?
