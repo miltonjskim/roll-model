@@ -385,6 +385,7 @@ class PipelineService:
 
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
+                
                 return {
                     "latestStep": latest_step.model_dump(),
                     "totalSteps": len(latest_history.preprocessing_steps),

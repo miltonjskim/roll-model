@@ -33,6 +33,8 @@ from service.db.pipeline_mysql_service import create_mysql_pipeline
 from service.storage.storage import add_index_to_csv
 import chardet
 
+from utils.execution_time_checker import execution_time
+
 logger = logging.getLogger()
 
 
@@ -68,6 +70,7 @@ def replace_nan_values(obj, round_decimals=None):
 """
 1️⃣ 데이터셋을 MinIO, MongoDB에 업로드하고 메타데이터 저장
 """
+@execution_time
 async def upload_dataset_and_save_metadata(
         db: Session,
         project_id: int,
@@ -206,6 +209,7 @@ Args:
 Returns:
     Dict: 분석 결과
 """
+@execution_time
 async def analyze_dataset(file_io: BinaryIO, config: Dict[str, Any]) -> Dict[str, Any]:
     try:
         delimiter_map = {
@@ -289,6 +293,7 @@ Args:
 Returns:
     ObjectId: 생성된 파이프라인 문서의 ID
 """
+@execution_time
 async def create_pipeline_document(project_id: int, member_id: int, dataset_id:str, object_name: str, etag: str) -> Any:
 
     try:
@@ -338,6 +343,7 @@ Returns:
 Raises:
     HTTPException: MongoDB 저장 중 오류 발생 시
 """
+@execution_time
 async def store_dataset_to_mongodb(
     project_id: int,
     member_id: int,
@@ -424,7 +430,7 @@ async def store_dataset_to_mongodb(
         logger.error(f"MongoDB에 데이터셋 저장 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"MongoDB에 데이터셋 저장 중 오류: {str(e)}")
 
-
+@execution_time
 async def calculate_and_update_statistics(
         dataset_id: str,
         data: List[Dict[str, Any]],
@@ -544,13 +550,13 @@ async def calculate_and_update_statistics(
 
 import chardet
 
-
+@execution_time
 def convert_to_utf8_bytes(data: bytes) -> bytes:
     """
     바이트 데이터를 UTF-8 바이트로 변환
     """
     # 1. 원본 인코딩 감지
-    detected = chardet.detect(data)
+    detected = chardet.detect(data[:100])
     encoding = detected['encoding'] or 'utf-8'
 
     # 2. 유니코드 문자열로 디코딩
@@ -562,6 +568,7 @@ def convert_to_utf8_bytes(data: bytes) -> bytes:
     # 3. UTF-8로 인코딩
     return text.encode('utf-8')
 
+@execution_time
 def convert_to_utf8_string(data: bytes) -> str:
     """
     바이트 데이터를 UTF-8로 디코딩한 문자열로 변환
@@ -570,6 +577,7 @@ def convert_to_utf8_string(data: bytes) -> str:
     utf8_bytes = convert_to_utf8_bytes(data)
     return utf8_bytes.decode('utf-8')
 
+@execution_time
 def fallback_decode(data: bytes) -> str:
     """
     여러 인코딩을 순서대로 시도

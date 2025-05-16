@@ -29,6 +29,9 @@ import pandas as pd
 import re
 import math
 
+from utils.execution_time_checker import execution_time
+
+from core.exception import CustomAPIException
 from core.security import verify_token
 from core.storage import MinioClient, get_minio_client
 from db.mysql_config import get_mysql_db
@@ -44,6 +47,7 @@ from service.pipeline_fork_service import save_new_pipeline, prepare_response_da
 
 from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
     create_new_pipeline_model
+from service.preprocessing.preprocessing_handler import PreprocessingHandler
 from utils.snake_to_camel import convert_dict_to_camel_case
 from core.config import get_settings
 settings = get_settings()
@@ -54,6 +58,7 @@ router = APIRouter()
 sample_router = APIRouter()
 pipeline_router = APIRouter()
 
+@execution_time
 @router.post("/dataset", response_class=ApiResponse)
 async def upload_project_dataset(
     background_tasks: BackgroundTasks,
@@ -657,7 +662,8 @@ async def fork_pipeline_preprocess(
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
-        db: Session = Depends(get_mysql_db)
+        db: Session = Depends(get_mysql_db),
+        minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
     기존 파이프라인의 전처리 단계만 복제하여 새로운 파이프라인을 생성합니다.
@@ -673,6 +679,12 @@ async def fork_pipeline_preprocess(
         )
         if error_response:
             return error_response
+        
+        if not source_pipeline or not source_pipeline_details:
+            return CustomAPIException(
+                status_code=404,
+                message="파이프라인을 찾을 수 없습니다."
+            )
 
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
@@ -686,9 +698,15 @@ async def fork_pipeline_preprocess(
         new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
 
         # 5. 전처리 단계만 복제
+        result = None
         if source_pipeline_details.history and len(source_pipeline_details.history) > 0:
             latest_history = source_pipeline_details.history[-1]
 
+            # 전처리 단계가 있는 경우 가장 마지막 단계의 result 추출
+            if latest_history.preprocessing_steps and len(latest_history.preprocessing_steps) > 0:
+                # 리스트의 마지막 요소의 result (order 순서대로 저장되어 있다고 가정)
+                result = latest_history.preprocessing_steps[-1].result
+            
             # 전처리 단계만 포함한 새 히스토리 항목 생성
             new_history_item = PipelineHistoryItem(
                 preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
@@ -708,7 +726,19 @@ async def fork_pipeline_preprocess(
             pipeline_service=pipeline_service
         )
 
+        data_dict = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline=source_pipeline_details,
+            minio_client=minio_client,
+            return_full=True
+        )
+
         # 8. 응답 데이터 준비 (카테고리 정보 포함)
+        current_step_data = PreprocessingHandler.create_response(
+            pipeline_id=new_pipeline_id,
+            result=result, # 전처리 단계 가장 최근 결과
+            df=pd.DataFrame(data_dict), # 데이터프레임임
+        )
+
         response_data = await prepare_response_data(
             new_pipeline_id, new_pipeline, target_project_category
         )
@@ -716,7 +746,7 @@ async def fork_pipeline_preprocess(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data), round_decimals=2))
         )
 
     except Exception as e:
@@ -733,6 +763,7 @@ async def fork_pipeline_total(
         pipeline_id: str = Path(..., description="복제할 파이프라인 ID"),
         member_id: int = Depends(verify_token),
         pipeline_service: PipelineService = Depends(get_pipeline_service),
+        minio_client: MinioClient = Depends(get_minio_client),
         db: Session = Depends(get_mysql_db)
 ):
     """
@@ -750,12 +781,18 @@ async def fork_pipeline_total(
         if error_response:
             return error_response
 
+        if not source_pipeline or not source_pipeline_details:
+            return CustomAPIException(
+                status_code=404,
+                message="파이프라인을 찾을 수 없습니다."
+            )
+
         # 2. 최초 파이프라인 정보 조회
         original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
 
         # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
         target_project_id, target_project_category = await determine_target_project(
-            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+            db, source_pipeline, member_id, source_pipeline, original_project_id, original_project_owner_id
         )
 
         # 4. 새로운 파이프라인 모델 생성
@@ -785,18 +822,12 @@ async def fork_pipeline_total(
         )
 
         # 8. 응답 데이터 준비 (카테고리 정보 포함)
-
         response_data = await prepare_response_data(
             new_pipeline_id,
             new_pipeline,
             target_project_category,
             include_all_history=True
         )
-
-        # 9. 컬럼 데이터 가져오기
-
-        columns = await pipeline_service.get_latest_dataset_columns(new_pipeline)
-        response_data["columns"] = columns
 
         return ApiResponse(
             status_code=200,
@@ -921,6 +952,8 @@ async def get_dataset_page(
             message=f"데이터셋 조회 실패: {str(e)}"
         )
     
+@execution_time
+async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
 
 async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
    
@@ -1003,6 +1036,7 @@ async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any]
         logger.info("기본 추천 로직으로 대체합니다.")
         return generate_default_recommendations(safe_result)
 
+@execution_time
 def generate_default_recommendations(safe_result: Dict[str, Any]) -> List[Dict[str, Any]]:
     """기본 전처리 추천을 생성합니다 (API 호출 실패 시)."""
     recommendations = []
@@ -1207,6 +1241,7 @@ PREPROCESSING_CATEGORIES = {
     }
 }
 
+@execution_time
 def parse_openai_response(response_text: str):
     try:
         # 마크다운 블록 제거
@@ -1245,12 +1280,28 @@ def parse_openai_response(response_text: str):
     except Exception as e:
         logger.error(f"GPT 응답 파싱 실패: {str(e)}", exc_info=True)
         raise
+
+@execution_time
+def clean_for_json(obj):
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(i) for i in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    return obj
+
     
 def safe_float(val):
     if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
         return None
     return float(val)
 
+@execution_time
+def analyze_csv(df: pd.DataFrame) -> Dict[str, Any]:
+    """CSV 파일을 분석하여 기본 통계 및 특성을 반환합니다."""
 def get_sample_rows(df: pd.DataFrame, max_rows: int = 2) -> List[Dict]:
     """DataFrame에서 최소한의 샘플 행을 추출하여 반환합니다."""
     sample = df.head(max_rows).fillna("NA")
