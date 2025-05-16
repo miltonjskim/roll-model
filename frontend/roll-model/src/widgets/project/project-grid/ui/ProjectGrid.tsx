@@ -10,9 +10,11 @@ export const ProjectGrid = ({ projects }: ProjectGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-wrap justify-center">
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+        <div key={project.id} className="w-[24rem] p-4">
+          <ProjectCard project={project} />
+        </div>
       ))}
     </div>
   );
