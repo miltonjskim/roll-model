@@ -87,9 +87,11 @@ public class FCMService {
                 data.put("title", projectTitle);
                 data.put("body", "모델 학습이 성공적으로 완료되었습니다.");
                 data.put("state", "COMPLETED");
-
+                log.info("MODEL TRAINING STATUS: {}", data);
                 // 모델링 데이터 추출
                 ModelPerformanceSummary modelPerformanceSummary = modelService.getModelPerformanceSummary(pipelineId);
+
+                log.info("MODEL TRAINING SUMMARY: {}", modelPerformanceSummary);
 
                 // 파이프라인 업데이트
                 pipelineRepository.updateStatusAndResultByPipelineId(
@@ -98,8 +100,12 @@ public class FCMService {
                     pipelineId
                 );
 
+                log.info("MODEL TRAINING UPDATE: {}", pipelineId);
+
                 // 버전 저장
                 projectVersionService.savePipelineVersion(pipelineId);
+
+                log.info("VERSION UPDATE");
 
                 break;
             case "fail":
