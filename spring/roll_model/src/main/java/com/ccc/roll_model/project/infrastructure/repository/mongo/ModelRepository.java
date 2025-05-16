@@ -15,4 +15,6 @@ public interface ModelRepository extends MongoRepository<ModelDocument, ObjectId
     ModelDocument findByPipelineId(String pipelineId);
 
     List<ModelDocument> findAllByPipelineId(String pipelineId);
+
+
 }
