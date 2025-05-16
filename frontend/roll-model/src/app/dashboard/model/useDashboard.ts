@@ -6,6 +6,7 @@ export function useDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'COMPLETED' | 'PREPROCESSED' | 'FAILED_OR_LEARNING'>('all');
 
   // 필터링 및 검색 상태
   const [selectedCategory, setSelectedCategory] = useState<'all' | ProjectType>('all');
@@ -60,12 +61,20 @@ export function useDashboard() {
     };
   }, [loadDashboardData]);
 
+  // 카테고리 핸들러
   const handleCategoryChange = useCallback((category: 'all' | ProjectType) => {
     setSelectedCategory(category);
   }, []);
 
+  // 검색 핸들러
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
+  }, []);
+
+  // statuats 핸들러
+  const handleStatusChange = useCallback((status: 'all' | 'COMPLETED' | 'PREPROCESSED' | 'FAILED_OR_LEARNING') => {
+    setSelectedStatus((prev) => (prev === status ? 'all' : status));
+    // setSelectedStatus(status);
   }, []);
 
   const filteredProjects = useMemo(() => {
@@ -75,15 +84,22 @@ export function useDashboard() {
       dashboardData.projects
         // 카테고리 필터링
         .filter((project) => selectedCategory === 'all' || project.category === selectedCategory)
+        // status 필터링
+        .filter((project) => {
+          if (selectedStatus === 'all') return true;
+          if (selectedStatus === 'COMPLETED') return project.status === 'COMPLETED';
+          if (selectedStatus === 'PREPROCESSED') return project.status === 'PREPROCESSED';
+          if (selectedStatus === 'FAILED_OR_LEARNING') return project.status === 'FAILED' || project.status === 'LEARNING';
+          return true;
+        })
         // 검색어 필터링
         .filter((project) => {
           if (!searchQuery.trim()) return true;
-
           const query = searchQuery.toLowerCase().trim();
           return project.title.toLowerCase().includes(query) || (project.target?.toLowerCase() || '').includes(query);
         })
     );
-  }, [dashboardData?.projects, selectedCategory, searchQuery]);
+  }, [dashboardData?.projects, selectedCategory, selectedStatus, searchQuery]);
 
   return {
     dashboardData,
@@ -91,6 +107,8 @@ export function useDashboard() {
     error,
     filteredProjects,
     selectedCategory,
+    selectedStatus,
+    handleStatusChange,
     handleCategoryChange,
     handleSearch,
     refreshData: loadDashboardData,
