@@ -967,7 +967,7 @@ async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any]
         start = time.time()
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "당신은 데이터 분석 전문가입니다."},
                 {"role": "user", "content": prompt}
