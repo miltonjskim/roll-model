@@ -12,59 +12,7 @@ import { TiLockClosed } from 'react-icons/ti';
 import { TiLockOpen } from 'react-icons/ti';
 import { IoWarning } from 'react-icons/io5';
 import { SiGoogledocs } from 'react-icons/si';
-
-const DOMAIN_STYLES = {
-  FINANCE: {
-    icons: ['💰', '💹', '🏦', '💲'],
-    colors: ['bg-[theme(color-green-01)]', 'bg-[theme(color-green-02)]', 'bg-[theme(color-green-03)]', 'bg-[theme(color-blue-01)]'],
-    borders: ['border-[theme(color-green-01)]', 'border-[theme(color-green-02)]', 'border-[theme(color-green-03)]', 'border-[theme(color-blue-01)]'],
-  },
-  HEALTHCARE: {
-    icons: ['🩺', '❤️', '🏥', '💊'],
-    colors: ['bg-[theme(color-rose-01)]', 'bg-[theme(color-rose-02)]', 'bg-[theme(color-rose-03)]', 'bg-[theme(color-pink-01)]'],
-    borders: ['border-[theme(color-rose-01)]', 'border-[theme(color-rose-02)]', 'border-[theme(color-rose-03)]', 'border-[theme(color-pink-01)]'],
-  },
-  RETAIL: {
-    icons: ['🛒', '🛍️', '🏪', '📦'],
-    colors: ['bg-[theme(color-blue-01)]', 'bg-[theme(color-blue-02)]', 'bg-[theme(color-blue-03)]', 'bg-[theme(color-mint-01)]'],
-    borders: ['border-[theme(color-blue-01)]', 'border-[theme(color-blue-02)]', 'border-[theme(color-blue-03)]', 'border-[theme(color-mint-01)]'],
-  },
-  MARKETING: {
-    icons: ['📣', '🎯', '📈', '📊'],
-    colors: ['bg-[theme(color-yellow-01)]', 'bg-[theme(color-yellow-02)]', 'bg-[theme(color-yellow-03)]', 'bg-[theme(color-orange-01)]'],
-    borders: ['border-[theme(color-yellow-01)]', 'border-[theme(color-yellow-02)]', 'border-[theme(color-yellow-03)]', 'border-[theme(color-orange-01)]'],
-  },
-  MANUFACTURING: {
-    icons: ['🏭', '⚙️', '🔧', '🛠️'],
-    colors: ['bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]', 'bg-[theme(color-gray-04)]', 'bg-[theme(color-gray-05)]'],
-    borders: ['border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]', 'border-[theme(color-gray-04)]', 'border-[theme(color-gray-05)]'],
-  },
-  EDUCATION: {
-    icons: ['📚', '🎓', '✏️', '🧠'],
-    colors: ['bg-[theme(color-mint-01)]', 'bg-[theme(color-mint-02)]', 'bg-[theme(color-mint-03)]', 'bg-[theme(color-blue-02)]'],
-    borders: ['border-[theme(color-mint-01)]', 'border-[theme(color-mint-02)]', 'border-[theme(color-mint-03)]', 'border-[theme(color-blue-02)]'],
-  },
-  REAL_ESTATE: {
-    icons: ['🏠', '🏢', '🏗️', '🔑'],
-    colors: ['bg-[theme(color-purple-01)]', 'bg-[theme(color-purple-02)]', 'bg-[theme(color-purple-03)]', 'bg-[theme(color-pink-02)]'],
-    borders: ['border-[theme(color-purple-01)]', 'border-[theme(color-purple-02)]', 'border-[theme(color-purple-03)]', 'border-[theme(color-pink-02)]'],
-  },
-  LOGISTICS: {
-    icons: ['🚚', '📦', '🚢', '✈️'],
-    colors: ['bg-[theme(color-blue-01)]', 'bg-[theme(color-blue-02)]', 'bg-[theme(color-blue-03)]', 'bg-[theme(color-mint-02)]'],
-    borders: ['border-[theme(color-blue-01)]', 'border-[theme(color-blue-02)]', 'border-[theme(color-blue-03)]', 'border-[theme(color-mint-02)]'],
-  },
-  ENTERTAINMENT: {
-    icons: ['🎬', '🎮', '🎭', '🎵'],
-    colors: ['bg-[theme(color-pink-01)]', 'bg-[theme(color-pink-02)]', 'bg-[theme(color-pink-03)]', 'bg-[theme(color-purple-01)]'],
-    borders: ['border-[theme(color-pink-01)]', 'border-[theme(color-pink-02)]', 'border-[theme(color-pink-03)]', 'border-[theme(color-purple-01)]'],
-  },
-  GENERAL: {
-    icons: ['📋', '🔍', '🧩', '⭐'],
-    colors: ['bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]', 'bg-[theme(color-gray-04)]', 'bg-[theme(color-gray-05)]'],
-    borders: ['border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]', 'border-[theme(color-gray-04)]', 'border-[theme(color-gray-05)]'],
-  },
-};
+import { DOMAIN_STYLES } from '@/shared/ui/project-cards/DomainStyles';
 
 interface ProjectCardProps {
   project: Project;
@@ -75,34 +23,42 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   const router = useRouter();
   const { handleAfterSchoolClick } = useAfterSchool();
 
-  const handleProjectClick = () => {
-    // atom 상태 업데이트
+  //상세보기
+  const handleProjectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     setProjectDetail({
       id: project.id,
       title: project.title,
       version: project.version,
       category: project.category,
       domain: project.domain,
-      ownerYn: false, // 초기값은 false로 설정
+      ownerYn: false,
     });
-
-    // 프로젝트 상세 페이지로 라우팅
     router.push(`/project-detail/${project.id}`);
   };
 
   // 도메인 정보를 표시하는 부분 수정:
-  // p 태그를 span으로 변경하고 배경색 적용
   const domainIndex = project.dataCount % 4;
   const domainStyle = DOMAIN_STYLES[project.domain] || DOMAIN_STYLES['GENERAL'];
   const domainIcon = domainStyle.icons[domainIndex];
   const domainColor = domainStyle.colors[domainIndex];
   const domainBorder = domainStyle.borders[domainIndex];
 
+  // 카드 전체클릭 (상세이동 or 설명 나오도록)
   const handleIsThisGotThatDetail = (status: string) => {
     if (status === 'COMPLETED') {
+      setProjectDetail({
+        id: project.id,
+        title: project.title,
+        version: project.version,
+        category: project.category,
+        domain: project.domain,
+        ownerYn: false,
+      });
       router.push(`/project-detail/${project.id}`);
       return;
     } else {
+      // 여기에 검정배경 설명코드 작성
     }
   };
 
@@ -114,9 +70,9 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         <div className="flex items-center space-x-2">
           <h2 className="truncate text-lg font-semibold">{project.title}</h2>
           {project.category === 'CLASSIFICATION' ? (
-            <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold text-gray-600">분류</div>
+            <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
           ) : (
-            <div className="bg-[theme(color-yellow-02)] rounded-sm px-1 py-0.5 text-xs font-semibold text-gray-600">회귀</div>
+            <div className="bg-[theme(color-yellow-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">회귀</div>
           )}
         </div>
         {/* 헤더/오른쪽 */}
@@ -162,7 +118,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               )}
             </div>
           </div>
-          <div className={`rounded bg-[var(--primary-white)]/10 px-2 py-1 text-xs`}>
+          <div className={`rounded bg-[var(--primary-white)]/10 px-2 py-1 text-xs whitespace-nowrap`}>
             {project.status === 'COMPLETED' ? (project.publicYn ? '공개' : '비공개') : project.status === 'PREPROCESSED' ? '준비됨' : project.status === 'LEARNING' ? '학습중' : '실패'}
           </div>
         </div>
@@ -226,8 +182,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             ) : (
               <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
                 <div className="w-full text-start text-xs">R²</div>
-                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rsquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {project.rsquared ? (project.rsquared * 100).toFixed(2) : '학습대기중'}
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rSquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}
                 </div>
               </div>
             )}
@@ -245,7 +201,10 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             {project.status === 'PREPROCESSED' && (
               <button
                 className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                onClick={() => handleAfterSchoolClick(project.id)}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation(); // 이벤트 버블링 중단
+                  handleAfterSchoolClick(project.id);
+                }}
               >
                 재학습
               </button>
@@ -253,7 +212,10 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             {project.status === 'FAILED' && (
               <button
                 className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                onClick={() => handleAfterSchoolClick(project.id)}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation(); // 이벤트 버블링 중단
+                  handleAfterSchoolClick(project.id);
+                }}
               >
                 재학습
               </button>

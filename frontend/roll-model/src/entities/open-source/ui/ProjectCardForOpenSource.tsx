@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { likeThisPipeline } from '@/shared/api/openSourceApi';
 import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
 import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
+import { DOMAIN_STYLES } from '@/shared/ui/project-cards/DomainStyles';
 
 interface ProjectCardProps {
   project: OpenSourceProject;
@@ -15,12 +16,12 @@ interface ProjectCardProps {
 
 export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
   const setProjectDetail = useSetAtom(projectDetailAtom);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const { handleAfterSchoolClick, moveToPreprocessing } = useAfterSchool();
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(project.likeYn);
+  const { handleAfterSchoolClick } = useAfterSchool();
 
-  const handleProjectClick = () => {
+  const handleProjectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     setProjectDetail({
       id: project.id,
       title: project.title,
@@ -31,8 +32,15 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     });
     router.push(`/project-detail/${project.id}`);
   };
+  // 도메인 정보를 표시하는 부분 수정:
+  const domainIndex = project.dataCount % 4;
+  const domainStyle = DOMAIN_STYLES[project.domain] || DOMAIN_STYLES['GENERAL'];
+  const domainIcon = domainStyle.icons[domainIndex];
+  const domainColor = domainStyle.colors[domainIndex];
+  const domainBorder = domainStyle.borders[domainIndex];
 
-  const handleLikeClick = async () => {
+  const handleLikeClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     const preLiked = isLiked;
     const newLiked = !preLiked;
     setIsLiked(newLiked);
@@ -47,51 +55,135 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
   };
 
   return (
-    <div className="cursor-default rounded-lg bg-white p-4 shadow-sm transition-shadow select-none hover:shadow-md">
-      <div className="mb-2 flex items-start justify-between">
-        <h2 className="truncate text-lg font-bold">{project.title}</h2>
-        <button className="cursor-pointer" onClick={handleLikeClick}>
-          {isLiked ? '❤️' : '🤍'}
-        </button>
-      </div>
+    <div>
+      <div className="cursor-pointer rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
+        {/* 헤더 */}
+        <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
+          {/* 헤더/왼쪽 */}
+          <div className="flex w-full items-center space-x-2 overflow-hidden">
+            <h2 className="max-w-[70%] truncate text-lg font-semibold">{project.title}</h2>
+            {project.category === 'CLASSIFICATION' ? (
+              <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
+            ) : (
+              <div className="bg-[theme(color-yellow-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">회귀</div>
+            )}
+          </div>
+          {/* 헤더/오른쪽 */}
+          <div className="flex items-center space-x-2">
+            <div>
+              <button className="cursor-pointer" onClick={handleLikeClick}>
+                {isLiked ? '❤️' : '🤍'}
+              </button>
+            </div>
+            <div className="rounded-sm bg-[var(--primary-white)]/10 px-1 text-sm whitespace-nowrap">{project.writerNickname}</div>
+          </div>
+        </div>
 
-      <div className="mb-4 text-sm text-gray-500">
-        <p>타입: {project.category === 'CLASSIFICATION' ? '분류' : '회귀'}</p>
-        <p>도메인: {project.displayDomain || getDomainDisplayName(project.domain)}</p>
-        <p>목표변수: {project.target}</p>
-        <p>데이터 수: {project.dataCount.toLocaleString()}</p>
-        <p>버전 : {project.version}</p>
-        <p>학습시간 : {project.runnungDuration}</p>
-        {/* <p>주인장번호 : {project.writerId}</p> */}
-        <p>주인장이름 : {project.writerNickname}</p>
-        {project.category === 'CLASSIFICATION' ? (
-          <p>정확도: {project.accuracy ? `${(project.accuracy * 100).toFixed(2)}%` : '학습대기중'}</p>
-        ) : (
-          <p>R²: {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}</p>
-        )}
-        {/* <p>{formatDate(project.updatedAt, 'yyyy-MM-dd')} 수정됨</p> */}
-        <p>{getRelativeTime(project.updatedAt)} 수정됨</p>
-      </div>
+        <center onClick={handleProjectClick} className="flex items-center justify-between p-4 select-none">
+          {/* 센터 왼쪽 */}
+          <section className="w-[7.5rem]">
+            <div className="relative mt-3 mb-4 ml-2">
+              <div className={`${domainColor} rounded-lg text-[4.5rem]`}>{domainIcon}</div>
+              <div
+                className={`${domainBorder} absolute -top-3 -right-4 flex h-10 w-10 items-center justify-center rounded-full border border-2 bg-white p-1 ${project.version && project.version.length >= 4 ? 'text-sm' : 'text-base'} font-bold`}
+              >
+                v{project.version || '0.0'}
+              </div>
+              <div className={`${domainBorder} absolute -bottom-3 ${project.domain === 'GENERAL' ? '-left-2' : '-left-4'} rounded-lg border border-2 bg-white px-2 py-0.5 text-sm font-bold`}>
+                {project.displayDomain || getDomainDisplayName(project.domain)}
+              </div>
+            </div>
 
-      <div className="flex justify-between text-xs text-gray-500">
-        <span className="flex items-center">
-          <span className="mr-1">❤️</span> {project.likeCount}
-        </span>
-        <span className="flex items-center">
-          <span className="mr-1">⬇️</span> {project.downloadCount}
-        </span>
-        <span className="flex items-center">
-          <span className="mr-1">⏱️</span>
-          {new Date(project.updatedAt).toLocaleDateString()}
-        </span>
-      </div>
-      <div className="mt-4 flex justify-end gap-3 select-none">
-        {project.status === 'COMPLETED' && (
-          <button className="bg-[theme(color-gray-01)] hover:bg-[theme(primary-black)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out" onClick={handleProjectClick}>
-            상세
-          </button>
-        )}
-        {project.status === 'COMPLETED' && <AfterSchoolDropdown project={project} />}
+            <div className="ml-2 flex flex-col">
+              <div className="flex space-x-2">
+                <div className="flex w-1/2 items-center">
+                  <div className="font-tossface mr-1">❤️</div> {project.likeCount >= 1000 ? `${(project.likeCount / 1000).toFixed(1)}k` : project.likeCount}
+                </div>
+                <div className="flex w-1/2 items-center">
+                  <div className="font-tossface mr-1">⬇️</div> {project.downloadCount >= 1000 ? `${(project.downloadCount / 1000).toFixed(1)}k` : project.downloadCount}
+                </div>
+              </div>
+              <div className="w-full text-end text-xs text-gray-400">{getRelativeTime(project.updatedAt)} 수정됨</div>
+            </div>
+          </section>
+
+          {/* 센터 오른쪽 */}
+          <section>
+            {/* 그리드 */}
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+                <div className="w-full text-start text-xs">데이터 수</div>
+                <div className={`text-md w-full overflow-hidden text-end font-semibold`}>{project.dataCount.toLocaleString()}</div>
+              </div>
+              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+                <div className="w-full text-start text-xs">목표변수</div>
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.target ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {project.target || '학습대기중'}
+                </div>
+              </div>
+              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+                <div className="w-full text-start text-xs">학습시간</div>
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.runningDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {project.runningDuration || '학습대기중'}
+                </div>
+              </div>
+              {project.category === 'CLASSIFICATION' ? (
+                <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+                  <div className="w-full text-start text-xs">정확도</div>
+                  <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.accuracy ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                    {project.accuracy ? `${(project.accuracy * 100).toFixed(2)}%` : '학습대기중'}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+                  <div className="w-full text-start text-xs">R²</div>
+                  <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rSquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                    {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* 하단 버튼 */}
+            <div className="mt-4 flex justify-end gap-3 select-none">
+              {project.status === 'COMPLETED' && (
+                <button
+                  className="border-[theme(color-gray-01)] hover:border-[theme(primary-black)] text-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md border border-2 duration-600 ease-out"
+                  onClick={handleProjectClick}
+                >
+                  상세
+                </button>
+              )}
+              {project.status === 'PREPROCESSED' && (
+                <button
+                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation(); // 이벤트 버블링 중단
+                    handleAfterSchoolClick(project.id);
+                  }}
+                >
+                  재학습
+                </button>
+              )}
+              {project.status === 'FAILED' && (
+                <button
+                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation(); // 이벤트 버블링 중단
+                    handleAfterSchoolClick(project.id);
+                  }}
+                >
+                  재학습
+                </button>
+              )}
+
+              {project.status === 'COMPLETED' && <AfterSchoolDropdown project={project} />}
+
+              {project.status === 'LEARNING' && (
+                <button className="bg-[theme(color-gray-01)] hover:bg-[theme(primary-black)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out">학습중</button>
+              )}
+            </div>
+          </section>
+        </center>
       </div>
     </div>
   );

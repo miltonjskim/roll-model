@@ -21,9 +21,12 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
     <div className="relative">
       {project.status === 'COMPLETED' && (
         <button
-          className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-pointer rounded-md px-3 py-2 text-white duration-600 ease-out"
+          className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] w-20 cursor-default rounded-md px-3 py-2 text-white duration-600 ease-out"
           onMouseEnter={() => setShowDropdown(true)}
           onMouseLeave={() => setShowDropdown(false)}
+          onClick={(e) => {
+            e.stopPropagation(); // 이벤트 버블링 중단
+          }}
         >
           재학습
         </button>
@@ -36,11 +39,20 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
         >
           <button
             className="bg-[theme(color-blue-02)] hover:bg-[theme(color-blue-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
-            onClick={() => moveToPreprocessing(project.id, project.title)}
+            onClick={(e) => {
+              e.stopPropagation(); // 이벤트 버블링 중단
+              moveToPreprocessing(project.id, project.title);
+            }}
           >
             전처리부터 재학습
           </button>
-          <button className="bg-[theme(color-green-02)] hover:bg-[theme(color-green-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white" onClick={() => handleAfterSchoolClick(project.id)}>
+          <button
+            className="bg-[theme(color-green-02)] hover:bg-[theme(color-green-01)] rounded-md px-3 py-2 text-sm whitespace-nowrap text-white"
+            onClick={(e) => {
+              e.stopPropagation(); // 이벤트 버블링 중단
+              handleAfterSchoolClick(project.id);
+            }}
+          >
             모델링부터 재학습
           </button>
         </div>

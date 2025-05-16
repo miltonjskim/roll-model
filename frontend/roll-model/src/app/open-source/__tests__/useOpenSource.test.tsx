@@ -41,7 +41,7 @@ describe('useOpenSource', () => {
             rSquared: null, // rSquared(Root Mean Square Error, 회귀 모델에서 사용하는 오차 지표)
             target: '신용등급', // 목표 변수
             dataCount: 1000, // 데이터 수
-            runnungDuration: 120, // 실행 시간(초)
+            runningDuration: 120, // 실행 시간(초)
             likeCount: 10, // 좋아요 수
             downloadCount: 5, // 다운로드 수
             visibility: true, // 공개 여부
@@ -61,7 +61,7 @@ describe('useOpenSource', () => {
             rSquared: 0.05, // 회귀 모델의 성능 지표 (낮을수록 좋음)
             target: '혈압',
             dataCount: 2000,
-            runnungDuration: 180,
+            runningDuration: 180,
             likeCount: 15,
             downloadCount: 8,
             visibility: true,
