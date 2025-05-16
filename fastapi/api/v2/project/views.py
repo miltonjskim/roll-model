@@ -164,6 +164,7 @@ async def upload_project_dataset(
             category = category,
             domain = domain
         )
+        result["originalDatasets"]["data"] = result["originalDatasets"]["data"][:30]
         # NaN, INF 수동 인코딩
         safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
     
