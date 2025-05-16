@@ -88,11 +88,8 @@ class PreprocessingHandler:
         # 6. 파이프라인 히스토리 업데이트
         await self._update_pipeline_history(pipeline, preprocessing_type, request, result, etag, object_name)
 
-        # 7. 데이터셋 요약 정보 생성
-        dataset_summary = self._get_dataset_summary(df)
-
-        # 8. 응답 생성
-        response = self._create_response(pipeline_id, result, df.to_dict(orient="records"), dataset_summary)
+        # 7. 응답 생성
+        response = PreprocessingHandler.create_response(pipeline_id, result, df)
 
         return response
 
@@ -193,7 +190,8 @@ class PreprocessingHandler:
         await self.pipeline_service.add_pipeline_history(pipeline, history_item)
         self.logger.info(f"파이프라인 히스토리 업데이트 성공: {preprocessing_type}")
 
-    def _get_dataset_summary(self, df: DataFrame):
+    @staticmethod
+    def get_dataset_summary(df: DataFrame):
         """데이터셋 요약 정보 생성"""
         # 데이터셋 요약 정보 생성 로직
         # 예시: 데이터셋의 컬럼 수, 행 수, 결측치 비율 등
@@ -232,10 +230,14 @@ class PreprocessingHandler:
             }
         }
 
-    def _create_response(self, pipeline_id, result, dataset, dataset_summary):
+    @staticmethod
+    def create_response(pipeline_id, result, df):
         """결과 응답 생성"""
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         logger.info(f"result: {result}")
+        # 7. 데이터셋 요약 정보 생성
+        dataset = df.to_dict(orient="records")
+        dataset_summary = PreprocessingHandler.get_dataset_summary(df)
         page_size = 30
         start_point = result.get("startPoint", 0)
         result.pop("startPoint", None)  # startPoint는 응답에서 제거
