@@ -100,7 +100,7 @@ public class ProjectVersionService {
                 .title(project.getTitle())
                 .category(project.getCategory().name())
                 .domain(project.getDomain().name())
-                .version(pipelineEntity.getVersion().toString())
+                .version(versionEntity.getVersionNum())
                 .projectPublicYn(project.getPublicYn())
                 .pipelinePublicYn(pipelineEntity.getPublicYn())
                 .ownerYn(isProjectOwner)
@@ -121,6 +121,10 @@ public class ProjectVersionService {
             ModelDocument model,
             ProjectEntity project,
             boolean isProjectOwner) {
+
+        // 현재 파이프라인의 버전 정보 조회
+        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+        String versionNum = versionEntity != null ? versionEntity.getVersionNum() : ROOT_VERSION;
 
         // 프로젝트 카테고리에 따라 성능 지표 설정
         Double accuracy = null;
@@ -145,18 +149,19 @@ public class ProjectVersionService {
         }
 
         // parent_pipeline_id에 해당하는 버전 정보
-        String parentVersion = "1.0"; // 기본값(부모 파이프라인 못 찾으면)
+        String parentVersion = ROOT_VERSION; // 기본값(부모 파이프라인 못 찾으면)
         if (pipeline.getParentPipelineId() != null && !pipeline.getParentPipelineId().isEmpty()) {
-            Optional<PipelineEntity> parentPipeline = pipelineRepository.findById(pipeline.getParentPipelineId());
-            if (parentPipeline.isPresent()) {
-                parentVersion = parentPipeline.get().getVersion().toString();
+            // 부모 파이프라인의 버전 정보도 VersionEntity에서 조회
+            VersionEntity parentVersionEntity = versionRepository.findVersionEntityByPipelineId(pipeline.getParentPipelineId());
+            if (parentVersionEntity != null) {
+                parentVersion = parentVersionEntity.getVersionNum();
             }
         }
 
         // 응답 객체
         return PipelineInfo.builder()
                 .pipelineId(pipeline.getPipelineId())
-                .version(pipeline.getVersion().toString())
+                .version(versionNum)
                 .publicYn(pipeline.getPublicYn())
                 .deletedYn(pipeline.getDeletedYn())
                 .parent(parentVersion)

@@ -23,15 +23,15 @@ import java.util.*;
 public class ModelResponseAssembler {
     private static boolean isSupportedAlgorithm(String algorithm) {
         return List.of(
-                "LogisticRegressionParams",
-                "RandomForestClassifierParams",
-                "GradientBoostingClassifierParams",
-                "KNeighborsClassifierParams",
-                "SVCParams",
-                "RandomForestRegressorParams",
-                "GradientBoostingRegressorParams",
-                "ElasticNetParams",
-                "SVRParams"
+                "LogisticRegression",
+                "RandomForestClassifier",
+                "GradientBoostingClassifier",
+                "KNeighborsClassifier",
+                "SVC",
+                "RandomForestRegressor",
+                "GradientBoostingRegressor",
+                "ElasticNet",
+                "SVR"
         ).contains(algorithm);
     }
 
@@ -39,16 +39,13 @@ public class ModelResponseAssembler {
      * 모델 파라미터 구성
      */
     public static List<GetModelAndMetricResponse.ModelParameters> buildModelParameters(ModelDocument modelDocument) {
+
         List<GetModelAndMetricResponse.ModelParameters> parameters = new ArrayList<>();
 
-        if (modelDocument == null) {
-            log.warn("ModelDocument is null in buildModelParameters");
-            return parameters;
-        }
-
         String algorithm = modelDocument.getAlgorithm();
+
         if (algorithm == null) {
-            log.warn("Algorithm is null in ModelDocument");
+            log.warn("알고리즘이 없습니다.");
             return parameters;
         }
 
@@ -66,7 +63,7 @@ public class ModelResponseAssembler {
         try {
             params = modelDocument.getParameters();
             if (params == null) {
-                log.warn("ModelParameters is null for algorithm: {}", algorithm);
+                log.warn("모델 파라미터가 존재하지 않습니다.: {}", algorithm);
                 return parameters;
             }
         } catch (Exception e) {
@@ -269,14 +266,11 @@ public class ModelResponseAssembler {
      * 타겟 정보 구성
      */
     public static List<Map<String, String>> buildTargetInfo(ModelDocument modelDocument) {
+
         List<Map<String, String>> targetInfoList = new ArrayList<>();
 
-        if (modelDocument == null) {
-            log.warn("ModelDocument is null in buildTargetInfo");
-            return targetInfoList;
-        }
-
         ModelDocument.TrainInfo trainInfo = modelDocument.getTrainInfo();
+
         if (trainInfo != null) {
             if (trainInfo.getFeatures() != null) {
                 Map<String, String> featureCount = new HashMap<>();
@@ -289,8 +283,18 @@ public class ModelResponseAssembler {
             Map<String, String> duration = new HashMap<>();
             duration.put("durationName", "학습 시간");
             if (trainInfo.getStartTime() != null && trainInfo.getEndTime() != null) {
-                long seconds = Duration.between(trainInfo.getStartTime(), trainInfo.getEndTime()).getSeconds();
-                duration.put("durationValue", String.valueOf(seconds));
+                Duration durationBetween = Duration.between(trainInfo.getStartTime(), trainInfo.getEndTime());
+
+                long seconds = durationBetween.getSeconds();
+                int nanos = durationBetween.getNano();
+
+                // 초 + 나노초를 합쳐서 초 단위 실수로 변환
+                double totalSeconds = seconds + nanos / 1_000_000_000.0;
+
+                // 소수점 4자리로 포맷팅
+                String formattedDuration = String.format("%.4f", totalSeconds);
+
+                duration.put("durationValue", formattedDuration);
             } else {
                 duration.put("durationValue", "N/A");
             }
@@ -305,14 +309,14 @@ public class ModelResponseAssembler {
      * 성능 메트릭 구성
      */
     public static List<GetModelAndMetricResponse.PerformanceMetric> buildPerformanceMetrics(ModelDocument modelDocument, String category) {
+
         List<GetModelAndMetricResponse.PerformanceMetric> metrics = new ArrayList<>();
+
         ModelDocument.Performance performance;
-        if (modelDocument == null) {
-            log.warn("ModelDocument is null in buildPerformanceMetrics");
-            return metrics;
-        }
+
+
         if( modelDocument.getPerformance()==null){
-            log.warn("modelDocument is null in buildPerformanceMetrics");
+            log.warn("performance 데이터가 존재하지 않습니다.");
             return metrics;
         }else{
             performance = modelDocument.getPerformance();
@@ -408,17 +412,13 @@ public class ModelResponseAssembler {
      * 특성 중요도 구성
      */
     public static List<GetModelAndMetricResponse.FeatureImportance> buildFeatureImportance(ModelDocument modelDocument) {
-        List<GetModelAndMetricResponse.FeatureImportance> importanceList = new ArrayList<>();
 
-        if (modelDocument == null) {
-            log.warn("ModelDocument is null in buildFeatureImportance");
-            return importanceList;
-        }
+        List<GetModelAndMetricResponse.FeatureImportance> importanceList = new ArrayList<>();
 
         Map<String, Double> featureImportance = modelDocument.getFeatureImportance();
         if (featureImportance != null && !featureImportance.isEmpty()) {
             for (Map.Entry<String, Double> entry : featureImportance.entrySet()) {
-                if (entry.getKey() != null && entry.getValue() != null) {
+                if (entry.getKey() != null && entry.getValue() != null&& entry.getValue()!=0) {
                     importanceList.add(GetModelAndMetricResponse.FeatureImportance.builder()
                             .featureName(entry.getKey())
                             .importanceValue(String.format("%.0f", entry.getValue() * 100))
@@ -434,7 +434,7 @@ public class ModelResponseAssembler {
                     Double valB = Double.parseDouble(b.getImportanceValue());
                     return valB.compareTo(valA);
                 } catch (NumberFormatException e) {
-                    log.warn("Failed to parse importance value: {}", e.getMessage());
+                    log.warn("Importance 값 파싱에 실패했습니다.: {}", e.getMessage());
                     return 0;
                 }
             });
@@ -447,43 +447,43 @@ public class ModelResponseAssembler {
      * 혼동 행렬 구성
      */
     public static ClassificationResponse.ConfusionMatrix buildConfusionMatrix(ModelDocument document) {
-        if (document == null) {
-            log.warn("ModelDocument is null in buildConfusionMatrix");
+
+        ModelDocument.Performance performance;
+        if (document.getPerformance() == null) {
+            log.warn("Performance 존재하지 않습니다.");
             return null;
+        }else{
+            performance = document.getPerformance();
         }
 
-        ModelDocument.Performance performance = document.getPerformance();
-        if (performance == null) {
-            log.warn("Performance is null in ModelDocument");
-            return null;
-        }
-
-        if (performance.getClassification() == null) {
-            log.warn("ClassificationPerformance is null in Performance");
-            return null;
-        }
-
-        ModelDocument.TrainInfo trainInfo = document.getTrainInfo();
-        if (trainInfo == null) {
+        ModelDocument.TrainInfo trainInfo ;
+        if (document.getTrainInfo() == null) {
             log.warn("TrainInfo is null in ModelDocument");
-            return null;
+            trainInfo=null;
+        }else{
+            trainInfo = document.getTrainInfo();
+
+        }
+        List<List<Integer>> matrix;
+        if (performance.getClassification().getConfusionMatrix() == null || performance.getClassification().getConfusionMatrix() .isEmpty()) {
+            log.warn("혼동행렬 정보가 없습니다.");
+            matrix = null;
+        }else{
+            matrix = performance.getClassification().getConfusionMatrix();
         }
 
-        List<List<Integer>> matrix = performance.getClassification().getConfusionMatrix();
-        if (matrix == null || matrix.isEmpty()) {
-            log.warn("ConfusionMatrix is null or empty");
-            return null;
-        }
 
-        String targetFeatureName = trainInfo.getTargetFeature();
-        if (targetFeatureName == null) {
-            log.warn("TargetFeature is null in TrainInfo");
-            return null;
+        String targetFeatureName;
+        if (trainInfo.getTargetFeature() == null) {
+            log.warn("TargetFeature가 존재하지 않습니다.");
+            targetFeatureName = null;
+        }else{
+            targetFeatureName = trainInfo.getTargetFeature();
         }
 
         List<ModelDocument.TrainInfo.Feature> features = trainInfo.getFeatures();
 
-        List<String> labels = extractLabelsFromFeatures(features, targetFeatureName, matrix.size());
+        List<String> labels = extractLabelsFromFeatures(features, targetFeatureName, Objects.requireNonNull(matrix).size());
 
         return ClassificationResponse.ConfusionMatrix.builder()
                 .labels(labels)
@@ -518,27 +518,24 @@ public class ModelResponseAssembler {
      * 회귀 모델의 파라미터 Mapper
      */
     public static RegressionResponse.ActualVsPredicted buildActualVsPredicted(ModelDocument modelDocument) {
-        if (modelDocument == null) {
-            log.warn("ModelDocument is null in buildActualVsPredicted");
-            return null;
-        }
+
         if(modelDocument.getPerformance() == null) {
             return null;
         }
         ModelDocument.Performance performance = modelDocument.getPerformance();
-        if (performance == null) {
-            log.warn("Performance is null in ModelDocument");
-            return null;
-        }
+//        if (performance == null) {
+//            log.warn("Performance is null in ModelDocument");
+//            return null;
+//        }
 
         ModelDocument.Performance.RegressionPerformance regression = performance.getRegression();
-        if (regression == null) {
-            log.warn("RegressionPerformance is null in Performance");
+        if (performance.getRegression() == null) {
+            log.warn("회귀 Performance가 존재하지 않습니다.");
             return null;
         }
 
         if (regression.getScatterPlot() == null) {
-            log.warn("ScatterPlot is null in RegressionPerformance");
+            log.warn("ScatterPlot가 존재하지 않습니다.");
             return null;
         }
 
@@ -569,12 +566,20 @@ public class ModelResponseAssembler {
                 );
             }
         }
+        double minActual = Double.MAX_VALUE;
+        double maxActual = Double.MIN_VALUE;
 
+        for (Double actual : actualList) {
+            if (actual != null) {
+                minActual = Math.min(minActual, actual);
+                maxActual = Math.max(maxActual, actual);
+            }
+        }
         return RegressionResponse.ActualVsPredicted.builder()
                 .data(dataPoints)
                 .perfectLinePoints(List.of(
-                        RegressionResponse.ActualVsPredicted.PointXY.builder().x(0).y(0).build(),
-                        RegressionResponse.ActualVsPredicted.PointXY.builder().x(8100).y(8100).build()
+                        RegressionResponse.ActualVsPredicted.PointXY.builder().x(minActual).y(minActual).build(),
+                        RegressionResponse.ActualVsPredicted.PointXY.builder().x(maxActual).y(maxActual).build()
                 ))
                 .xAxisLabel("실제값 (IC50_nM)")
                 .yAxisLabel("예측값")
@@ -585,10 +590,20 @@ public class ModelResponseAssembler {
 
         if (regression == null || regression.getScatterPlot() == null) return null;
 
-        List<Double> actualList = regression.getScatterPlot().getActual();
-        List<Double> predictedList = regression.getScatterPlot().getPredicted();
+        log.info("ResidualPlot:{}", regression.getScatterPlot());
+        log.info("ResidualPlot:{}", regression);
+
+
+        if(regression.getResidualPlot().getResiduals() == null) {
+            log.info("Actual 없음");
+        }
+
+        List<Double> actualList = regression.getResidualPlot().getResiduals();
+        List<Double> predictedList = regression.getResidualPlot().getPredicted();
 
         if (actualList == null || predictedList == null || actualList.size() != predictedList.size()) return null;
+
+        List<Double> residuals = new ArrayList<>(); // 히스토그램 계산
 
         List<RegressionResponse.ResidualPlot.ResidualDataPoint> residualData = new ArrayList<>();
         for (int i = 0; i < predictedList.size(); i++) {
@@ -600,11 +615,44 @@ public class ModelResponseAssembler {
                             .id(i)
                             .build()
             );
+            residuals.add(residual);
         }
 
-        // 히스토그램 데이터가 저장된 경우 사용하고 없으면 비워둡니다.
-        List<Double> bins = List.of(-40.0, -35.0, -30.0, /* ... */ 40.0);
-        List<Integer> frequencies = List.of(0, 0, 0, /* ... */ 0);
+        // 최적의 구간 수 결정
+        int numBins = determineOptimalBins(residuals);
+
+        // 잔차의 최대 절대값 찾기
+        double maxAbsResidual = 0;
+        for (Double residual : residuals) {
+            maxAbsResidual = Math.max(maxAbsResidual, Math.abs(residual));
+        }
+
+        // 약간의 여유 공간 추가 (5%)
+        maxAbsResidual *= 1.05;
+
+        // 구간 설정 (대칭적으로)
+        double binWidth = (2 * maxAbsResidual) / numBins;
+
+        // 구간의 경계값 계산
+        List<Double> bins = new ArrayList<>();
+        for (int i = 0; i <= numBins; i++) {
+            bins.add(-maxAbsResidual + i * binWidth);
+        }
+
+        // 각 구간의 빈도수 계산
+        List<Integer> frequencies = new ArrayList<>(Collections.nCopies(numBins, 0));
+
+        for (Double residual : residuals) {
+            int binIndex = (int) ((residual + maxAbsResidual) / binWidth);
+            // 경계값 처리
+            if (binIndex < 0) binIndex = 0;
+            if (binIndex >= numBins) binIndex = numBins - 1;
+            frequencies.set(binIndex, frequencies.get(binIndex) + 1);
+        }
+
+//        // 히스토그램 데이터가 저장된 경우 사용하고 없으면 비워둡니다.
+//        List<Double> bins = List.of(-40.0, -35.0, -30.0, /* ... */ 40.0);
+//        List<Integer> frequencies = List.of(0, 0, 0, /* ... */ 0);
 
         return RegressionResponse.ResidualPlot.builder()
                 .data(residualData)
@@ -620,5 +668,31 @@ public class ModelResponseAssembler {
                 .build();
     }
 
+    // 스터지스 공식 적용
+    static int calculateSturgesBins(int n) {
+        return (int) Math.ceil(1 + 3.322 * Math.log10(n));
+    }
+
+    // 제곱근 규칙 적용
+    public static int calculateSquareRootBins(int n) {
+        return (int) Math.ceil(Math.sqrt(n));
+    }
+
+    // 잔차 데이터의 구간 수 결정
+    public static int determineOptimalBins(List<Double> residuals) {
+        int n = residuals.size();
+
+        // 데이터가 적은 경우 최소 구간 수 지정
+        if (n < 30) {
+            return 5;
+        }
+
+        // 스터지스 공식 적용
+        int sturgesBins = calculateSturgesBins(n);
+
+        // 데이터 크기에 따라 구간 수 제한
+        int maxBins = 50; // 최대 구간 수 제한
+        return Math.min(sturgesBins, maxBins);
+    }
 
 }

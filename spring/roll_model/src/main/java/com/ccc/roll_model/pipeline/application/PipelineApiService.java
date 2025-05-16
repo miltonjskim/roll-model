@@ -115,8 +115,14 @@ public class PipelineApiService {
                 .ownerYn(projectEntity.getMemberEntity().getMemberId().equals(memberId))
                 .build();
 
-        // TODO: ApiStatus 구성 (만료일은 하드코딩)
-        LocalDateTime expiresAt = LocalDateTime.of(2025, 8, 8, 23, 59, 59);
+        ModelDocument.ApiKey apiKey = modelDocument.getApiKey() != null ? modelDocument.getApiKey() : null;
+        if( apiKey == null) {
+            throw new ApiException(ErrorCode.MODEL_API_KEY_NOT_FOUND);
+        }
+        Long timestamp = apiKey.getCreatedAt();
+        LocalDateTime createdAt = LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.UTC);
+        LocalDateTime expierdAt = createdAt.plusYears(1L);
+
         Double accuracy = null;
         Double rSquared = null;
 
@@ -139,19 +145,17 @@ public class PipelineApiService {
         }
 
         GetPipelineApiResponse.ApiStatus apiStatus = GetPipelineApiResponse.ApiStatus.builder()
-                .expiresAt(expiresAt)
+                .expiresAt(expierdAt)
                 .accuracy(accuracy)
                 .rSquared(rSquared)
                 .build();
 
-        // TODO: Endpoint 구성 (API 키는 하드코딩)
-        String baseUrl = "http://54.180.212.247:31228";
-        String url = baseUrl + "/v1/models/model-" + pipelineEntity.getPipelineId();
-        String apiKey = "sk_12345abcdef67890";
+        String url = modelDocument.getApiEndpoint();
+        String apiKeyValue = modelDocument.getApiKey().getKey() != null ? modelDocument.getApiKey().getKey() : "";
 
         GetPipelineApiResponse.Endpoint endpoint = GetPipelineApiResponse.Endpoint.builder()
                 .url(url)
-                .apiKey(apiKey)
+                .apiKey(apiKeyValue)
                 .build();
 
         // InputSchema 구성

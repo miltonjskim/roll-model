@@ -134,7 +134,7 @@ public class PipelineService {
 		log.info("모델 ModelDocument:{}", modelDocuments.size());
 
 
-		ModelDocument modelDocument = modelDocuments.get(0);
+		ModelDocument modelDocument = modelDocuments.get(modelDocuments.size() - 1);
 
 		ProjectEntity project= projectRepository.findById(pipeline.getProjectId())
 				.orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
@@ -160,7 +160,7 @@ public class PipelineService {
 		log.info("TargetInfo:{}", targetInfo);
 
 		// 성능 메트릭 구성
-		List<GetModelAndMetricResponse.PerformanceMetric> performanceMetrics = ModelResponseAssembler.buildPerformanceMetrics(modelDocument,projectInfo.getCategory().toString());
+		List<GetModelAndMetricResponse.PerformanceMetric> performanceMetrics = ModelResponseAssembler.buildPerformanceMetrics(modelDocument, projectInfo.getCategory());
 		log.info("PerformanceMetrics:{}", performanceMetrics);
 
 		// 특성 중요도 구성
@@ -186,7 +186,6 @@ public class PipelineService {
 
 			if(modelDocument.getPerformance() != null) {
 				residualPlot = ModelResponseAssembler.buildResidualPlot(modelDocument.getPerformance().getRegression());
-				log.info("ResidualPlot:{}", residualPlot);
 
 				actualVsPredicted = ModelResponseAssembler.buildActualVsPredicted(modelDocument);
 				log.info("ActualVsPredicted:{}", actualVsPredicted);
