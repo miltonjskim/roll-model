@@ -7,6 +7,7 @@ from api.v2.preprocessing.routers import api_router as preprocessing_router
 from api.v2.project.routers import api_router as project_router
 from core.api_response import ApiResponse
 import signal
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from core.exception import (
     startlette_http_exception_handler,
@@ -33,7 +34,7 @@ app = FastAPI(
     redoc_url="/redoc",           # ReDoc 경로
     default_response_class=ApiResponse,
 )
-
+instrumentator = Instrumentator().instrument(app).expose(app) 
 # logs 폴더 만들기
 LOG_FILE_PATH = "logs/app.log"
 os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
