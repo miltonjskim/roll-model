@@ -2,18 +2,23 @@ interface StatsCardProps {
   title: string;
   value: number;
   icon?: React.ReactNode;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
-export const StatsCard = ({ title, value, icon }: StatsCardProps) => {
+export const StatsCard = ({ title, value, icon, isSelected = false, onClick }: StatsCardProps) => {
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md " >
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="mb-1 text-sm text-gray-500">{title}</h3>
-          <p className="text-3xl font-bold">{value}</p>
-        </div>
-        {icon && <div className="font-tossface text-2xl text-gray-400">{icon}</div>}
+    <div
+      className={`flex cursor-pointer items-center justify-between rounded-lg p-4 shadow-sm transition-all select-none hover:shadow-md ${
+        isSelected ? 'bg-[theme(primary-black)] border-[theme(primary-black)] border-2' : 'bg-white'
+      }`}
+      onClick={onClick}
+    >
+      <div>
+        <h3 className={`${isSelected ? 'text-[theme(color-blue-01)]' : 'text-gray-500'}`}>{title}</h3>
+        <p className={`text-2xl font-bold ${isSelected ? 'text-[theme(color-blue-01)]' : ''}`}>{value}</p>
       </div>
+      <div className="font-tossface text-3xl">{icon}</div>
     </div>
   );
 };
