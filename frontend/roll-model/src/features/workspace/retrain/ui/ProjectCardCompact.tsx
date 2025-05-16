@@ -91,10 +91,10 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
         ) : (
           <p>
             정확도 (R²):{' '}
-            {project.rsquared != null
+            {project.rSquared != null
               ? `${new Intl.NumberFormat('en-US', {
                   maximumFractionDigits: 2,
-                }).format(project.rsquared * 100)}%`
+                }).format(project.rSquared * 100)}%`
               : '학습대기중'}
           </p>
         )}

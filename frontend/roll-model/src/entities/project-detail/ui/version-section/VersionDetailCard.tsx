@@ -119,8 +119,8 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
               </div>
               <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
                 <div className="w-full text-start text-xs">학습시간</div>
-                <div className={`text-md w-full overflow-hidden text-end font-semibold ${pipeline.runnungDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {pipeline.runnungDuration || '학습대기중'}
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${pipeline.runningDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {pipeline.runningDuration || '학습대기중'}
                 </div>
               </div>
               {projectDetail.category === 'CLASSIFICATION' ? (
@@ -199,7 +199,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
     //           </div>
     //           <div className="rounded-lg bg-gray-50 p-3">
     //             <h3 className="mb-1 text-sm text-gray-500">학습시간</h3>
-    //             <p className="font-medium">{pipeline.runnungDuration}초</p>
+    //             <p className="font-medium">{pipeline.runningDuration}초</p>
     //           </div>
     //         </div>
     //       ) : (

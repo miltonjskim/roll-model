@@ -22,7 +22,7 @@ export interface Pipeline {
   rSquared: number | null;
   dataCount: number;
   target: string;
-  runnungDuration: number;
+  runningDuration: number;
   likeCount: number;
   downloadCount: number;
   updatedAt: string;

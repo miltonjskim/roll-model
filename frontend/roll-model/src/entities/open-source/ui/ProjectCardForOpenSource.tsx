@@ -60,8 +60,8 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
         {/* 헤더 */}
         <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
           {/* 헤더/왼쪽 */}
-          <div className="flex items-center space-x-2">
-            <h2 className="truncate text-lg font-semibold">{project.title}</h2>
+          <div className="flex w-full items-center space-x-2 overflow-hidden">
+            <h2 className="max-w-[70%] truncate text-lg font-semibold">{project.title}</h2>
             {project.category === 'CLASSIFICATION' ? (
               <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
             ) : (
@@ -75,7 +75,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
                 {isLiked ? '❤️' : '🤍'}
               </button>
             </div>
-            <div>{project.writerNickname}</div>
+            <div className="rounded-sm bg-[var(--primary-white)]/10 px-1 text-sm whitespace-nowrap">{project.writerNickname}</div>
           </div>
         </div>
 
@@ -123,8 +123,8 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
               </div>
               <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
                 <div className="w-full text-start text-xs">학습시간</div>
-                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.runnungDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {project.runnungDuration || '학습대기중'}
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.runningDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {project.runningDuration || '학습대기중'}
                 </div>
               </div>
               {project.category === 'CLASSIFICATION' ? (

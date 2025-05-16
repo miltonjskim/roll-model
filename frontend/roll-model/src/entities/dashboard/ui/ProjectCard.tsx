@@ -118,7 +118,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               )}
             </div>
           </div>
-          <div className={`rounded bg-[var(--primary-white)]/10 px-2 py-1 text-xs`}>
+          <div className={`rounded bg-[var(--primary-white)]/10 px-2 py-1 text-xs whitespace-nowrap`}>
             {project.status === 'COMPLETED' ? (project.publicYn ? '공개' : '비공개') : project.status === 'PREPROCESSED' ? '준비됨' : project.status === 'LEARNING' ? '학습중' : '실패'}
           </div>
         </div>
@@ -182,8 +182,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             ) : (
               <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
                 <div className="w-full text-start text-xs">R²</div>
-                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rsquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {project.rsquared ? (project.rsquared * 100).toFixed(2) : '학습대기중'}
+                <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rSquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                  {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}
                 </div>
               </div>
             )}
