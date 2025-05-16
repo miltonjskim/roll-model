@@ -94,3 +94,4 @@ scikit-learn
 aiohttp>=3.8.0
 openai>=1.16.0
 chardet==5.2.0
+prometheus-fastapi-instrumentator==6.1.0

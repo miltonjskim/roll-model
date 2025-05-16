@@ -23,7 +23,7 @@ import logging
 import json
 import io
 import time
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from openai import OpenAI
 import pandas as pd
 import re
@@ -152,8 +152,47 @@ async def upload_project_dataset(
         try:
 
             df = pd.read_csv(io.BytesIO(contents))
-            analysis_result = analyze_csv(df)
-            analysis_result = clean_for_json(analysis_result)  
+             # 기본 분석 수행
+            analysis_result = analyze_csv_optimized(df)
+            
+            # 추가 필드: 데이터 품질 평가 (간략한 요약)
+            data_quality = {}
+            
+            # 1. 결측치 비율 요약
+            missing_ratios = [col['missing_ratio'] for col in analysis_result.get('missing_columns', [])]
+            if missing_ratios:
+                data_quality['missing_data_summary'] = "높음" if max(missing_ratios) > 0.5 else "중간" if max(missing_ratios) > 0.2 else "낮음"
+            else:
+                data_quality['missing_data_summary'] = "매우 낮음"
+                
+            # 2. 주요 변수 유무 확인 (목적 변수로 사용될 가능성이 높은 시간 관련 변수)
+            if 'ATA' in df.columns or 'ATA_LT' in df.columns:
+                data_quality['has_time_variable'] = True
+            
+            # 3. 데이터 설명 - 매우 간략한 설명
+            ship_data_desc = "해상 선박 관련 데이터로 "
+            if 'SHIP_TYPE_CATEGORY' in df.columns:
+                ship_types = df['SHIP_TYPE_CATEGORY'].nunique()
+                ship_data_desc += f"{ship_types}개 선박 유형, "
+            
+            if 'FLAG' in df.columns:
+                flag_count = df['FLAG'].nunique()
+                ship_data_desc += f"{flag_count}개 국가, "
+                
+            ship_data_desc += f"총 {analysis_result['total_rows']}개 레코드 포함"
+            data_quality['data_summary'] = ship_data_desc
+            
+            # 최종 분석 결과에 데이터 품질 요약 추가
+            analysis_result['data_quality'] = data_quality
+        
+            # 불필요한 필드 제거
+            if 'sample_rows' in analysis_result and len(analysis_result['sample_rows']) > 0:
+                # 샘플 행 제거 여부 결정 (예: 행 수가 너무 많은 경우)
+                if analysis_result['total_rows'] > 1000000:  # 백만 행 이상인 경우
+                    analysis_result['sample_rows'] = analysis_result['sample_rows'][:1]  # 1개 행만 유지
+                    
+            # 최종 정리
+            analysis_result = clean_for_json(analysis_result)
 
         except Exception as e:
             analysis_result = []
@@ -170,7 +209,9 @@ async def upload_project_dataset(
             domain = domain
         )
         
+       
         try:
+            logger.info("전처리 분석한거: %s", analysis_result)
             recommendations = await generate_preprocessing_recommendations(analysis_result, project_info)
         except Exception as rec_e:
             logger.warning(f"전처리 추천 실패. 빈 리스트로 대체합니다: {rec_e}")
@@ -913,15 +954,17 @@ async def get_dataset_page(
     
 @execution_time
 async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+
+async def generate_preprocessing_recommendations(analysis_result: Dict[str, Any], project_info: Dict[str, Any] = None) -> List[Dict[str, Any]]:
    
     """OpenAI API를 사용하여 전처리 추천을 생성합니다."""
     recommendations=[]
     prompt = f"""
-    CSV 파일 분석 결과: {json.dumps(safe_result, ensure_ascii=False)}
+    CSV 파일 분석 결과: {json.dumps(analysis_result, ensure_ascii=False)}
 
     프로젝트 정보: {json.dumps(project_info, ensure_ascii=False) if project_info else "정보 없음"}
 
-    위 데이터를 분석하고 적절한 데이터 전처리 단계를 추천해주세요. 다음 JSON 형식으로 응답해주세요:
+    위 데이터를 분석하고 적절한 데이터 전처리 단계를 추천해주세요. 다음 JSON 형식으로 응답해주세요. 추천을 안하는 경우는 존재하지 않습니다.:
 
     [
       {{
@@ -949,6 +992,7 @@ async def generate_preprocessing_recommendations(safe_result: Dict[str, Any], pr
     5. 위에 응답 형식을 정확하게 지켜주세요.
     6. 추천하는 전처리 순서를 정확하게 지켜서 보내주세요.
     7. 만약 전처리할 필요가 없다면 step 배열안에 null로 보내주세요.
+    8. 전처리 추천은 무조건 해야된다. 없어도 해.
     """
 
     try:
@@ -1047,42 +1091,36 @@ PREPROCESSING_CATEGORIES = {
     "missing-values": {
         "id": "missing-values",
         "name": "결측치 처리",
-        "icon": "❓",
         "description": "빠진 데이터를 채우거나 삭제할 수 있습니다.",
         "options": [
             {
                 "id": "mean",
                 "name": "평균값으로 대체",
                 "description": "결측치를 평균값으로 대체",
-                "apiEndpoint": "/missing-values/imputation",
                 "method": "MEAN"
             },
             {
                 "id": "median",
                 "name": "중앙값으로 대체",
                 "description": "결측치를 중앙값으로 대체",
-                "apiEndpoint": "/missing-values/imputation",
                 "method": "MEDIAN"
             },
             {
                 "id": "mode",
                 "name": "최빈값으로 대체",
                 "description": "결측치를 최빈값으로 대체",
-                "apiEndpoint": "/missing-values/imputation",
                 "method": "MODE"
             },
             {
                 "id": "drop-rows",
                 "name": "결측치가 있는 행 제거",
                 "description": "결측치가 있는 행 제거",
-                "apiEndpoint": "/missing-values/remove",
                 "method": "ROW_REMOVE"
             },
             {
                 "id": "drop-columns",
                 "name": "결측치가 있는 열 제거",
                 "description": "결측치가 있는 열 제거",
-                "apiEndpoint": "/missing-values/remove",
                 "method": "COL_REMOVE"
             },
         ]
@@ -1090,21 +1128,18 @@ PREPROCESSING_CATEGORIES = {
     "outlier-detection": {
         "id": "outlier-detection",
         "name": "이상치 탐지",
-        "icon": "🔍",
         "description": "데이터의 이상값을 탐지합니다.",
         "options": [
             {
                 "id": "z-score",
                 "name": "Z-점수 기반 탐지",
                 "description": "Z-점수로 이상치 탐지",
-                "apiEndpoint": "/outliers/detection",
                 "method": "ZSCORE"
             },
             {
                 "id": "iqr",
                 "name": "IQR 기반 탐지",
                 "description": "IQR로 이상치 탐지",
-                "apiEndpoint": "/outliers/detection",
                 "method": "IQR"
             },
         ]
@@ -1112,27 +1147,23 @@ PREPROCESSING_CATEGORIES = {
     "outlier-handle": {
         "id": "outlier-handle",
         "name": "이상치 처리",
-        "icon": "🛠️",
         "description": "탐지된 이상치를 제거하거나 대체합니다.",
         "options": [
             {
                 "id": "replace",
                 "name": "이상치 대체",
-                "description": "이상치를 대체합니다.",
-                "apiEndpoint": "/outliers/imputation"
+                "description": "이상치를 대체합니다."
             },
             {
                 "id": "remove-rows",
                 "name": "행 제거",
                 "description": "이상치가 있는 행을 제거합니다.",
-                "apiEndpoint": "/outliers/remove",
                 "method": "ROW_REMOVE"
             },
             {
                 "id": "remove-cols",
                 "name": "열 제거",
                 "description": "이상치가 있는 열을 제거합니다.",
-                "apiEndpoint": "/outliers/remove",
                 "method": "COL_REMOVE"
             },
         ]
@@ -1140,39 +1171,33 @@ PREPROCESSING_CATEGORIES = {
     "data-transformation": {
         "id": "data-transformation",
         "name": "데이터 변환",
-        "icon": "🔁",
         "description": "데이터를 정규화 및 변환합니다.",
         "options": [
             {
                 "id": "z-score",
                 "name": "Z-점수 정규화",
-                "description": "Z-score 정규화 적용",
-                "apiEndpoint": "/transform/z-score"
+                "description": "Z-score 정규화 적용"
             },
             {
                 "id": "min-max",
                 "name": "Min-Max 정규화",
-                "description": "Min-Max 정규화 적용",
-                "apiEndpoint": "/transform/min-max"
+                "description": "Min-Max 정규화 적용"
             },
             {
                 "id": "log",
                 "name": "로그 변환",
-                "description": "로그 변환 적용",
-                "apiEndpoint": "/transform/log"
+                "description": "로그 변환 적용"
             },
             {
                 "id": "sqrt",
                 "name": "제곱근 변환",
-                "description": "제곱근 변환 적용",
-                "apiEndpoint": "/transform/sqrt"
+                "description": "제곱근 변환 적용"
             },
         ]
     },
     "encoding": {
         "id": "encoding",
         "name": "인코딩",
-        "icon": "🧮",
         "description": "범주형 데이터 인코딩",
         "options": [
             {
@@ -1198,21 +1223,18 @@ PREPROCESSING_CATEGORIES = {
     "class-balancing": {
         "id": "class-balancing",
         "name": "클래스 불균형 처리",
-        "icon": "⚖️",
         "description": "클래스 불균형 문제 해결",
         "options": [
             {
                 "id": "over",
                 "name": "오버샘플링",
                 "description": "Over Sampling 적용",
-                "apiEndpoint": "/class-balancing",
                 "method": "OVER"
             },
             {
                 "id": "under",
                 "name": "언더샘플링",
                 "description": "Under Sampling 적용",
-                "apiEndpoint": "/class-balancing",
                 "method": "UNDER"
             },
         ]
@@ -1224,13 +1246,39 @@ def parse_openai_response(response_text: str):
     try:
         # 마크다운 블록 제거
         cleaned_text = re.sub(r"^```(?:json)?|```$", "", response_text.strip(), flags=re.MULTILINE).strip()
-    
+        
+        # 주석 제거
         cleaned_text = re.sub(r"//.*", "", cleaned_text)
-        logger.info(f"마크다운 제거 후:\n{cleaned_text}")
-
+        
+        # JSON 데이터가 시작되는 위치와 끝나는 위치를 찾습니다
+        start_index = cleaned_text.find('[')
+        if start_index == -1:
+            start_index = cleaned_text.find('{')
+        
+        if start_index != -1:
+            # 괄호 매칭 알고리즘으로 JSON 끝 위치 찾기
+            stack = []
+            end_index = -1
+            
+            for i, char in enumerate(cleaned_text[start_index:]):
+                if char in '[{':
+                    stack.append(char)
+                elif char in ']}':
+                    if (char == ']' and stack[-1] == '[') or (char == '}' and stack[-1] == '{'):
+                        stack.pop()
+                        if not stack:  # 스택이 비어있으면 매칭된 괄호를 모두 찾은 것
+                            end_index = start_index + i + 1
+                            break
+            
+            if end_index != -1:
+                cleaned_text = cleaned_text[start_index:end_index]
+        
+        logger.info(f"파싱 준비된 JSON:\n{cleaned_text}")
+        
+        # JSON 데이터 로드
         return json.loads(cleaned_text)
     except Exception as e:
-        logger.error("GPT 응답 파싱 실패", exc_info=True)
+        logger.error(f"GPT 응답 파싱 실패: {str(e)}", exc_info=True)
         raise
 
 @execution_time
@@ -1245,6 +1293,7 @@ def clean_for_json(obj):
         return obj
     return obj
 
+    
 def safe_float(val):
     if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
         return None
@@ -1253,41 +1302,124 @@ def safe_float(val):
 @execution_time
 def analyze_csv(df: pd.DataFrame) -> Dict[str, Any]:
     """CSV 파일을 분석하여 기본 통계 및 특성을 반환합니다."""
+def get_sample_rows(df: pd.DataFrame, max_rows: int = 2) -> List[Dict]:
+    """DataFrame에서 최소한의 샘플 행을 추출하여 반환합니다."""
+    sample = df.head(max_rows).fillna("NA")
+    
+    # 각 행의 모든 열이 아닌 중요 열만 선택
+    important_columns = []
+    
+    # 열 개수에 따라 동적으로 중요 열 선택
+    if len(df.columns) > 15:
+        # 수치형 열 중 중요한 것들
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        important_numeric = [col for col in numeric_cols if col in ['DIST', 'DEADWEIGHT', 'LENGTH', 'ID']][:3]
+        
+        # 범주형 열 중 중요한 것들
+        categorical_cols = df.select_dtypes(include=['object']).columns
+        important_categorical = [col for col in categorical_cols if col in ['SHIP_TYPE_CATEGORY', 'FLAG', 'ARI_CO']][:2]
+        
+        # 날짜 관련 열
+        date_cols = [col for col in df.columns if 'DATE' in col.upper() or 'TIME' in col.upper() or 'ATA' in col.upper()][:1]
+        
+        important_columns = important_numeric + important_categorical + date_cols
+        
+        # 식별자 열 추가 (첫 번째 열이 보통 ID)
+        if len(df.columns) > 0:
+            important_columns = [df.columns[0]] + important_columns
+        
+        # 중복 제거 및 최대 8개 열로 제한
+        important_columns = list(dict.fromkeys(important_columns))[:8]
+    else:
+        important_columns = df.columns
+    
+    # 선택된 열만 포함하는 샘플 준비
+    reduced_sample = sample[important_columns].to_dict(orient="records")
+    return reduced_sample
+
+def analyze_csv_optimized(df: pd.DataFrame, sample_size: int = 500) -> Dict[str, Any]:
+    """CSV 파일을 분석하여 초경량화된 기본 통계 및 특성을 반환합니다."""
+    # 데이터가 큰 경우 샘플링하여 분석 (샘플 크기 500으로 축소)
+    if len(df) > sample_size:
+        analysis_df = df.sample(sample_size, random_state=42)
+    else:
+        analysis_df = df
+    
+    # 기본 정보 - 필수 정보만 포함
     analysis = {
-        "shape": df.shape,
-        "columns": list(df.columns),
-        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
-        "missing_values": {col: int(df[col].isna().sum()) for col in df.columns},
-        "numeric_columns": list(df.select_dtypes(include=['number']).columns),
-        "categorical_columns": list(df.select_dtypes(include=['object', 'category']).columns),
-        "datetime_columns": list(df.select_dtypes(include=['datetime']).columns),
-        "stats": {}
+        "total_rows": len(df),
+        "total_columns": len(df.columns),
+        "sample_rows": get_sample_rows(df, max_rows=2),  # 2개 행으로 축소
     }
-
-    # 수치형 열에 대한 기본 통계
-    for col in analysis["numeric_columns"]:
+    
+    # 중요 열 분류 - 데이터 타입별로 열 이름만 수집
+    numeric_columns = list(df.select_dtypes(include=['number']).columns)
+    categorical_columns = list(df.select_dtypes(include=['object', 'category']).columns)
+    datetime_columns = []
+    
+    # ATA 열이 존재하는지 확인하고 datetime으로 변환 가능한지 확인
+    if 'ATA' in df.columns:
         try:
-            analysis["stats"][col] = {
-                "mean": safe_float(df[col].mean()),
-                "median": safe_float(df[col].median()),
-                "std": safe_float(df[col].std()),
-                "min": safe_float(df[col].min()),
-                "max": safe_float(df[col].max()),
-                "q1": safe_float(df[col].quantile(0.25)),
-                "q3": safe_float(df[col].quantile(0.75))
+            pd.to_datetime(df['ATA'].iloc[0])
+            datetime_columns.append('ATA')
+        except:
+            pass
+    
+    analysis["column_types"] = {
+        "numeric": numeric_columns[:10],  # 최대 10개만 포함
+        "categorical": categorical_columns[:10],  # 최대 10개만 포함
+        "datetime": datetime_columns
+    }
+    
+    # 결측치 정보 - 결측치 비율이 높은(20% 이상) 상위 3개 열만 포함
+    missing_values = {col: int(df[col].isna().sum()) for col in df.columns}
+    missing_ratio = {col: missing/len(df) for col, missing in missing_values.items() if missing/len(df) > 0.2}
+    analysis["missing_columns"] = [
+        {"column": col, "missing_ratio": round(ratio, 2)} 
+        for col, ratio in sorted(missing_ratio.items(), key=lambda x: x[1], reverse=True)[:3]
+    ] if missing_ratio else []
+    
+    # 주요 통계 - 수치형 열 전체 통계 대신 중요 열만 분석
+    key_stats = {}
+    
+    # 1. 수치형 열 중 가장 중요할 것 같은 3개만 선택
+    important_numeric = [col for col in numeric_columns if col in ['DIST', 'DEADWEIGHT', 'LENGTH', 'BUILT']][:3]
+    for col in important_numeric:
+        try:
+            key_stats[col] = {
+                "min": safe_float(analysis_df[col].min()),
+                "max": safe_float(analysis_df[col].max()),
+                "null_ratio": round(df[col].isna().mean(), 2)
             }
         except:
             pass
-
-    # 범주형 열에 대한 기본 통계
-    for col in analysis["categorical_columns"]:
+    
+    # 2. 범주형 열 중 가장 중요할 것 같은 2개만 선택
+    important_categorical = [col for col in categorical_columns if col in ['SHIP_TYPE_CATEGORY', 'FLAG', 'ARI_CO']][:2]
+    for col in important_categorical:
         try:
-            value_counts = df[col].value_counts().to_dict()
-            analysis["stats"][col] = {
-                "unique_values": len(value_counts),
-                "top_values": dict(sorted(value_counts.items(), key=lambda x: x[1], reverse=True)[:5])
+            unique_count = analysis_df[col].nunique()
+            key_stats[col] = {
+                "unique_values": unique_count,
+                "high_cardinality": unique_count > 100
             }
         except:
             pass
-
+    
+    if key_stats:
+        analysis["key_stats"] = key_stats
+    
     return analysis
+
+def clean_for_json(obj: Any) -> Any:
+    """객체를 JSON 직렬화 가능한 형태로 변환합니다."""
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(i) for i in obj]
+    elif isinstance(obj, tuple):
+        return tuple(clean_for_json(i) for i in obj)
+    elif isinstance(obj, (int, float, str, bool, type(None))):
+        return obj
+    else:
+        return str(obj)
