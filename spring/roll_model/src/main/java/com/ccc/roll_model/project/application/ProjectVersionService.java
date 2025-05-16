@@ -178,7 +178,10 @@ public class ProjectVersionService {
         VersionEntity version;
 
         // 현재 파이프라인의 부모 정보 조회
-        VersionEntity parentVersion = versionRepository.findVersionEntityByPipelineId(pipelineId);
+        PipelineEntity parentPipeline = pipelineRepository.findByPipelineId(pipelineId)
+            .orElse;
+
+        // 부모 파이프라인 ID로 버전 Entity 찾기
 
         if (parentVersion == null) {
             // 부모가 없으면 새로운 그룹 생성
