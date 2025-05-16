@@ -164,9 +164,6 @@ async def upload_project_dataset(
             category = category,
             domain = domain
         )
-        # NaN, INF 수동 인코딩
-        safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
-    
         
         try:
             recommendations = await generate_preprocessing_recommendations(analysis_result, project_info)
@@ -174,6 +171,10 @@ async def upload_project_dataset(
             logger.warning(f"전처리 추천 실패. 빈 리스트로 대체합니다: {rec_e}")
             recommendations = []
 
+        result["originalDatasets"]["data"] = result["originalDatasets"]["data"][:30]
+        # NaN, INF 수동 인코딩
+        safe_result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
+    
         # 응답 구성
         return ApiResponse(
             data={"result":safe_result,"step":recommendations},
