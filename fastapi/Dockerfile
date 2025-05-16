@@ -11,4 +11,12 @@ RUN pip install --no-cache-dir --upgrade -r /code/app/requirements.txt
 COPY . /code/app
 
 # Gunicorn으로 Uvicorn 실행
-CMD ["gunicorn", "main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:80"]
+# 더 상세한 설정
+CMD ["gunicorn", "main:app", \
+     "-w", "4", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:80", \
+     "--timeout", "300", \
+     "--keep-alive", "2", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50"]
