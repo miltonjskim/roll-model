@@ -418,10 +418,10 @@ public class ModelResponseAssembler {
         Map<String, Double> featureImportance = modelDocument.getFeatureImportance();
         if (featureImportance != null && !featureImportance.isEmpty()) {
             for (Map.Entry<String, Double> entry : featureImportance.entrySet()) {
-                if (entry.getKey() != null && entry.getValue() != null&& entry.getValue()!=0) {
+                if (entry.getKey() != null && entry.getValue() != null&&entry.getValue() * 100 >= 1) {
                     importanceList.add(GetModelAndMetricResponse.FeatureImportance.builder()
                             .featureName(entry.getKey())
-                            .importanceValue(String.format("%.0f", entry.getValue() * 100))
+                            .importanceValue(String.format("%.2f", entry.getValue() * 100))
                             .importanceKey(entry.getKey().replaceAll("\\s+", "_").toLowerCase())
                             .build());
                 }
