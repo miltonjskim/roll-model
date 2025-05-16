@@ -30,6 +30,7 @@ public enum ErrorCode {
 	MODEL_EXPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "M002", "모델 내보내기에 실패했습니다."),
 	INVALID_MODEL_PARAMETER(HttpStatus.BAD_REQUEST, "M003", "잘못된 모델 파라미터입니다."),
 	INVALID_MODELING_STATUS(HttpStatus.BAD_REQUEST, "M004", "전처리된 상태가 아닙니다."),
+	MODEL_API_KEY_NOT_FOUND(HttpStatus.NOT_FOUND, "M005", "모델의 Api Key를 찾을 수 없습니다."),
 
 	// AI
 	AI_CHAT_FAILED(HttpStatus.BAD_REQUEST,"C001","AI 응답 생성에 실패했습니댜."),

@@ -58,6 +58,8 @@ public class ModelDocument {
     private String modelFilePath; // 모델 파일 저장 경로
     @Field("api_endpoint")
     private String apiEndpoint; // API 엔드포인트
+    @Field("api_key")
+    private ApiKey apiKey; // API 키
     @Field("registered_at")
     private LocalDateTime registeredAt; // 생성(등록) 시간
 
@@ -161,6 +163,17 @@ public class ModelDocument {
                 private List<Double> actual; // 실제값 (y축) 또는 잔차 값
             }
         }
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ApiKey {
+        @Field("created_at")
+        private Long createdAt; // API Key 생성 시간
+        private String key; // API Key 값
     }
 }
 
