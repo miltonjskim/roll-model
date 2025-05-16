@@ -509,7 +509,7 @@ async def calculate_and_update_statistics(
                 # 숫자형 변수만 선택
                 numeric_df = df[numeric_columns].apply(pd.to_numeric, errors='coerce')
                 # 상관관계 행렬 계산
-                corr_matrix = numeric_df.corr().values.tolist()
+                corr_matrix: List = numeric_df.corr().fillna(0).values.tolist()
                 correlation_matrix = corr_matrix
             except Exception as e:
                 logger.warning(f"상관관계 행렬 계산 중 오류: {str(e)}")

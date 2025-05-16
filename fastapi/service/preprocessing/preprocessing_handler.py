@@ -88,8 +88,11 @@ class PreprocessingHandler:
         # 6. 파이프라인 히스토리 업데이트
         await self._update_pipeline_history(pipeline, preprocessing_type, request, result, etag, object_name)
 
-        # 7. 응답 생성
-        response = self._create_response(pipeline_id, result, df.to_dict(orient="records"))
+        # 7. 데이터셋 요약 정보 생성
+        dataset_summary = self._get_dataset_summary(df)
+
+        # 8. 응답 생성
+        response = self._create_response(pipeline_id, result, df.to_dict(orient="records"), dataset_summary)
 
         return response
 
@@ -190,7 +193,46 @@ class PreprocessingHandler:
         await self.pipeline_service.add_pipeline_history(pipeline, history_item)
         self.logger.info(f"파이프라인 히스토리 업데이트 성공: {preprocessing_type}")
 
-    def _create_response(self, pipeline_id, result, dataset):
+    def _get_dataset_summary(self, df: DataFrame):
+        """데이터셋 요약 정보 생성"""
+        # 데이터셋 요약 정보 생성 로직
+        # 예시: 데이터셋의 컬럼 수, 행 수, 결측치 비율 등
+
+        total_rows = len(df)
+        total_columns = len(df.columns)
+
+        missing_columns = []
+        missing_details = {}
+
+        for col in df.columns:
+            missing_count = df[col].isna().sum()
+            if missing_count > 0:
+                missing_percentage = round((missing_count / total_rows) * 100, 2)
+                # 모든 결측치 행 인덱스 가져오기 (제한 없음)
+                missing_indices = df[df[col].isna()].index.tolist()
+
+                missing_columns.append(col)
+                missing_details[col] = {
+                    "count": int(missing_count),
+                    "percentage": missing_percentage,
+                    "rowIndices": missing_indices
+                }
+
+        data_sample = {
+            "columns": df.columns.tolist(),
+            "data": df[:].to_dict(orient="records")  # 지정된 행 수만 반환
+        }
+
+        return {
+            "total_rows": total_rows,
+            "total_columns": total_columns,
+            "missing_values": {
+                "columns": missing_columns,
+                "details": missing_details
+            }
+        }
+
+    def _create_response(self, pipeline_id, result, dataset, dataset_summary):
         """결과 응답 생성"""
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         logger.info(f"result: {result}")
@@ -208,7 +250,8 @@ class PreprocessingHandler:
                 "page": (aligned_start // page_size) + 1,
                 "pageSize": page_size,
                 "totalPages": (len(dataset) + page_size - 1) // page_size,
-                "startPoint": aligned_start
+                "startPoint": aligned_start,
+                "dataset_summary": dataset_summary
             }
         }
         return jsonable_encoder(replace_nan_values(response, round_decimals=2))
