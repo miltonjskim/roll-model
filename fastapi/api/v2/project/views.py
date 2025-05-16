@@ -58,8 +58,8 @@ router = APIRouter()
 sample_router = APIRouter()
 pipeline_router = APIRouter()
 
-@execution_time
 @router.post("/dataset", response_class=ApiResponse)
+@execution_time
 async def upload_project_dataset(
     background_tasks: BackgroundTasks,
     project_id: int = Path(..., title="프로젝트 ID"),
