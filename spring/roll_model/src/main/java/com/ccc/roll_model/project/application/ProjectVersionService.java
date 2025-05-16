@@ -41,11 +41,11 @@ public class ProjectVersionService {
     @Transactional(readOnly = true)
     public GetProjectVersionsResponse getProjectVersions(GetProjectVersionsCommand command) {
         log.info("Getting project versions for pipelineId: {}, memberId: {}",
-                command.getPipelineId(), command.getMemberId());
+            command.getPipelineId(), command.getMemberId());
 
         // 1. 현재 사용자 조회
         Member member = memberRepository.findById(command.getMemberId())
-                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 해당 파이프라인이 속한 그룹의 모든 파이프라인 조회
         VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
@@ -63,21 +63,21 @@ public class ProjectVersionService {
         }
 
         List<PipelineEntity> pipelines = versionEntities.stream()
-                .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
-                .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
-                .toList();
+            .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
+            .filter(Objects::nonNull)
+            .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
+            .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+            .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
         // 3. 파이프라인이 속한 프로젝트 조회
         PipelineEntity pipelineEntity = pipelineRepository.findByPipelineId(command.getPipelineId())
-                .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND));
+            .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND));
 
         Integer projectId = pipelineEntity.getProjectEntity().getProjectId();
 
         ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_PARAMETER));
+            .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_PARAMETER));
 
         // 4. 프로젝트 소유자 여부 확인
         boolean isProjectOwner = project.getMemberEntity().getMemberId().equals(member.getMemberId());
@@ -103,31 +103,31 @@ public class ProjectVersionService {
 
         // 프로젝트 정보 구성
         ProjectInfo projectInfo = ProjectInfo.builder()
-                .title(project.getTitle())
-                .category(project.getCategory().name())
-                .domain(project.getDomain().name())
-                .version(versionEntity.getVersionNum())
-                .projectPublicYn(project.getPublicYn())
-                .pipelinePublicYn(pipelineEntity.getPublicYn())
-                .ownerYn(isProjectOwner)
-                .build();
+            .title(project.getTitle())
+            .category(project.getCategory().name())
+            .domain(project.getDomain().name())
+            .version(versionEntity.getVersionNum())
+            .projectPublicYn(project.getPublicYn())
+            .pipelinePublicYn(pipelineEntity.getPublicYn())
+            .ownerYn(isProjectOwner)
+            .build();
 
         // 최종 응답 구성
         GetProjectVersionsResponse response = GetProjectVersionsResponse.builder()
-                .projectInfo(projectInfo)
-                .pipelines(pipelineInfoList)
-                .build();
+            .projectInfo(projectInfo)
+            .pipelines(pipelineInfoList)
+            .build();
 
         log.info("Returning response with {} pipelines", pipelineInfoList.size());
         return response;
     }
 
     private PipelineInfo buildPipelineInfo(
-            PipelineEntity pipeline,
-            ModelDocument model,
-            ProjectEntity project,
-            boolean isProjectOwner,
-            Map<String, VersionEntity> versionMap) {
+        PipelineEntity pipeline,
+        ModelDocument model,
+        ProjectEntity project,
+        boolean isProjectOwner,
+        Map<String, VersionEntity> versionMap) {
 
         // 맵에서 현재 파이프라인의 버전 정보 조회
         VersionEntity versionEntity = versionMap.get(pipeline.getPipelineId());
@@ -150,7 +150,7 @@ public class ProjectVersionService {
         // 학습 소요 시간은 ModelDocument에서 가져올게.
         Double runningDuration = null;
         if (model != null && model.getLearningDuration() != null) {
-//            runningDuration = model.getLearningDuration().doubleValue();
+            //            runningDuration = model.getLearningDuration().doubleValue();
             // 러닝 타임도 소수점 둘째 자리까지 반올림
             runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
         }
@@ -167,21 +167,21 @@ public class ProjectVersionService {
 
         // 응답 객체
         return PipelineInfo.builder()
-                .pipelineId(pipeline.getPipelineId())
-                .version(versionNum)
-                .publicYn(pipeline.getPublicYn())
-                .deletedYn(pipeline.getDeletedYn())
-                .parent(parentVersion)
-                .accuracy(accuracy)
-                .rSquared(rSquared)
-                .dataCount(pipeline.getDataCount())
-                .target(pipeline.getTargetFeature())
-                .runnungDuration(runningDuration)
-                .likeCount(pipeline.getLikeCount())
-                .downloadCount(pipeline.getDownloadCount())
-                .updatedAt(pipeline.getModifiedAt())
-                .ownerYn(isProjectOwner) // 프로젝트 소유자 ==> 파이프라인 소유자
-                .build();
+            .pipelineId(pipeline.getPipelineId())
+            .version(versionNum)
+            .publicYn(pipeline.getPublicYn())
+            .deletedYn(pipeline.getDeletedYn())
+            .parent(parentVersion)
+            .accuracy(accuracy)
+            .rSquared(rSquared)
+            .dataCount(pipeline.getDataCount())
+            .target(pipeline.getTargetFeature())
+            .runnungDuration(runningDuration)
+            .likeCount(pipeline.getLikeCount())
+            .downloadCount(pipeline.getDownloadCount())
+            .updatedAt(pipeline.getModifiedAt())
+            .ownerYn(isProjectOwner) // 프로젝트 소유자 ==> 파이프라인 소유자
+            .build();
     }
 
     @Transactional
