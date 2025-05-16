@@ -98,40 +98,44 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
   return (
     <div className="mt-4">
       <div
-        className={clsx('rounded-md border border-[var(--color-gray-04)] p-2', cardStyle === 'small' ? 'flex max-h-[27rem] flex-col gap-3 overflow-y-auto' : 'flex flex-nowrap gap-3 overflow-x-auto')}
+        className={clsx('rounded-md border border-[var(--color-gray-04)] p-2', cardStyle === 'small' ? 'flex max-h-[80%] flex-col gap-3 overflow-y-auto' : 'flex flex-nowrap gap-3 overflow-x-auto')}
       >
-        {steps.length === 0 ? (
-          <p className="text-sm text-gray-500">적용된 전처리 단계가 없습니다.</p>
+        {!steps || steps.filter(Boolean).length === 0 ? (
+          <p className="text-sm text-gray-500">{cardStyle === 'small' ? 'AI 추천 전처리 단계가 없습니다.' : '적용된 전처리 단계가 없습니다.'}</p>
         ) : (
-          steps.map((step, idx) => (
-            <div
-              key={idx}
-              ref={idx === steps.length - 1 ? lastStepRef : null}
-              className={clsx(cardBaseClass, cardStyle === 'large' && idx === steps.length - 1 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}
-            >
-              <p className="mb-1 font-semibold text-[var(--color-blue-01)]">
-                {idx + 1}. {getStepLabel(step.type)}
-              </p>
-              <p className="text-xs font-medium text-gray-800">{step.optionName}</p>
-              <p className="mb-2 text-xs text-gray-500">{getStepSubLabel(step)}</p>
+          steps
+            .filter((step): step is Step => step != null)
+            .map((step, idx) => {
+              return (
+                <div
+                  key={idx}
+                  ref={idx === steps.length - 1 ? lastStepRef : null}
+                  className={clsx(cardBaseClass, cardStyle === 'large' && idx === steps.length - 1 && 'ring-2 ring-[var(--color-blue-01)] ring-offset-1')}
+                >
+                  <p className="mb-1 font-semibold text-[var(--color-blue-01)]">
+                    {idx + 1}. {getStepLabel(step.type)}
+                  </p>
+                  <p className="text-xs font-medium text-gray-800">{step.optionName}</p>
+                  <p className="mb-2 text-xs text-gray-500">{getStepSubLabel(step)}</p>
 
-              <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
-                {step.type === 'OUTLIER-DETECTION' && (
-                  <>
-                    {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
-                    {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
-                    {Array.isArray(step.parameters.outlierIndices) && (
-                      <li>
-                        이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
-                        {step.parameters.outlierIndices.length > 5 && '...'}
-                      </li>
+                  <ul className="max-h-24 space-y-0.5 overflow-y-auto pr-1 text-xs text-gray-600">
+                    {step.type === 'OUTLIER-DETECTION' && (
+                      <>
+                        {step.parameters.maxThreshold !== undefined && <li>상한 임계값: {step.parameters.maxThreshold}</li>}
+                        {step.parameters.minThreshold !== undefined && <li>하한 임계값: {step.parameters.minThreshold}</li>}
+                        {Array.isArray(step.parameters.outlierIndices) && (
+                          <li>
+                            이상치 행: {step.parameters.outlierIndices.slice(0, 5).join(', ')}
+                            {step.parameters.outlierIndices.length > 5 && '...'}
+                          </li>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-                {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
-              </ul>
-            </div>
-          ))
+                    {step.type === 'MISSING-VALUES' && step.parameters.fillValue !== undefined && <li>결측치 대체 값: {step.parameters.fillValue}</li>}
+                  </ul>
+                </div>
+              );
+            })
         )}
       </div>
     </div>
