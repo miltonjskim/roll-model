@@ -1,4 +1,6 @@
 from celery import Celery
+from confluent_kafka import Producer
+import json
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, ElasticNet
 from sklearn.svm import SVC, SVR
@@ -15,6 +17,9 @@ from config import (
     DEFAULT_TARGET_COLUMN,
     MINIO_DATASETS_BUCKET,
     MINIO_MODELS_BUCKET,
+    KAFKA_PRODUCER_CONFIG,
+    KAFKA_STATUS_TOPIC,
+    NODEPORT_HOST
 )
 from minio_utils import upload_model, download_dataset, parse_s3_url
 from mongo_utils import save_to_mongodb, update_model_by_pipeline_id
@@ -22,6 +27,10 @@ from mlflow_utils import log_model_to_mlflow
 from kserve_utils import (
     sanitize_k8s_name,
     deploy_model_with_virtual_service
+)
+from kong_utils import (
+    setup_model_api_gateway,
+    save_api_info_by_pipeline_id
 )
 
 # Celery 앱 설정 (RabbitMQ 브로커 사용)
@@ -444,7 +453,6 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
             # 현재 배포된 모델 수 확인하여 리소스 할당 결정
             import subprocess
             import yaml
-            import json
 
             # 현재 사용 중인 CPU 리소스 확인
             try:
@@ -510,56 +518,152 @@ def train_model_task(data_path: str, model_type: str, model_params: dict, save_p
                 memory_limit=model_memory_limit
             )
 
-        #     if deployment_success:
-        #         # 배포 정보 기록
-        #         deployment_info = {
-        #             "status": "deployed",
-        #             "service_name": service_name,
-        #             "url": service_url,
-        #             "deployment_time": pd.Timestamp.now().isoformat()
-        #         }
-        #     else:
-        #         deployment_info = {
-        #             "status": "failed",
-        #             "error": deployment_message,
-        #             "deployment_time": pd.Timestamp.now().isoformat()
-        #         }
-        # else:
-        #     deployment_info = {
-        #         "status": "skipped",
-        #         "reason": "MLflow 모델 등록 실패"
-        #     }
-        #
-        # # 결과 반환에 MLflow 및 배포 정보 추가
-        # result = {
-        #     "status": "success",
-        #     "model_type": model_type,
-        #     "s3_model_path": s3_model_path,
-        #     "model_metadata": model_metadata,
-        #     "mlflow_info": mlflow_info,
-        #     "deployment_info": deployment_info
-        # }
-        #
-        # if pipeline_id:
-        #     result["pipeline_id"] = pipeline_id
-        #
-        #     # MongoDB에 배포 상태 업데이트
-        #     if deployment_info["status"] == "deployed":
-        #         update_data = {
-        #             "deployment_status": "deployed",
-        #             "api_endpoint": deployment_info["url"],
-        #             "deployment_timestamp": deployment_info["deployment_time"]
-        #         }
-        #         update_model_by_pipeline_id(pipeline_id, update_data)
+            # 배포 결과 한글 로깅
+            if deployment_success:
+                print(f"[Task] 모델 배포 성공:")
+                print(f"  - 서비스 이름: {service_name}")
+                print(f"  - 서비스 URL: {service_url}")
+                print(f"  - 배포 메시지: {deployment_message}")
+            else:
+                print(f"[Task] 모델 배포 실패:")
+                print(f"  - 실패 메시지: {deployment_message}")
 
-        # return result
-        return model_metadata
+            # KServe 배포 성공 후 Kong API Gateway 설정
+            if deployment_success and service_url:
+                # Kong API Gateway 설정
+                try:
+                    print(f"[Task] Kong API Gateway 설정 시작 (모델: {pipeline_id})")
+
+                    # 서비스 URL 구성
+                    api_service_url = service_url
+                    if not api_service_url.startswith('http'):
+                        api_service_url = f"http://{NODEPORT_HOST}{api_service_url}"
+
+                    # Kong API Gateway 설정 실행 (모델별 1:1 소비자 및 ACL 그룹 생성)
+                    kong_result = setup_model_api_gateway(
+                        pipeline_id=pipeline_id,
+                        service_url=api_service_url,
+                        paths=[f"/model/{pipeline_id}"]
+                    )
+
+                    if kong_result and kong_result["status"] == "success":
+                        print(f"[Task] Kong API Gateway 설정 완료")
+
+                        # MongoDB에 API 정보 저장
+                        if pipeline_id:
+                            api_info = {
+                                "api_key": kong_result.get("api_key"),
+                                "api_endpoint": kong_result.get("api_endpoint"),
+                                "consumer": kong_result.get("consumer")
+                            }
+                            save_result = save_api_info_by_pipeline_id(pipeline_id, api_info)
+                            if save_result:
+                                print(f"[Task] API 정보를 MongoDB에 저장 완료")
+                            else:
+                                print(f"[Task] API 정보 MongoDB 저장 실패")
+
+                            # API 엔드포인트를 모델 메타데이터에 추가
+                            model_metadata["api_endpoint"] = kong_result.get("api_endpoint")
+
+                    else:
+                        print(f"[Task] Kong API Gateway 설정 실패: {kong_result.get('message', '알 수 없는 오류')}")
+                except Exception as kong_error:
+                    print(f"[Task] Kong API Gateway 설정 중 오류 발생: {kong_error}")
+
+        # 결과 생성
+        result = {
+            "status": "success",
+            "model_type": model_type,
+            "s3_model_path": s3_model_path,
+            "model_metadata": model_metadata
+        }
+
+        if pipeline_id:
+            result["pipeline_id"] = pipeline_id
+
+        # Kafka로 학습 완료 메시지 발행
+        try:
+            # 생산자 생성
+            producer = Producer(KAFKA_PRODUCER_CONFIG)
+
+            # 메시지 페이로드
+            message = {
+                "event_type": "model_training_completed",
+                "timestamp": pd.Timestamp.now().isoformat(),
+                "pipeline_id": pipeline_id,
+                "project_id": project_id,
+                "member_id": member_id,
+                "model_type": model_type,
+                "model_path": s3_model_path,
+                "error_message": None,
+                "status": "success"
+            }
+
+            # 토픽 지정 (config에서 가져올 수도 있음)
+            topic = KAFKA_STATUS_TOPIC
+
+            # 메시지 발행
+            producer.produce(
+                topic,
+                key=str(pipeline_id) if pipeline_id else "unknown",
+                value=json.dumps(message).encode('utf-8'),
+                callback=lambda err, msg: print(
+                    f"[Producer] 메시지 전송 완료: {msg.topic()}" if err is None else f"[Producer] 메시지 전송 실패: {err}")
+            )
+
+            # 모든 메시지가 발행될 때까지 대기
+            producer.flush()
+
+            print(f"[Task] 학습 완료 메시지가 Kafka에 성공적으로 발행됨: {topic}")
+
+        except Exception as kafka_error:
+            print(f"[Task] Kafka 메시지 발행 중 오류 발생: {kafka_error}")
+
+        return result
 
     except Exception as e:
         error_result = {"status": "error", "error": str(e)}
 
         if pipeline_id:
             error_result["pipeline_id"] = pipeline_id
+
+        # Kafka로 학습 실패 메시지 발행
+        try:
+            # 생산자 생성
+            producer = Producer(KAFKA_PRODUCER_CONFIG)
+
+            # 메시지 페이로드
+            message = {
+                "event_type": "model_training_failed",
+                "timestamp": pd.Timestamp.now().isoformat(),
+                "pipeline_id": pipeline_id,
+                "project_id": project_id,
+                "member_id": member_id,
+                "model_type": model_type,
+                "model_path": None,
+                "error_message": str(e),
+                "status": "fail"
+            }
+
+            # 토픽 지정
+            topic = KAFKA_STATUS_TOPIC
+
+            # 메시지 발행
+            producer.produce(
+                topic,
+                key=str(pipeline_id) if pipeline_id else "unknown",
+                value=json.dumps(message).encode('utf-8'),
+                callback=lambda err, msg: print(
+                    f"[Producer] 메시지 전송 완료: {msg.topic()}" if err is None else f"[Producer] 메시지 전송 실패: {err}")
+            )
+
+            # 모든 메시지가 발행될 때까지 대기
+            producer.flush()
+
+            print(f"[Task] 학습 실패 메시지가 Kafka에 성공적으로 발행됨: {topic}")
+
+        except Exception as kafka_error:
+            print(f"[Task] Kafka 메시지 발행 중 오류 발생: {kafka_error}")
 
         print(f"[Task] Error during model training: {e}")
         return error_result

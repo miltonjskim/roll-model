@@ -23,6 +23,7 @@ RABBITMQ_BROKER_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOS
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS')
 KAFKA_CONSUMER_GROUP = os.environ.get('KAFKA_CONSUMER_GROUP')
 KAFKA_TOPIC = os.environ.get('KAFKA_TOPIC')
+KAFKA_STATUS_TOPIC = os.environ.get('KAFKA_STATUS_TOPIC')
 
 # 기본 설정 - 환경 변수에 없는 경우 기본값
 DEFAULT_TARGET_COLUMN = os.environ.get('DEFAULT_TARGET_COLUMN', 'sentiment')
@@ -35,6 +36,11 @@ KAFKA_CONSUMER_CONFIG = {
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': True,
     'broker.address.family': 'v4'
+}
+
+# Kafka 생산자 설정
+KAFKA_PRODUCER_CONFIG = {
+    'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS
 }
 
 # MinIO 설정
@@ -54,6 +60,9 @@ MONGODB_COLLECTION = os.environ.get('MONGODB_COLLECTION')
 
 # MLflow 설정
 MLFLOW_TRACKING_URI = os.environ.get('MLFLOW_TRACKING_URI')
+
+# Kubernetes NodePort 설정
+NODEPORT_HOST = os.environ.get('NODEPORT_HOST')
 
 def get_absolute_path(path):
     """상대 경로를 절대 경로로 변환"""
