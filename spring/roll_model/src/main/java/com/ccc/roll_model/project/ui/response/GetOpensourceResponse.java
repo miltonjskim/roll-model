@@ -1,5 +1,7 @@
 package com.ccc.roll_model.project.ui.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,7 +36,12 @@ public class GetOpensourceResponse {
         private String status;
         private String domain;
         private Double accuracy;
+        @JsonProperty("rSquared")
         private Double rSquared;
+        @JsonIgnore
+        public Double getRsquared() {
+            return this.rSquared = rSquared;
+        }
         private String target;
         private int dataCount;
         private Double runningDuration;
