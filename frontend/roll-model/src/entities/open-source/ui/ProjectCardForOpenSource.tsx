@@ -19,6 +19,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(project.likeYn);
   const { handleAfterSchoolClick } = useAfterSchool();
+  const [showDropdown, setShowDropdown] = useState('');
 
   const handleProjectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -60,8 +61,8 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
         {/* 헤더 */}
         <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
           {/* 헤더/왼쪽 */}
-          <div className="flex w-full items-center space-x-2 overflow-hidden">
-            <h2 className="max-w-[70%] truncate text-lg font-semibold">{project.title}</h2>
+          <div className="flex max-w-[70%] items-center space-x-2 overflow-hidden">
+            <h2 className="truncate text-lg font-semibold">{project.title}</h2>
             {project.category === 'CLASSIFICATION' ? (
               <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
             ) : (
@@ -103,42 +104,63 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
                   <div className="font-tossface mr-1">⬇️</div> {project.downloadCount >= 1000 ? `${(project.downloadCount / 1000).toFixed(1)}k` : project.downloadCount}
                 </div>
               </div>
-              <div className="w-full text-end text-xs text-gray-400">{getRelativeTime(project.updatedAt)} 수정됨</div>
+              <div className="w-full text-start text-xs text-gray-400">{getRelativeTime(project.updatedAt)} 수정됨</div>
             </div>
           </section>
 
           {/* 센터 오른쪽 */}
           <section>
             {/* 그리드 */}
-            <div className="mb-4 grid grid-cols-2 gap-2">
-              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+            <div
+              className={`mb-4 h-26 overflow-hidden transition-all duration-600 ${showDropdown === project.id ? 'grid w-42 grid-cols-2 gap-2' : 'block w-42'}`}
+              onMouseEnter={() => setShowDropdown(project.id)}
+              onMouseLeave={() => setShowDropdown('')}
+            >
+              <div
+                className={`rounded-md border border-[var(--color-gray-03)] text-sm text-[var(--primary-black)] transition-all duration-300 ${showDropdown === project.id ? 'h-12 w-20 p-1 opacity-100' : 'h-0 overflow-hidden opacity-0'}`}
+              >
                 <div className="w-full text-start text-xs">데이터 수</div>
                 <div className={`text-md w-full overflow-hidden text-end font-semibold`}>{project.dataCount.toLocaleString()}</div>
               </div>
-              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+
+              <div
+                className={`rounded-md border border-[var(--color-gray-03)] text-sm text-[var(--primary-black)] transition-all duration-300 ${showDropdown === project.id ? 'h-12 w-20 p-1 opacity-100' : 'h-0 overflow-hidden opacity-0'}`}
+              >
                 <div className="w-full text-start text-xs">목표변수</div>
                 <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.target ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
                   {project.target || '학습대기중'}
                 </div>
               </div>
-              <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
+
+              <div
+                className={`rounded-md border border-[var(--color-gray-03)] text-sm text-[var(--primary-black)] transition-all duration-300 ${showDropdown === project.id ? 'h-12 w-20 p-1 opacity-100' : 'h-0 overflow-hidden opacity-0'}`}
+              >
                 <div className="w-full text-start text-xs">학습시간</div>
                 <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.runningDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {project.runningDuration || '학습대기중'}
+                  {project.runningDuration ? `${(project.runningDuration * 1000).toFixed(2)}ms` : '학습대기중'}
                 </div>
               </div>
+
               {project.category === 'CLASSIFICATION' ? (
-                <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
-                  <div className="w-full text-start text-xs">정확도</div>
-                  <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.accuracy ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
+                <div
+                  className={`rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)] transition-all duration-300 ${showDropdown === project.id ? 'h-12 w-20 opacity-100' : 'flex h-[calc(100%-6px)] w-full flex-col justify-between p-3 opacity-100'}`}
+                >
+                  <div className={`w-full text-start ${showDropdown === project.id ? 'text-xs' : 'text-lg'}`}>정확도</div>
+                  <div
+                    className={` ${showDropdown === project.id ? 'text-md' : 'text-3xl'} w-full overflow-hidden text-end font-semibold ${project.accuracy ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}
+                  >
                     {project.accuracy ? `${(project.accuracy * 100).toFixed(2)}%` : '학습대기중'}
                   </div>
                 </div>
               ) : (
-                <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
-                  <div className="w-full text-start text-xs">R²</div>
-                  <div className={`text-md w-full overflow-hidden text-end font-semibold ${project.rSquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                    {project.rSquared ? (project.rSquared * 100).toFixed(2) : '학습대기중'}
+                <div
+                  className={`rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)] transition-all duration-300 ${showDropdown === project.id ? 'h-12 w-20 opacity-100' : 'flex h-[calc(100%-6px)] w-full flex-col justify-between p-3 opacity-100'}`}
+                >
+                  <div className={`w-full text-start ${showDropdown === project.id ? 'text-xs' : 'text-2xl'}`}>R²</div>
+                  <div
+                    className={` ${showDropdown === project.id ? 'text-md' : 'text-3xl'} w-full overflow-hidden text-end font-semibold ${project.rSquared ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}
+                  >
+                    {project.rSquared ? `${(project.rSquared * 100).toFixed(1)}%` : '학습대기중'}
                   </div>
                 </div>
               )}
@@ -147,7 +169,7 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
             <div className="mt-4 flex justify-end gap-3 select-none">
               {project.status === 'COMPLETED' && (
                 <button
-                  className="border-[theme(color-gray-01)] hover:border-[theme(primary-black)] text-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md border border-2 duration-600 ease-out"
+                  className="border-[theme(color-gray-01)] hover:border-[theme(primary-black)] text-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md border border-2 duration-300 ease-out hover:font-semibold"
                   onClick={handleProjectClick}
                 >
                   상세
