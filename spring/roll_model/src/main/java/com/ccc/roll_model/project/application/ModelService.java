@@ -33,7 +33,7 @@ public class ModelService {
     public ModelService(
             ModelRepository modelRepository,
             @Qualifier("modelMinioClient") MinioClient minioClient,
-            PipelineRepository pipelineRepository, LoggersEndpoint loggersEndpoint) {
+            PipelineRepository pipelineRepository) {
         this.modelRepository = modelRepository;
         this.minioClient = minioClient;
         this.pipelineRepository = pipelineRepository;

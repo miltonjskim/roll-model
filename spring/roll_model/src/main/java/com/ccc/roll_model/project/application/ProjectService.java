@@ -353,10 +353,12 @@ public class ProjectService {
                             targetFeature = pipeline.getTargetFeature();
                         }
 
+                        VersionEntity version = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+
                         // 프로젝트 상세 정보 생성 - 데이터가 없는 경우 null 또는 기본값 사용
                         return GetOpensourceResponse.Project.builder()
                                 .id(pipeline.getPipelineId())
-                                .version(pipeline.getVersion() != null ? pipeline.getVersion().toString() : "1.0") // 기본값 제공
+                                .version(version != null ? version.getVersionNum() : null)
                                 .title(project.getTitle())
                                 .writerId(writer != null ? writer.getMemberId() : null)
                                 .writerNickname(writer != null ? writer.getNickname() : null)
