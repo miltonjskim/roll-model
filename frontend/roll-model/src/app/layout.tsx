@@ -6,6 +6,7 @@ import Navbar from '@/widgets/navbar/Navbar';
 import ClientFCMInitializer from '@/app/providers/ClientFCMInitializer';
 import FcmCatStatus from '@/widgets/fcmCat/FcmCatStatus';
 import GlobalLoading from '@/shared/ui/GlobalLoading';
+import 'shepherd.js/dist/css/shepherd.css';
 
 export const metadata: Metadata = {
   title: 'Roll model',
