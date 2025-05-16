@@ -56,12 +56,18 @@ public class ProjectVersionService {
         // 먼저 버전으로 정렬 (내림차순)
         versionEntities.sort((v1, v2) -> compareVersions(v2.getVersionNum(), v1.getVersionNum()));
 
+        // 버전 엔티티와 파이프라인 ID를 매핑하는 맵 생성
+        Map<String, VersionEntity> versionMap = new HashMap<>();
+        for (VersionEntity ve : versionEntities) {
+            versionMap.put(ve.getPipelineId(), ve);
+        }
+
         List<PipelineEntity> pipelines = versionEntities.stream()
-            .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
-            .filter(Objects::nonNull)
-            .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
-            .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
-            .toList();
+                .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
+                .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+                .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
         // 3. 파이프라인이 속한 프로젝트 조회
@@ -89,7 +95,7 @@ public class ProjectVersionService {
             // 모델 정보 조회 (runningDuration 용)
             ModelDocument model = modelRepository.findByPipelineId(pipeline.getPipelineId());
 
-            PipelineInfo pipelineInfo = buildPipelineInfo(pipeline, model, project, isProjectOwner);
+            PipelineInfo pipelineInfo = buildPipelineInfo(pipeline, model, project, isProjectOwner, versionMap);
             pipelineInfoList.add(pipelineInfo);
         }
 
@@ -120,10 +126,11 @@ public class ProjectVersionService {
             PipelineEntity pipeline,
             ModelDocument model,
             ProjectEntity project,
-            boolean isProjectOwner) {
+            boolean isProjectOwner,
+            Map<String, VersionEntity> versionMap) {
 
-        // 현재 파이프라인의 버전 정보 조회
-        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+        // 맵에서 현재 파이프라인의 버전 정보 조회
+        VersionEntity versionEntity = versionMap.get(pipeline.getPipelineId());
         String versionNum = versionEntity != null ? versionEntity.getVersionNum() : ROOT_VERSION;
 
         // 프로젝트 카테고리에 따라 성능 지표 설정
@@ -145,14 +152,14 @@ public class ProjectVersionService {
         if (model != null && model.getLearningDuration() != null) {
 //            runningDuration = model.getLearningDuration().doubleValue();
             // 러닝 타임도 소수점 둘째 자리까지 반올림
-             runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
+            runningDuration = Math.round(model.getLearningDuration().doubleValue() * 100) / 100.0;
         }
 
         // parent_pipeline_id에 해당하는 버전 정보
         String parentVersion = ROOT_VERSION; // 기본값(부모 파이프라인 못 찾으면)
         if (pipeline.getParentPipelineId() != null && !pipeline.getParentPipelineId().isEmpty()) {
-            // 부모 파이프라인의 버전 정보도 VersionEntity에서 조회
-            VersionEntity parentVersionEntity = versionRepository.findVersionEntityByPipelineId(pipeline.getParentPipelineId());
+            // 맵에서 부모 파이프라인의 버전 정보 조회
+            VersionEntity parentVersionEntity = versionMap.get(pipeline.getParentPipelineId());
             if (parentVersionEntity != null) {
                 parentVersion = parentVersionEntity.getVersionNum();
             }
