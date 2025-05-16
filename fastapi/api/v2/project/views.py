@@ -1211,8 +1211,17 @@ def parse_openai_response(response_text: str):
     try:
         # 마크다운 블록 제거
         cleaned_text = re.sub(r"^```(?:json)?|```$", "", response_text.strip(), flags=re.MULTILINE).strip()
-    
+        
+        # 주석 제거
         cleaned_text = re.sub(r"//.*", "", cleaned_text)
+        
+        # JSON 객체/배열의 끝을 찾아서 그 이후 텍스트는 모두 제거
+        json_pattern = re.compile(r'(\[.*?\]|\{.*?\})', re.DOTALL)
+        json_match = json_pattern.search(cleaned_text)
+        
+        if json_match:
+            cleaned_text = json_match.group(1)
+        
         logger.info(f"마크다운 제거 후:\n{cleaned_text}")
 
         return json.loads(cleaned_text)
