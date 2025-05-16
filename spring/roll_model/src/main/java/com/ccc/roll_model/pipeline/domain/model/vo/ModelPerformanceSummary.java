@@ -2,7 +2,7 @@ package com.ccc.roll_model.pipeline.domain.model.vo;
 
 import lombok.Builder;
 
-public record ModelPerformanceSummary(String modelId, Integer learningDuration, Double result) {
+public record ModelPerformanceSummary(String modelId, Double learningDuration, Double result) {
 	@Builder
 	public ModelPerformanceSummary {
 	}
