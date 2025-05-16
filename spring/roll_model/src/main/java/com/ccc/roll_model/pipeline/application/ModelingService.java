@@ -182,7 +182,7 @@ public class ModelingService {
 				.memberId(command.getMemberId())
 				.modelTitle(generateDefaultModelTitle(modelingInfo.getModelType().getCategory().toString(), modelingInfo.getModelType().toString()))
 				.modelDescription("설명이 없습니다.") // 기본 설명
-				.modelType(modelingInfo.getModelType().toString())
+				.modelType(modelingInfo.getModelType().getCategory().name())
 				.algorithm(modelingInfo.getAlgorithm())
 				.registeredAt(LocalDateTime.now())
 				.build();
