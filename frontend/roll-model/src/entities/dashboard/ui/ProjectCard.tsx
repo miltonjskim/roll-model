@@ -69,7 +69,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   };
 
   // confetti 트리거 함수
-  const triggerConfetti = () => {
+  const triggerConfetti = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     if (isConfettiActive || !iconRef.current) return;
 
     setIsConfettiActive(true);
