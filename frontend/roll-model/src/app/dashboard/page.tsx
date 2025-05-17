@@ -26,7 +26,7 @@ export default function Page() {
   }
 
   return (
-    <div className="container mx-auto w-[80vw] px-4 py-8">
+    <div className="container mx-auto w-[80vw] py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-5xl font-bold tracking-tighter">Dashboard</h1>
         <NewProjectButton />
