@@ -10,11 +10,13 @@ import com.ccc.roll_model.project.infrastructure.entity.mongo.DatasetDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.DatasetRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 
+import com.ccc.roll_model.project.infrastructure.repository.mysql.VersionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -41,18 +43,29 @@ public class PipelineApiService {
     private final ProjectRepository projectRepository;
     private final ModelRepository modelRepository;
     private final DatasetRepository datasetRepository;
+    private final VersionRepository versionRepository;
     private final Random random = new Random(42);  // 일관성 유지
+    private final String ROOT_VERSION = "1.0";
 
     @Transactional(readOnly = true)
     public GetPipelineApiResponse getPipelineApi(GetPipelineApiCommand command) {
         String pipelineId = command.getPipelineId();
         Integer memberId = command.getMemberId();
 
+        log.info("파이프라인 조회 시작 - ID: {}", pipelineId);
+
         // 1. MongoDB에서 파이프라인 document 직접 조회 (MySQL 조회 없이)
-        PipelineDocument pipelineDocument = pipelineMongoRepository.findById(new ObjectId(pipelineId))
+        ObjectId objectId;
+        try {
+            objectId = new ObjectId(pipelineId);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(ErrorCode.INVALID_PIPELINE_ID);
+        }
+        PipelineDocument pipelineDocument = pipelineMongoRepository.findById(objectId)
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
 
         Integer projectId = pipelineDocument.getProjectId();
+        log.info("프로젝트 ID 찾음: {}", projectId);
 
         // 2. 프로젝트 정보가 필요하므로 MySQL에서 프로젝트 entity 조회
         ProjectEntity projectEntity = projectRepository.findById(projectId)
@@ -62,20 +75,32 @@ public class PipelineApiService {
         PipelineEntity pipelineEntity = pipelineRepository.findById(pipelineId)
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_METADATA_NOT_FOUND));
 
-        // 4. 파이프라인의 최신 히스토리 가져오기
+        // 버전 엔티티 조회
+        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(pipelineId);
+        String versionNum = versionEntity != null ? versionEntity.getVersionNum() : ROOT_VERSION;
+
+        // 4. 파이프라인의 맨 마지막 히스토리 가져오기
         PipelineDocument.PipelineHistoryItem latestHistoryItem = pipelineDocument.getHistory().stream()
                 .filter(item -> item.getModelId() != null)
-                .findFirst()
+                .reduce((first, second) -> second)
                 .orElseThrow(() -> new ApiException(ErrorCode.NO_MODEL_HISTORY_FOUND));
 
+        ObjectId modelId = latestHistoryItem.getModelId();
+        log.info("모델 ID 찾음: {}", modelId);
+
         // 5. MongoDB에서 모델 document 조회
-        ModelDocument modelDocument = modelRepository.findById(latestHistoryItem.getModelId())
-                .orElseThrow(() -> new ApiException(ErrorCode.MODEL_NOT_FOUND));
+        ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
+        if (modelDocument == null) {
+            throw new ApiException(ErrorCode.MODEL_NOT_FOUND);
+        }
 
         // 6. 전처리된 데이터셋 찾기 (선택적)
         DatasetDocument preprocessedDataset = findPreprocessedDataset(latestHistoryItem);
+        if (preprocessedDataset != null) {
+            log.info("전처리된 데이터셋 ID 찾음: {}", preprocessedDataset.getId());
+        }
 
-        return buildApiResponse(projectEntity, pipelineEntity, modelDocument, preprocessedDataset, memberId);
+        return buildApiResponse(projectEntity, pipelineEntity, modelDocument, preprocessedDataset, memberId, versionNum);
     }
 
     // 전처리된 데이터셋을 찾는 별도 메소드
@@ -87,14 +112,20 @@ public class PipelineApiService {
         String preprocessedDatasetId = historyItem.getPreprocessingSteps().stream()
                 .filter(step -> step.getPreprocessedDatasetId() != null)
                 .map(PipelineDocument.PreprocessingStep::getPreprocessedDatasetId)
-                .findFirst()
+                .reduce((first, second) -> second)
                 .orElse(null);
 
-        if (preprocessedDatasetId == null) {
+        if (preprocessedDatasetId == null || preprocessedDatasetId.isEmpty()) {
             return null;
         }
 
-        return datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
+        log.info("전처리된 데이터셋 조회 - ID: {}", preprocessedDatasetId);
+        try {
+            return datasetRepository.findById(new ObjectId(preprocessedDatasetId)).orElse(null);
+        } catch (IllegalArgumentException e) {
+            log.warn("유효하지 않은 데이터셋 ID 형식: {}", preprocessedDatasetId);
+            return null;
+        }
     }
 
     private GetPipelineApiResponse buildApiResponse(
@@ -102,14 +133,15 @@ public class PipelineApiService {
             PipelineEntity pipelineEntity,
             ModelDocument modelDocument,
             DatasetDocument preprocessedDataset,
-            Integer memberId
+            Integer memberId,
+            String versionNum
     ) {
         // ProjectInfo 구성
         GetPipelineApiResponse.ProjectInfo projectInfo = GetPipelineApiResponse.ProjectInfo.builder()
                 .title(projectEntity.getTitle())
                 .category(projectEntity.getCategory().name())
                 .domain(projectEntity.getDomain().name())
-                .version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : "1.0")
+                .version(versionNum)
                 .projectPublicYn(projectEntity.getPublicYn())
                 .pipelinePublicYn(pipelineEntity.getPublicYn())
                 .ownerYn(projectEntity.getMemberEntity().getMemberId().equals(memberId))
@@ -393,7 +425,7 @@ public class PipelineApiService {
                             if (!feature.getName().equals(
                                     modelDocument.getTrainInfo().getTargetFeature())) {
                                 featureNames.add(feature.getName());
-                            }
+}
                         }
                     }
 
