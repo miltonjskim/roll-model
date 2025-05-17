@@ -1,5 +1,7 @@
 FROM python:3.11
 
+ENV TZ=Asia/Seoul
+
 WORKDIR /code/app
 
 COPY ./requirements.txt /code/app/requirements.txt
