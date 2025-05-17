@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib import response
 
 from sqlalchemy import text
 
@@ -9,6 +10,7 @@ from schemas.mongo.pipeline import PipelineModel
 from schemas.mysql.schemas import Pipeline, Project
 import logging
 
+from service.db import pipeline_service
 from service.db.pipeline_service import PipelineService
 
 logger = logging.getLogger()
@@ -459,6 +461,7 @@ async def prepare_response_data(new_pipeline_id, new_pipeline, category, include
             for step in latest_history.preprocessing_steps
         ] if latest_history.preprocessing_steps else []
         response_data["status"] = latest_history.status
+        response_data["modelingInfo"] = latest_history.modeling_info.model_dump(exclude=dataset_fields_to_exclude) if latest_history.modeling_info else None
         # modelingInfo는 포함하지 않음
     elif new_pipeline.history:
         new_history_item = new_pipeline.history[0]
@@ -466,5 +469,6 @@ async def prepare_response_data(new_pipeline_id, new_pipeline, category, include
             step.model_dump(exclude=dataset_fields_to_exclude)
             for step in new_history_item.preprocessing_steps
         ] if new_history_item.preprocessing_steps else []
+
 
     return response_data
