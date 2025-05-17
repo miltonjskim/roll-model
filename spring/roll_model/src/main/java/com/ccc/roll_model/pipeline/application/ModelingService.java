@@ -18,6 +18,7 @@ import com.ccc.roll_model.pipeline.ui.dto.response.*;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.DatasetDocument.Metadata.Statistics.NumericFeature;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
@@ -36,6 +37,7 @@ import com.ccc.roll_model.project.infrastructure.entity.mysql.PipelineEntity;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.Status;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.DatasetRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.PipelineRepository;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.VersionRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,7 @@ public class ModelingService {
 	private final MessagePublisher messagePublisher;
 	private final ModelingInfoMapper modelingInfoMapper;
 	private final ProjectRepository projectRepository;
+	private final VersionRepository versionRepository;
 
 	public void executeModeling(ExecuteModelingCommand command) {
 		// 커맨드 유효성 검사
@@ -330,6 +333,8 @@ public class ModelingService {
 			throw new EntityNotFoundException("프로젝트를 찾을 수 없습니다.");
 		}
 
+		VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
+
 		// 전처리된 데이터셋을 우선적으로 조회
 		DatasetDocument datasetDocument;
 
@@ -357,7 +362,7 @@ public class ModelingService {
 		}
 
 		// 응답 구성
-		return buildResponse(pipelineEntity, pipelineDocument, projectEntity, datasetDocument, command.getMemberId());
+		return buildResponse(pipelineEntity, pipelineDocument, projectEntity, datasetDocument, versionEntity, command.getMemberId());
 	}
 
 	/**
@@ -420,6 +425,7 @@ public class ModelingService {
 			PipelineDocument pipelineDocument,
 			ProjectEntity projectEntity,
 			DatasetDocument datasetDocument,
+			VersionEntity versionEntity,
 			Integer memberId
 	) {
 		// 프로젝트 정보 구성
@@ -429,7 +435,7 @@ public class ModelingService {
 				.title(projectEntity.getTitle())
 				.category(projectEntity.getCategory().name())
 				.domain(projectEntity.getDomain().name())
-				.version(pipelineEntity.getVersion() != null ? pipelineEntity.getVersion().toString() : null)
+				.version(versionEntity != null ? versionEntity.getVersionNum() : null)
 				.projectPublicYn(projectEntity.getPublicYn())
 				.pipelinePublicYn(pipelineEntity.getPublicYn())
 				.ownerYn(isActualOwner) // 실제 소유자 여부에 따라 설정
