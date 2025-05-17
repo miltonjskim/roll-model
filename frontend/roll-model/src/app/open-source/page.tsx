@@ -6,12 +6,13 @@ import { SearchBar } from '@/features/dashboard/SearchBar'; // 검색 컴포넌�
 import { ProjectGridForOpenSource } from '@/widgets/project/project-grid/ui/ProjectGridForOpenSource';
 import { useOpenSource } from '@/app/open-source/model/useOpenSource';
 import { NewProjectButton } from '@/features/dashboard/NewProjectButton';
+import OpenSourceLoading from '@/app/open-source/loading';
 
 export default function Page() {
   const { openSourceData, isLoading, error, filteredProjects, selectedCategory, selectedSort, handleCategoryChange, handleSortChange, handleSearch } = useOpenSource();
 
   if (isLoading) {
-    return <div>로딩 중...</div>;
+    return <OpenSourceLoading />;
   }
 
   if (error) {
@@ -19,7 +20,7 @@ export default function Page() {
   }
 
   return (
-    <div className="container mx-auto w-[80vw] px-4 py-8">
+    <div className="container mx-auto w-[80vw] py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-5xl font-bold tracking-tighter">OpenSource</h1>
         <NewProjectButton />

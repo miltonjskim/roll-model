@@ -23,6 +23,8 @@ export function useOpenSource() {
 
   // 데이터 로드 함수를 useCallback으로 메모이제이션
   const loadOpenSourceData = useCallback(async () => {
+    console.log('change :', selectedCategory);
+
     try {
       setIsLoading(true);
       const response = await fetchOpenSourceData(selectedCategory, searchQuery, selectedSort, page, size);
@@ -75,7 +77,9 @@ export function useOpenSource() {
   }, []); // 의존성 배열을 비워 컴포넌트 마운트 시 한 번만 실행되도록 함
 
   const handleCategoryChange = useCallback((category: 'all' | ProjectType) => {
+    console.log('변경 시도:', category);
     setSelectedCategory(category);
+    console.log(selectedCategory);
   }, []);
 
   const handleSortChange = useCallback((sortOption: SortOption) => {
@@ -86,10 +90,40 @@ export function useOpenSource() {
     setSearchQuery(query);
   }, []);
 
-  // 필터링된 프로젝트 데이터
+  // // 필터링된 프로젝트 데이터
+  // const filteredProjects = useMemo(() => {
+  //   return openSourceData?.projects || [];
+  // }, [openSourceData]);
+
+  // >>
   const filteredProjects = useMemo(() => {
-    return openSourceData?.projects || [];
-  }, [openSourceData]);
+    if (!openSourceData?.projects) return [];
+
+    return (
+      openSourceData.projects
+        // 카테고리 필터링
+        .filter((project) => selectedCategory === 'all' || project.category === selectedCategory)
+        // 검색어 필터링
+        .filter((project) => {
+          if (!searchQuery.trim()) return true;
+          const query = searchQuery.toLowerCase().trim();
+          return project.title.toLowerCase().includes(query) || (project.target?.toLowerCase() || '').includes(query);
+        }) // 최신순 정렬 (updatedAt 기준)
+        .sort((a, b) => {
+          if (selectedSort === 'recent') {
+            // 최신순 정렬 (updatedAt 기준)
+            const dateA = new Date(a.updatedAt);
+            const dateB = new Date(b.updatedAt);
+            return dateB.getTime() - dateA.getTime();
+          } else if (selectedSort === 'name') {
+            // 이름순 정렬 (알파벳 오름차순)
+            return a.title.localeCompare(b.title);
+          }
+          return 0;
+        })
+    );
+  }, [openSourceData?.projects, selectedCategory, searchQuery, selectedSort]);
+  // <<
 
   return {
     openSourceData,
