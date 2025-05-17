@@ -6,12 +6,14 @@ import { CategoryTabs } from '@/features/dashboard/CategoryTabs';
 import { SearchBar } from '@/features/dashboard/SearchBar';
 import { NewProjectButton } from '@/features/dashboard/NewProjectButton';
 import { useDashboard } from '@/app/dashboard/model/useDashboard';
+import DashboardLoading from '@/app/dashboard/loading';
 
 export default function Page() {
   const { dashboardData, isLoading, error, filteredProjects, selectedCategory, handleCategoryChange, handleSearch, selectedStatus, handleStatusChange } = useDashboard();
+  
 
   if (isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">로딩중 ...</div>;
+    return <DashboardLoading />;
   }
 
   if (error || !dashboardData) {

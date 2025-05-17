@@ -6,12 +6,13 @@ import { SearchBar } from '@/features/dashboard/SearchBar'; // 검색 컴포넌�
 import { ProjectGridForOpenSource } from '@/widgets/project/project-grid/ui/ProjectGridForOpenSource';
 import { useOpenSource } from '@/app/open-source/model/useOpenSource';
 import { NewProjectButton } from '@/features/dashboard/NewProjectButton';
+import OpenSourceLoading from '@/app/open-source/loading';
 
 export default function Page() {
   const { openSourceData, isLoading, error, filteredProjects, selectedCategory, selectedSort, handleCategoryChange, handleSortChange, handleSearch } = useOpenSource();
 
   if (isLoading) {
-    return <div>로딩 중...</div>;
+    return <OpenSourceLoading />;
   }
 
   if (error) {
