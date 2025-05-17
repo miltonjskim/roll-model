@@ -37,9 +37,42 @@ export function useOpenSource() {
   }, [selectedCategory, searchQuery, selectedSort]);
 
   // 초기 데이터 로드 및 필터링 변경 시 다시 로드
+  // 오픈소스 페이지의 useEffect 부분 수정
   useEffect(() => {
+    // 초기 데이터 로드
     loadOpenSourceData();
-  }, [loadOpenSourceData]);
+
+    // FCM 메시지로 인한 modelStatusUpdate 이벤트 리스너 추가
+    const handleModelStatusUpdate = () => {
+      console.log('OpenSource: 모델 상태 업데이트 감지, 데이터 새로고침');
+      // 지연시간 추가 (이전 논의에서 언급한 문제 해결)
+      setTimeout(() => {
+        loadOpenSourceData();
+      }, 300);
+    };
+
+    // 이벤트 리스너 등록
+    window.addEventListener('modelStatusUpdate', handleModelStatusUpdate);
+
+    // localStorage 변경 감지 (다른 탭/창에서 업데이트 된 경우)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'modelTrainingStatus') {
+        console.log('OpenSource: 다른 탭에서 모델 상태 변경 감지, 데이터 새로고침');
+        setTimeout(() => {
+          loadOpenSourceData();
+        }, 300);
+      }
+    };
+
+    // storage 이벤트 리스너 등록
+    window.addEventListener('storage', handleStorageChange);
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      window.removeEventListener('modelStatusUpdate', handleModelStatusUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []); // 의존성 배열을 비워 컴포넌트 마운트 시 한 번만 실행되도록 함
 
   const handleCategoryChange = useCallback((category: 'all' | ProjectType) => {
     setSelectedCategory(category);

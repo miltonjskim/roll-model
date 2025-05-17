@@ -37,7 +37,9 @@ export function useDashboard() {
     // FCM 메시지로 인한 modelStatusUpdate 이벤트 리스너 추가
     const handleModelStatusUpdate = () => {
       console.log('Dashboard: 모델 상태 업데이트 감지, 데이터 새로고침');
-      loadDashboardData();
+      setTimeout(() => {
+        loadDashboardData();
+      }, 300);
     };
 
     // 이벤트 리스너 등록
@@ -47,7 +49,9 @@ export function useDashboard() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'modelTrainingStatus') {
         console.log('Dashboard: 다른 탭에서 모델 상태 변경 감지, 데이터 새로고침');
-        loadDashboardData();
+        setTimeout(() => {
+          loadDashboardData();
+        }, 300);
       }
     };
 
