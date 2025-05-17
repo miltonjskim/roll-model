@@ -13,7 +13,8 @@ import { TiLockOpen } from 'react-icons/ti';
 import { IoWarning } from 'react-icons/io5';
 import { SiGoogledocs } from 'react-icons/si';
 import { DOMAIN_STYLES } from '@/shared/ui/project-cards/DomainStyles';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import confetti from 'canvas-confetti';
 
 interface ProjectCardProps {
   project: Project;
@@ -24,6 +25,9 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   const router = useRouter();
   const { handleAfterSchoolClick } = useAfterSchool();
   const [showDropdown, setShowDropdown] = useState('');
+  // confetti
+  const iconRef = useRef<HTMLDivElement>(null);
+  const [isConfettiActive, setIsConfettiActive] = useState(false);
 
   //상세보기
   const handleProjectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -62,6 +66,39 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
     } else {
       // 여기에 검정배경 설명코드 작성
     }
+  };
+
+  // confetti 트리거 함수
+  const triggerConfetti = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (isConfettiActive || !iconRef.current) return;
+
+    setIsConfettiActive(true);
+
+    const iconElement = iconRef.current;
+    const rect = iconElement.getBoundingClientRect();
+
+    // 아이콘의 중앙을 기준으로 confetti 생성
+    const x = (rect.left + rect.width / 2) / window.innerWidth + 0.01;
+    const y = (rect.top + rect.height / 2) / window.innerHeight + 0.05;
+
+    confetti({
+      particleCount: 100,
+      spread: 80,
+      origin: { x, y },
+      disableForReducedMotion: true,
+      zIndex: 1000,
+      colors: ['#ffb6c1', '#add8e6', '#90ee90', '#ffffe0', '#e6e6fa'],
+      shapes: ['circle', 'square'],
+      ticks: 80,
+      scalar: 0.8,
+      startVelocity: 10,
+      gravity: 0.3,
+    });
+
+    setTimeout(() => {
+      setIsConfettiActive(false);
+    }, 2000);
   };
 
   return (
@@ -129,8 +166,13 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
       <center className="flex items-center justify-between p-4 select-none">
         {/* 센터 왼쪽 */}
         <section className="w-[7.5rem]">
+          {/* 아이콘영역 */}
           <div className="relative mt-3 mb-4 ml-2">
-            <div className={`${domainColor} rounded-lg text-[4.5rem]`}>{domainIcon}</div>
+            <div className={`${domainColor} flex h-[7rem] w-[7rem] items-center justify-center overflow-hidden rounded-lg`}>
+              <div className={`w-full rounded-lg text-[4.5rem] transition-all duration-600 hover:text-[5rem]`} onClick={triggerConfetti} ref={iconRef}>
+                {domainIcon}
+              </div>
+            </div>
             <div
               className={`${domainBorder} absolute -top-3 -right-4 flex h-10 w-10 items-center justify-center rounded-full border border-2 bg-white p-1 ${project.version && project.version.length >= 4 ? 'text-sm' : 'text-base'} font-bold`}
             >

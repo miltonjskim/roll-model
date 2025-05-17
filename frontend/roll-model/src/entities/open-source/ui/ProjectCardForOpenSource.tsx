@@ -4,11 +4,12 @@ import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 import { useRouter } from 'next/navigation';
 import { OpenSourceProject } from '@/entities/open-source/model/types';
 import { getRelativeTime } from '@/shared/lib/utils/dateUtils';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { likeThisPipeline } from '@/shared/api/openSourceApi';
 import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
 import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
 import { DOMAIN_STYLES } from '@/shared/ui/project-cards/DomainStyles';
+import confetti from 'canvas-confetti';
 
 interface ProjectCardProps {
   project: OpenSourceProject;
@@ -20,6 +21,9 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
   const [isLiked, setIsLiked] = useState(project.likeYn);
   const { handleAfterSchoolClick } = useAfterSchool();
   const [showDropdown, setShowDropdown] = useState('');
+  // confetti
+  const iconRef = useRef<HTMLDivElement>(null);
+  const [isConfettiActive, setIsConfettiActive] = useState(false);
 
   const handleProjectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -55,6 +59,39 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     }
   };
 
+  // confetti 트리거 함수
+  const triggerConfetti = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (isConfettiActive || !iconRef.current) return;
+
+    setIsConfettiActive(true);
+
+    const iconElement = iconRef.current;
+    const rect = iconElement.getBoundingClientRect();
+
+    // 아이콘의 중앙을 기준으로 confetti 생성
+    const x = (rect.left + rect.width / 2) / window.innerWidth + 0.01;
+    const y = (rect.top + rect.height / 2) / window.innerHeight + 0.05;
+
+    confetti({
+      particleCount: 100,
+      spread: 80,
+      origin: { x, y },
+      disableForReducedMotion: true,
+      zIndex: 1000,
+      colors: ['#ffb6c1', '#add8e6', '#90ee90', '#ffffe0', '#e6e6fa'],
+      shapes: ['circle', 'square'],
+      ticks: 80,
+      scalar: 0.8,
+      startVelocity: 10,
+      gravity: 0.3,
+    });
+
+    setTimeout(() => {
+      setIsConfettiActive(false);
+    }, 2000);
+  };
+
   return (
     <div>
       <div className="cursor-pointer rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
@@ -84,7 +121,11 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
           {/* 센터 왼쪽 */}
           <section className="w-[7.5rem]">
             <div className="relative mt-3 mb-4 ml-2">
-              <div className={`${domainColor} rounded-lg text-[4.5rem]`}>{domainIcon}</div>
+              <div className={`${domainColor} flex h-[7rem] w-[7rem] items-center justify-center overflow-hidden rounded-lg`}>
+                <div className={`w-full rounded-lg text-[4.5rem] transition-all duration-600 hover:text-[5rem]`} onClick={triggerConfetti} ref={iconRef}>
+                  {domainIcon}
+                </div>
+              </div>
               <div
                 className={`${domainBorder} absolute -top-3 -right-4 flex h-10 w-10 items-center justify-center rounded-full border border-2 bg-white p-1 ${project.version && project.version.length >= 4 ? 'text-sm' : 'text-base'} font-bold`}
               >
