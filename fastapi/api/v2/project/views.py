@@ -829,6 +829,9 @@ async def fork_pipeline_total(
             include_all_history=True
         )
 
+        columns = await pipeline_service.get_latest_dataset_columns(new_pipeline)
+        response_data["columns"] = columns
+
         return ApiResponse(
             status_code=200,
             message="파이프라인이 성공적으로 복제되었습니다.",
