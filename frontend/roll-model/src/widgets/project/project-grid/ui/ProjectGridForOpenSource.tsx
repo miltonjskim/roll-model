@@ -11,12 +11,14 @@ export const ProjectGridForOpenSource = ({ projects }: ProjectGridProps) => {
   }
 
   return (
-    <div className="flex flex-wrap justify-center">
-      {projects.map((project) => (
-        <div key={project.id} className="w-[24rem] p-4">
-          <ProjectCardForOpenSource project={project} />
-        </div>
-      ))}
+    <div className="flex justify-center">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+        {projects.map((project) => (
+          <div key={project.id} className="w-full max-w-[22rem] min-w-[312px]">
+            <ProjectCardForOpenSource project={project} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

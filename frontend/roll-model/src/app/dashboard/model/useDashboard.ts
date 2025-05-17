@@ -101,6 +101,13 @@ export function useDashboard() {
           if (!searchQuery.trim()) return true;
           const query = searchQuery.toLowerCase().trim();
           return project.title.toLowerCase().includes(query) || (project.target?.toLowerCase() || '').includes(query);
+        }) // 최신순 정렬 (updatedAt 기준)
+        .sort((a, b) => {
+          // updatedAt이 문자열인 경우 Date 객체로 변환
+          const dateA = new Date(a.updatedAt);
+          const dateB = new Date(b.updatedAt);
+          // 내림차순 정렬 (최신 날짜가 먼저 오도록)
+          return dateB.getTime() - dateA.getTime();
         })
     );
   }, [dashboardData?.projects, selectedCategory, selectedStatus, searchQuery]);
