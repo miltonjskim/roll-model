@@ -8,6 +8,7 @@ import com.ccc.roll_model.pipeline.ui.dto.response.GetModelAndMetricResponse;
 import com.ccc.roll_model.pipeline.ui.dto.response.RegressionResponse;
 import com.ccc.roll_model.project.infrastructure.entity.mongo.ModelDocument;
 import com.ccc.roll_model.project.infrastructure.entity.mysql.ProjectEntity;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
 import com.ccc.roll_model.project.infrastructure.repository.mongo.ModelRepository;
 import com.ccc.roll_model.project.infrastructure.repository.mysql.ProjectRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,6 +26,7 @@ import com.ccc.roll_model.like.infrastructure.entity.PipelineLikeEntity;
 import com.ccc.roll_model.pipeline.ui.dto.request.PipelineLikeRequest;
 import com.ccc.roll_model.pipeline.ui.dto.response.PipelineLikeResponse;
 import com.ccc.roll_model.member.infrastructure.MemberEntity;
+import com.ccc.roll_model.project.infrastructure.repository.mysql.VersionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +45,7 @@ public class PipelineService {
 	private final ModelRepository modelRepository;
 	private final ProjectRepository ProjectRepository;
 	private final ProjectRepository projectRepository;
+	private final VersionRepository versionRepository;
 
 	public void getPipelineStatus() {
 
@@ -133,18 +136,19 @@ public class PipelineService {
 
 		log.info("모델 ModelDocument:{}", modelDocuments.size());
 
-
 		ModelDocument modelDocument = modelDocuments.get(modelDocuments.size() - 1);
 
 		ProjectEntity project= projectRepository.findById(pipeline.getProjectId())
 				.orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
+
+		VersionEntity version = versionRepository.findByPipelineId(pipeline.getPipelineId());
 
 		// 프로젝트 정보 구성
 		GetModelAndMetricResponse.ProjectInfo projectInfo =GetModelAndMetricResponse.ProjectInfo.builder()
 				.title(project.getTitle())
 				.category(project.getCategory().toString())
 				.domain(project.getDomain().toString())
-				.version(pipeline.getVersion()==null? null: pipeline.getVersion().toString()) // 필요에 따라 버전 정보 추가
+				.version(version != null ? version.getVersionNum() : null) // 필요에 따라 버전 정보 추가
 				.projectPublicYn(project.getPublicYn()) // 프로젝트 공개 여부는 필요에 따라 설정
 				.pipelinePublicYn(pipeline.getPublicYn()) // 파이프라인 공개 여부는 필요에 따라 설정
 				.ownerYn(project.getMemberEntity().getMemberId().equals(memberId)) // 소유자 여부는 필요에 따라 설정

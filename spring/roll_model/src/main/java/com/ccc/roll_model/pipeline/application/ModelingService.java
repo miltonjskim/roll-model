@@ -333,7 +333,8 @@ public class ModelingService {
 			throw new EntityNotFoundException("프로젝트를 찾을 수 없습니다.");
 		}
 
-		VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
+		// null 일수도 있음
+		VersionEntity versionEntity = versionRepository.findByPipelineId(command.getPipelineId());
 
 		// 전처리된 데이터셋을 우선적으로 조회
 		DatasetDocument datasetDocument;

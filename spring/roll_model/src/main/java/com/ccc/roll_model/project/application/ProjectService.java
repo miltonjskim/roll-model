@@ -172,7 +172,7 @@ public class ProjectService {
                         logger.info("Constructed project detail for project ID: {}", project.getProjectId());
                         // 최신 파이프라인 정보를 기반으로 프로젝트 상세 정보 생성
 
-                        VersionEntity version = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+                        VersionEntity version = versionRepository.findByPipelineId(pipeline.getPipelineId());
 
                         return GetMyProjectResponse.Project.builder()
                                 .id(pipeline.getPipelineId())
@@ -353,7 +353,7 @@ public class ProjectService {
                             targetFeature = pipeline.getTargetFeature();
                         }
 
-                        VersionEntity version = versionRepository.findVersionEntityByPipelineId(pipeline.getPipelineId());
+                        VersionEntity version = versionRepository.findByPipelineId(pipeline.getPipelineId());
 
                         // 프로젝트 상세 정보 생성 - 데이터가 없는 경우 null 또는 기본값 사용
                         return GetOpensourceResponse.Project.builder()
