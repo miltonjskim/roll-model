@@ -99,7 +99,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
                   <div className="font-tossface mr-1">⬇️</div> {pipeline.downloadCount >= 1000 ? `${(pipeline.downloadCount / 1000).toFixed(1)}k` : pipeline.downloadCount}
                 </div>
               </div>
-              <div className="w-full text-end text-xs text-gray-400">{getRelativeTime(pipeline.updatedAt)} 수정됨</div>
+              <div className="w-full text-start text-xs text-gray-400">{getRelativeTime(pipeline.updatedAt)} 수정됨</div>
             </div>
           </section>
 
@@ -142,7 +142,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
             {/* 하단 버튼 */}
             <div className="mt-4 flex justify-end gap-3 select-none">
               <button
-                className="border-[theme(color-gray-01)] hover:border-[theme(primary-black)] text-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md border border-2 duration-600 ease-out"
+                className="border-[theme(color-gray-01)] hover:border-[theme(primary-black)] text-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md border border-2 duration-300 ease-out hover:font-semibold"
                 onClick={handleProjectClick}
               >
                 상세

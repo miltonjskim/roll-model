@@ -58,7 +58,7 @@ export const DOMAIN_STYLES: DomainStyles = {
   },
   GENERAL: {
     icons: ['📋', '🔍', '🧩', '⭐'],
-    colors: ['bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]', 'bg-[theme(color-gray-04)]', 'bg-[theme(color-gray-05)]'],
-    borders: ['border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]', 'border-[theme(color-gray-04)]', 'border-[theme(color-gray-05)]'],
+    colors: ['bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]', 'bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]'],
+    borders: ['border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]', 'border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]'],
   },
 };
