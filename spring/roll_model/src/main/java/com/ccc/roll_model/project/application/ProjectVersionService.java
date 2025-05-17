@@ -48,7 +48,7 @@ public class ProjectVersionService {
             .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 해당 파이프라인이 속한 그룹의 모든 파이프라인 조회
-        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(command.getPipelineId());
+        VersionEntity versionEntity = versionRepository.findByPipelineId(command.getPipelineId());
         Integer groupId = versionEntity.getGroupId();
         List<VersionEntity> versionEntities =
             versionRepository.findVersionEntitiesByGroupId(groupId); // OrderBy 제거
@@ -195,7 +195,7 @@ public class ProjectVersionService {
 
         //부모가 없다 == 자기 자신이라면
         String parentPipelineId = pipeline.getParentPipelineId();
-        VersionEntity parentVersion = versionRepository.findVersionEntityByPipelineId(parentPipelineId);
+        VersionEntity parentVersion = versionRepository.findByPipelineId(parentPipelineId);
         if (parentPipelineId.equals(pipelineId) || parentVersion == null) {
             // 새로운 버전의 1.0 할듯함
             newVersion = ROOT_VERSION;

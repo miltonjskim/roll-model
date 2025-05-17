@@ -76,7 +76,7 @@ public class PipelineApiService {
                 .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_METADATA_NOT_FOUND));
 
         // 버전 엔티티 조회
-        VersionEntity versionEntity = versionRepository.findVersionEntityByPipelineId(pipelineId);
+        VersionEntity versionEntity = versionRepository.findByPipelineId(pipelineId);
         String versionNum = versionEntity != null ? versionEntity.getVersionNum() : ROOT_VERSION;
 
         // 4. 파이프라인의 맨 마지막 히스토리 가져오기

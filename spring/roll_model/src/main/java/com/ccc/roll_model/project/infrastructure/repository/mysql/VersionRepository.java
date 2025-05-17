@@ -13,15 +13,15 @@ import com.ccc.roll_model.project.infrastructure.entity.mysql.VersionEntity;
 @Repository
 public interface VersionRepository extends JpaRepository<VersionEntity, Integer> {
 
-	List<VersionEntity> findVersionEntitiesByGroupIdOrderByVersionNumDesc(Integer groupId);
-
 	@Query("SELECT v FROM PipelineEntity p " +
 	"JOIN VersionEntity v ON p.parentPipelineId = v.pipelineId " +
 	"WHERE p.pipelineId = :pipelineId")
-	VersionEntity findVersionEntityByPipelineId(@Param("pipelineId") String pipelineId);
+	VersionEntity findParentVersionByPipelineId(@Param("pipelineId") String pipelineId);
 
 	@Query("SELECT MAX(v.groupId) FROM VersionEntity v")
 	Optional<Integer> findHighestGroupId();
 
 	List<VersionEntity> findVersionEntitiesByGroupId(Integer groupId);
+
+	VersionEntity findByPipelineId(String pipelineId);
 }
