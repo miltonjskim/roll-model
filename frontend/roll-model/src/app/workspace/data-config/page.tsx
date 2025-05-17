@@ -229,7 +229,7 @@ const ConfigDataPage = () => {
             <div className="p-6 text-left">
               <div className="mb-3">
                 <h3 className="font-semibold">데이터 구조 확인</h3>
-                <p className="text-sm text-[color:var(--color-gray-01)]">데이터의 상위 1행을 미리 확인할 수 있습니다.</p>
+                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">데이터의 상위 1행을 미리 확인할 수 있습니다.</p>
               </div>
 
               <div className="mb-2">
@@ -269,7 +269,7 @@ const ConfigDataPage = () => {
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
                 </h3>
-                <p className="text-sm text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
               </div>
 
               <div className="flex flex-wrap gap-x-12 p-4">
@@ -308,7 +308,7 @@ const ConfigDataPage = () => {
               <h3 className="font-semibold">
                 <span className="text-[color:var(--color-error-text)]">*</span>구분자 선택
               </h3>
-              <p className="text-sm text-[color:var(--color-gray-01)]">
+              <p className="text-sm font-medium text-[color:var(--color-gray-01)]">
                 데이터 열을 구분하는 구분자를 선택해야 합니다.
                 <br />
                 열이 정상적으로 구분되지 않은 경우,
@@ -325,7 +325,7 @@ const ConfigDataPage = () => {
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>인코딩 선택
                 </h3>
-                <p className="text-sm text-[color:var(--color-gray-01)]">
+                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">
                   글자가 깨져 보인다면 인코딩을 변경하여 확인할 수 있습니다.
                   <br />
                   텍스트가 정상적으로 표시되지 않을 경우,

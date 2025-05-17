@@ -49,7 +49,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     description: '데이터에서 통계적 기준(Z-score, IQR 등)을 활용해 이상값을 탐지합니다.',
     options: [
       { id: 'z-score', name: 'Z-점수 기반 탐지', description: '평균과 표준편차를 이용해 임계값을 초과하는 값을 이상치로 탐지합니다.', apiEndpoint: '/outliers/detection', method: 'ZSCORE' },
-      { id: 'iqr', name: 'IQR 기반 탐지', description: '사분위 범위(IQR)를 기준으로 이상치를 탐지합니다.', apiEndpoint: '/outliers/detection', method: 'IQR', requireColumn: true },
+      { id: 'iqr', name: 'IQR 기반 탐지', description: '사분위 범위(IQR)를 기준으로 이상치를 탐지합니다.', apiEndpoint: '/outliers/detection', method: 'IQR' },
     ],
   },
   {
@@ -61,8 +61,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
       { id: 'mean', name: '평균값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEAN', requireColumn: true },
       { id: 'median', name: '중앙값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEDIAN', requireColumn: true },
       { id: 'mode', name: '최빈값으로 대체', description: '이상치를 해당 컬럼의 임계값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MODE', requireColumn: true },
-      { id: 'remove-rows', name: '행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE' },
-      { id: 'remove-cols', name: '열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE' },
+      { id: 'remove-rows', name: '행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE', requireColumn: true },
+      { id: 'remove-cols', name: '열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE', requireColumn: true },
     ],
   },
   {
