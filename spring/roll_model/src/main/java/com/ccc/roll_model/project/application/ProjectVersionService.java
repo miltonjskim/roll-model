@@ -186,20 +186,35 @@ public class ProjectVersionService {
 
     @Transactional
     public void savePipelineVersion(String pipelineId) {
+        log.info("시작: 파이프라인 버전 저장 - pipelineId: {}", pipelineId);
+
         String newVersion;
         VersionEntity version;
 
         // 현재 파이프라인 정보 조회
         PipelineEntity pipeline = pipelineRepository.findByPipelineId(pipelineId)
-            .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_NOT_FOUND));
-
+            .orElseThrow(() -> {
+                log.error("파이프라인을 찾을 수 없음: {}", pipelineId);
+                return new ApiException(ErrorCode.PIPELINE_NOT_FOUND);
+            });
+        log.info("파이프라인 조회 성공: {}", pipeline);
+        log.info("파이프라인 id 조회 성공: {}", pipeline.getPipelineId());
+        log.info("파이프라인 엄마 조회 성공: {}", pipeline.getParentPipelineId());
         //부모가 없다 == 자기 자신이라면
         String parentPipelineId = pipeline.getParentPipelineId();
+        log.info("부모 파이프라인 ID: {}", parentPipelineId);
+
         VersionEntity parentVersion = versionRepository.findByPipelineId(parentPipelineId);
+        log.info("부모 버전 조회 결과: {}", parentVersion);
+
         if (parentPipelineId.equals(pipelineId) || parentVersion == null) {
+            log.info("조건: 루트 파이프라인 또는 부모 버전 없음 - parentPipelineId equals pipelineId: {}, parentVersion is null: {}",
+                parentPipelineId.equals(pipelineId), parentVersion == null);
+
             // 새로운 버전의 1.0 할듯함
             newVersion = ROOT_VERSION;
             Integer newGroupId = generateNewGroupId();
+            log.info("신규 그룹 ID 생성: {}", newGroupId);
 
             version = VersionEntity.builder()
                 .pipelineId(pipelineId)
@@ -207,13 +222,20 @@ public class ProjectVersionService {
                 .groupId(newGroupId)
                 .parentVersion(newVersion)
                 .build();
+            log.info("루트 버전 생성: {}", version);
         } else {
+            log.info("조건: 기존 그룹의 자식 파이프라인");
+
             List<VersionEntity> pipelineGroup = versionRepository
                 .findVersionEntitiesByGroupId(parentVersion.getGroupId());
+            log.info("그룹 내 버전 목록 수: {}", pipelineGroup.size());
 
             pipelineGroup.sort((v1, v2) -> compareVersions(v2.getVersionNum(), v1.getVersionNum()));
+            log.info("정렬 후 최상위 버전: {}", pipelineGroup.isEmpty() ? "없음" : pipelineGroup.get(0));
+
             // 새로운 버전 생성
             newVersion = createNewVersion(parentVersion.getVersionNum(), pipelineGroup);
+            log.info("생성된 새 버전 번호: {}", newVersion);
 
             version = VersionEntity.builder()
                 .pipelineId(pipelineId)
@@ -221,9 +243,12 @@ public class ProjectVersionService {
                 .groupId(parentVersion.getGroupId())
                 .parentVersion(parentVersion.getVersionNum())
                 .build();
+            log.info("자식 버전 생성: {}", version);
         }
 
-        versionRepository.save(version);
+        VersionEntity savedVersion = versionRepository.save(version);
+        log.info("버전 저장 완료: {}", savedVersion);
+        log.info("종료: 파이프라인 버전 저장 성공");
     }
 
     private String createNewVersion(String parentVersion, List<VersionEntity> pipelineGroup) {
