@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 
 export default function ProjectDetailLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="container mx-auto p-4">
+    <div className="min-h-screen w-full">
       <ProjectDetailHeader />
       <ProjectDetailTabs />
       <main>{children}</main>

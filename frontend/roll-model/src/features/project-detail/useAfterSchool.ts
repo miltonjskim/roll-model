@@ -39,6 +39,9 @@ export const useAfterSchool = () => {
       //   category: response.data.category,
       // });
       setPipelineIdAtom(response.data.pipelineId);
+      console.log('0517test/모델링컬럼 : ', response);
+      console.log('0517test/모델링컬럼 : ', response.data);
+
       setDataColumnsAtom(response.data.columns);
 
       router.push('/workspace/modeling-section');
@@ -60,5 +63,5 @@ export const useAfterSchool = () => {
     }
   };
 
-  return { handleAfterSchoolClick , moveToPreprocessing };
+  return { handleAfterSchoolClick, moveToPreprocessing };
 };
