@@ -348,8 +348,11 @@ body {
 }
 
 /* globals.css 또는 Shepherd 초기화 스타일 파일 */
-.shepherd-element {
-  border-radius: 8px !important; /* tooltip 전체 */
+.shepherd-header {
+  border-radius: 16px 16px 0 0 !important;
+  background-color: unset !important;
+  font-size: large !important;
+  font-weight: 900 !important;
 }
 
 .shepherd-content {
@@ -357,10 +360,40 @@ body {
 }
 
 .shepherd-text {
-  border-radius: 8px !important;
+  border-radius: 16px !important;
 }
 
 /* tailwind.config.js의 safelist 필요 시 */
 .shepherd-rounded {
   @apply rounded-lg;
+}
+
+/* shepherd-content를 말풍선처럼 보이게 */
+.shepherd-element {
+  background: #fffaf0 !important;
+  border: 2px solid #fcd34d !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Pretendard', sans-serif;
+}
+
+.shepherd-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.shepherd-text {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* 말풍선 꼬리 모양 흉내내기 */
+.shepherd-element::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 30px;
+  border-width: 12px 12px 0;
+  border-style: solid;
+  border-color: #fcd34d transparent transparent;
 }
