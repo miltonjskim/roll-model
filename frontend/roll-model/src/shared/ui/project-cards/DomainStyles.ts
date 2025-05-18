@@ -33,8 +33,8 @@ export const DOMAIN_STYLES: DomainStyles = {
   },
   MANUFACTURING: {
     icons: ['🏭', '⚙️', '🔧', '🛠️'],
-    colors: ['bg-[theme(color-gray-01)]', 'bg-[theme(color-gray-02)]', 'bg-[theme(color-gray-04)]', 'bg-[theme(color-gray-05)]'],
-    borders: ['border-[theme(color-gray-01)]', 'border-[theme(color-gray-02)]', 'border-[theme(color-gray-04)]', 'border-[theme(color-gray-05)]'],
+    colors: ['bg-[theme(color-orange-01)]', 'bg-[theme(color-orange-02)]', 'bg-[theme(color-orange-03)]', 'bg-[theme(color-orange-01)]'],
+    borders: ['border-[theme(color-orange-01)]', 'border-[theme(color-orange-02)]', 'border-[theme(color-orange-03)]', 'border-[theme(color-orange-01)]'],
   },
   EDUCATION: {
     icons: ['📚', '🎓', '✏️', '🧠'],

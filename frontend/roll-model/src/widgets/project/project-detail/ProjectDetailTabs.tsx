@@ -16,8 +16,8 @@ export default function ProjectDetailTabs() {
     { name: '개요', path: basePath },
     { name: '데이터', path: `${basePath}/data-section` },
     { name: '모델 및 평가', path: `${basePath}/modeling-section` },
-    { name: '테스트', path: `${basePath}/testing-section` },
-    // { name: '버전', path: `${basePath}/version-section` },
+    // { name: '테스트', path: `${basePath}/testing-section` },
+    { name: '버전', path: `${basePath}/version-section` },
     { name: 'API', path: `${basePath}/api-section` },
   ];
 
@@ -35,7 +35,7 @@ export default function ProjectDetailTabs() {
   };
 
   return (
-    <div className="bg-[theme(primary-white)] mb-6 flex flex-col items-start justify-between rounded-md px-2 py-2 shadow-md md:flex-row md:items-center">
+    <div className="bg-[theme(primary-white)] mb-4 flex flex-col items-start justify-between rounded-md px-2 py-2 shadow-md md:flex-row md:items-center">
       <nav className="flex space-x-6">
         {tabs.map((tab) => (
           <Link

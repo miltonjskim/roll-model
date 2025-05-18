@@ -6,7 +6,6 @@ interface PreprocessingPipelineCardProps {
 }
 
 // 전처리 타입별 정보 객체
-// 전처리 타입별 정보 객체
 const preprocessingConfig: Record<string, { icon: string; name: string; ariaLabel: string }> = {
   ORIGINAL_DATA: {
     icon: '📄',
@@ -145,7 +144,7 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
             return (
               <div key={index} className="relative mx-2 flex flex-col items-center">
                 {/* 아이콘 */}
-                <div className="bg-[theme(color-gray-05)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2">
+                <div className="bg-[theme(primary-black)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2">
                   <span role="img" aria-label={config.ariaLabel} className="font-tossface text-3xl">
                     {config.icon}
                   </span>
