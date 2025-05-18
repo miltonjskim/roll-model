@@ -4,6 +4,7 @@ import ParameterSectionWidget from '@/widgets/workspace/modeling-section/Paramet
 import ModelSelectionWidget from '@/widgets/workspace/modeling-section/ModelSelectionWidget';
 import { useModeling } from '@/app/workspace/modeling-section/model/useModeling';
 import FcmGetToken from '@/app/workspace/modeling-section/test-for-fcm/FcmGetToken';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 
 export default function ModelingPage() {
   const {
@@ -26,10 +27,15 @@ export default function ModelingPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="mb-4 text-center text-2xl font-bold">프로젝트 모델 선택</h1>
-      <p className="mb-8 text-center">모델을 선택해주세요.</p>
+      <div className="flex items-center justify-between">
+        <div className="text-left">
+          <h1 className="text-xl font-bold">7. 프로젝트 모델 선택</h1>
+          <p>모델을 선택해주세요.</p>
+        </div>
+        <StepProgress />
+      </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* 왼쪽: 파라미터 설정 */}
         <div className="rounded-[var(--radius-lg)] bg-[var(--color-primary)] p-6 text-[var(--color-primary-foreground)]">
           <ParameterSectionWidget

@@ -9,6 +9,7 @@ import { showErrorToast } from '@/shared/lib/toast/toast';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DOMAIN_OPTIONS } from '@/features/workspace/constants/selectOptions';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 
 const categoryMap: Record<string, { label: string; description: string }> = {
   REGRESSION: {
@@ -76,9 +77,12 @@ const CompletePreprocessDataPage = () => {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-10">
-      <div className="text-center">
-        <h1 className="text-lg font-bold">데이터 전처리 완료</h1>
-        <p className="text-[var(--color-gray-01)]">모델 학습을 시작해보세요.</p>
+      <div className="flex items-center justify-between">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">6. 데이터 전처리 완료</h1>
+          <p className="text-[var(--color-gray-01)]">모델 학습을 시작해보세요.</p>
+        </div>
+        <StepProgress />
       </div>
 
       <div className="space-y-4 rounded-md bg-white p-5 text-sm text-gray-800 shadow-sm">

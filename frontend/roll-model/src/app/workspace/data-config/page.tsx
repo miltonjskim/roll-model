@@ -22,6 +22,11 @@ import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import { registerConfigDataGuideSteps } from '@/features/guide/steps/registerConfigDataGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
+import { guide } from '@/features/guide/GuideProvider';
+import DataTypeInfoDialog from '@/features/workspace/data-upload/ui/DataTypeInfoDialog';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -216,14 +221,28 @@ const ConfigDataPage = () => {
     }
   }, [selectedDelimiterOption, customDelimiter]);
 
+  useEffect(() => {
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerConfigDataGuideSteps();
+      startGuide();
+    }
+  }, []);
+
   return (
     <div className="flex flex-col justify-center">
-      <div>
-        <h1 className="text-lg font-bold">데이터 설정하기</h1>
-        <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+      <div className="flex items-center justify-between px-28">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">4. 데이터 설정하기</h1>
+          <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+        </div>
+        <StepProgress />
       </div>
 
-      <div className="mx-auto mt-4 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
+      <div className="mx-auto mt-8 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
         <div className="flex max-w-[90%] basis-[60rem] flex-col gap-4">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md">
             <div className="p-6 text-left">
@@ -243,11 +262,11 @@ const ConfigDataPage = () => {
               </div>
               <div className="mt-2 mr-4 flex items-center justify-end space-x-2">
                 <Checkbox id="use-header-row" checked={useHeaderRow} onCheckedChange={(checked) => setUseHeaderRow(Boolean(checked))} />
-                <label htmlFor="use-header-row" className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="use-header-row" className="guide-header-toggle text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   첫 줄을 헤더로 사용
                 </label>
               </div>
-              <div className="overflow-x-auto p-4">
+              <div className="guide-header-edit overflow-x-auto p-4">
                 <DataPreviewTable
                   header={header}
                   previewRow={previewRow}
@@ -265,14 +284,17 @@ const ConfigDataPage = () => {
 
           {header.length > 0 && (
             <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-              <div>
-                <h3 className="font-semibold">
-                  <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
-                </h3>
-                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">
+                    <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
+                  </h3>
+                  <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+                </div>
+                <DataTypeInfoDialog />
               </div>
 
-              <div className="flex flex-wrap gap-x-12 p-4">
+              <div className="guide-column-type flex flex-wrap gap-x-12 p-4">
                 {header.map((col, idx) => (
                   <div key={idx} className="my-2 flex items-center gap-6 text-sm">
                     <span className="w-32 font-semibold">{col.length === 0 ? `컬럼 ${idx + 1}` : col}</span>
@@ -304,7 +326,7 @@ const ConfigDataPage = () => {
 
         <div className="flex basis-[24rem] flex-col justify-between">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-            <div>
+            <div className="guide-delimiter-select">
               <h3 className="font-semibold">
                 <span className="text-[color:var(--color-error-text)]">*</span>구분자 선택
               </h3>
@@ -321,7 +343,7 @@ const ConfigDataPage = () => {
             </div>
 
             <div className="mt-6">
-              <div>
+              <div className="guide-delimiter-select">
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>인코딩 선택
                 </h3>
@@ -333,13 +355,14 @@ const ConfigDataPage = () => {
                   다른 인코딩을 선택해 보세요.
                 </p>
               </div>
-
-              <EncodingSelector value={encoding} onChange={setEncoding} />
+              <div className="guide-encoding-select">
+                <EncodingSelector value={encoding} onChange={setEncoding} />
+              </div>
             </div>
           </div>
 
           <div className="pt-4">
-            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-4 h-12 w-full">
+            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-2 h-12 w-full">
               ← 이전 단계로
             </BackButton>
             <Button variant="black" size="lg" className="h-12 w-full" onClick={handleCreateProject}>

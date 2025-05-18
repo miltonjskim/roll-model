@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/PreprocessingInfoDialog';
 
 interface PreprocessingOption {
   id: string;
@@ -229,6 +230,8 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
 
   return (
     <div className="flex flex-col space-y-2 overflow-y-auto">
+      <PreprocessingInfoDialog />
+
       {preprocessingCategories.map((cat) => {
         const isOpen = expanded.includes(cat.id);
         return (

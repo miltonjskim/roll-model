@@ -306,3 +306,94 @@ body {
     font-family: Tossface;
   }
 }
+
+/*
+** 
+  shepherd 가이드 버튼 스타일 초기화
+
+*/
+
+.shepherd-button {
+  all: unset; /* 기존 Shepherd 스타일 초기화 */
+}
+
+/* 버튼 텍스트 및 배경 스타일 */
+.shepherd-button {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+
+/* black 스타일 */
+.shepherd-button.black {
+  @apply bg-[#181d2b] text-white hover:bg-[#181d2b]/90;
+}
+
+/* outline 스타일 */
+.shepherd-button.outline {
+  @apply hover:bg-[theme(color-gray-05)] border border-[#d1d5db] bg-white text-[#181d2b];
+}
+
+/* hover */
+.shepherd-button.black:hover {
+  @apply bg-[##d1d5db] text-black;
+}
+
+.shepherd-highlight {
+  z-index: 99999;
+  position: relative;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 4px #fff,
+    0 0 0 8px rgba(59, 130, 246, 0.5);
+  padding: 0.25rem;
+}
+
+/* globals.css 또는 Shepherd 초기화 스타일 파일 */
+.shepherd-header {
+  border-radius: 16px 16px 0 0 !important;
+  background-color: unset !important;
+  font-size: large !important;
+  font-weight: 900 !important;
+}
+
+.shepherd-content {
+  border-radius: 8px !important; /* 텍스트 포함 영역 */
+}
+
+.shepherd-text {
+  border-radius: 16px !important;
+}
+
+/* tailwind.config.js의 safelist 필요 시 */
+.shepherd-rounded {
+  @apply rounded-lg;
+}
+
+/* shepherd-content를 말풍선처럼 보이게 */
+.shepherd-element {
+  background: #fffaf0 !important;
+  border: 2px solid #fcd34d !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Pretendard', sans-serif;
+}
+
+.shepherd-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.shepherd-text {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* 말풍선 꼬리 모양 흉내내기 */
+.shepherd-element::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 30px;
+  border-width: 12px 12px 0;
+  border-style: solid;
+  border-color: #fcd34d transparent transparent;
+}
