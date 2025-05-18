@@ -44,7 +44,7 @@ public class PipelineApiService {
     private final ModelRepository modelRepository;
     private final DatasetRepository datasetRepository;
     private final VersionRepository versionRepository;
-    private final Random random = new Random(42);  // 일관성 유지
+    private final Random random = new Random(42);  // 일관성 유지 
     private final String ROOT_VERSION = "1.0";
 
     @Transactional(readOnly = true)
@@ -148,7 +148,7 @@ public class PipelineApiService {
                 .build();
 
         ModelDocument.ApiKey apiKey = modelDocument.getApiKey() != null ? modelDocument.getApiKey() : null;
-        if( apiKey == null) {
+        if (apiKey == null) {
             throw new ApiException(ErrorCode.MODEL_API_KEY_NOT_FOUND);
         }
         Long timestamp = apiKey.getCreatedAt();
@@ -162,17 +162,17 @@ public class PipelineApiService {
                 modelDocument.getPerformance() != null &&
                 modelDocument.getPerformance().getClassification() != null) {
             accuracy = modelDocument.getPerformance().getClassification().getAccuracy();
-            // 소수점 이하 2자리
+            // 소수점 이하 4자리
             if (accuracy != null) {
-                accuracy = formatNumberTwoDecimals(accuracy);
+                accuracy = formatNumberFourDecimals(accuracy);
             }
         } else if (modelDocument.getModelType() != null && modelDocument.getModelType().equals("REGRESSION") &&
                 modelDocument.getPerformance() != null &&
                 modelDocument.getPerformance().getRegression() != null) {
             rSquared = modelDocument.getPerformance().getRegression().getRSquared();
-            // 소수점 이하 2자리
+            // 소수점 이하 4자리
             if (rSquared != null) {
-                rSquared = formatNumberTwoDecimals(rSquared);
+                rSquared = formatNumberFourDecimals(rSquared);
             }
         }
 
@@ -233,7 +233,7 @@ public class PipelineApiService {
 
                 // 숫자 타입인 경우 소수점 이하 2자리
                 if ("number".equals(featureType) && exampleValue instanceof Number) {
-                    exampleValue = formatNumberTwoDecimals(((Number)exampleValue).doubleValue());
+                    exampleValue = formatNumberTwoDecimals(((Number) exampleValue).doubleValue());
                 }
 
                 GetPipelineApiResponse.InputSchema.Feature.FeatureBuilder schemaFeature =
@@ -266,6 +266,13 @@ public class PipelineApiService {
     private Double formatNumberTwoDecimals(double value) {
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(2, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
+    // 소숫점 네자리까지
+    private Double formatNumberFourDecimals(double value) {
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(4, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }
 
@@ -425,7 +432,7 @@ public class PipelineApiService {
                             if (!feature.getName().equals(
                                     modelDocument.getTrainInfo().getTargetFeature())) {
                                 featureNames.add(feature.getName());
-}
+                            }
                         }
                     }
 
@@ -483,7 +490,7 @@ public class PipelineApiService {
 
                             // 숫자 타입인 경우 소수점 이하 2자리로 포맷팅
                             if ("number".equals(featureType) && value instanceof Number) {
-                                value = formatNumberTwoDecimals(((Number)value).doubleValue());
+                                value = formatNumberTwoDecimals(((Number) value).doubleValue());
                             }
 
                             examples.put(featureName, value);
@@ -526,7 +533,7 @@ public class PipelineApiService {
                     String[] categories = {"A", "B", "C", "D"};
                     return categories[random.nextInt(categories.length)];
                 } else {
-                    return "category_" + (char)('a' + random.nextInt(3));  // category_a, b, c
+                    return "category_" + (char) ('a' + random.nextInt(3));  // category_a, b, c
                 }
             case "boolean":
                 return random.nextBoolean();
