@@ -5,15 +5,12 @@ export const registerInitProjectSteps = () => {
     id: 'intro',
     title: '<span class="font-tossface">👋</span> 반가워요!',
     text: `이곳에서 <b>새 프로젝트를 만들고 데이터를 업로드</b>할 수 있어요.<br/>간단하게 데이터셋만 올리면 바로 시작할 수 있답니다.`,
-    attachTo: {
-      element: '.upload-section',
-      on: 'bottom',
-    },
     classes: 'bg-white shadow-xl rounded-md border border-gray-200 text-gray-900 max-w-md px-4 py-3',
+    highlightClass: 'shepherd-highlight',
     buttons: [
       {
         text: '다시 보지 않기',
-        classes: 'text-xs text-red-500 mr-2',
+        classes: `shepherd-button outline text-xs text-red-500 border-red-200 hover:bg-red-50`,
         action: () => {
           localStorage.setItem('guide.dismissed', 'true');
           guide.cancel();
@@ -21,7 +18,7 @@ export const registerInitProjectSteps = () => {
       },
       {
         text: '좋아요! 다음 단계',
-        classes: 'text-xs btn btn-primary',
+        classes: `shepherd-button black text-xs`,
         action: guide.next,
       },
     ],
@@ -35,9 +32,11 @@ export const registerInitProjectSteps = () => {
       element: '.add-project-btn',
       on: 'top',
     },
+    highlightClass: 'shepherd-highlight',
     buttons: [
       {
         text: '다음으로',
+        classes: `text-xs shepherd-button black`,
         action: guide.next,
       },
     ],
@@ -51,13 +50,16 @@ export const registerInitProjectSteps = () => {
       element: '.retrain-project-btn',
       on: 'top',
     },
+    highlightClass: 'shepherd-highlight',
     buttons: [
       {
         text: '이전',
+        classes: ` text-xs shepherd-button outline`,
         action: guide.back,
       },
       {
         text: '가이드 종료',
+        classes: ` text-xs shepherd-button black`,
         action: guide.complete,
       },
     ],

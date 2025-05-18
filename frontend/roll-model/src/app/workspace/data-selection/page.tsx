@@ -7,6 +7,7 @@ import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, project
 import { SampleColumnModal } from '@/features/workspace/data-selection/ui/SampleColumnModal';
 import { FileUploadDialog } from '@/features/workspace/data-upload/ui/FileUploadDialog';
 import { createProject } from '@/features/workspace/service/createProject';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
@@ -115,12 +116,15 @@ const SelectDataPage = () => {
 
   return (
     <div>
-      <div className="select-none">
-        <h1 className="text-xl font-bold">프로젝트 데이터 선택</h1>
-        <h2>데이터를 선택해 주세요</h2>
+      <div className="mx-auto flex max-w-[70%] items-center justify-between">
+        <div className="text-left select-none">
+          <h1 className="text-xl font-bold">3. 프로젝트 데이터 선택</h1>
+          <h2>데이터를 선택해 주세요</h2>
+        </div>
+        <StepProgress />
       </div>
 
-      <div className="mx-auto mt-4 max-w-[70rem] select-none">
+      <div className="mx-auto mt-8 max-w-[70rem] select-none">
         <div className="bg-[theme(primary-white)] flex h-120 justify-center gap-4 rounded-lg p-4">
           <FileUploadDialog />
           <div

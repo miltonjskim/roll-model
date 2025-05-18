@@ -88,7 +88,7 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
 
   const cardBaseClass = clsx(
     'shrink-0 rounded-lg border p-3 shadow-sm transition hover:shadow-md',
-    cardStyle === 'small' && 'w-[13rem] text-xs p-3',
+    cardStyle === 'small' && 'w-[80%] text-xs p-3',
     cardStyle === 'large' && 'w-[16rem] text-sm p-4',
     highlight === 'blue' && 'border-[var(--color-blue-02)]',
     highlight === 'gray' && 'bg-[var(--color-gray-00)] border-gray-300',
@@ -100,7 +100,11 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
       <div
         className={clsx(
           'rounded-md border border-[var(--color-gray-04)] p-2',
-          cardStyle === 'small' ? 'flex max-h-[80%] flex-col items-center gap-3 overflow-y-auto' : 'flex flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto',
+          cardStyle === 'small'
+            ? 'flex max-h-[80%] flex-col items-center gap-3 overflow-y-auto'
+            : steps.filter(Boolean).length === 0
+              ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto' // 👉 메시지 왼쪽 정렬
+              : 'flex flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto', // 👉 카드 오른쪽부터 쌓임
         )}
       >
         {/* 단계 수 표시 (large일 때만) */}
