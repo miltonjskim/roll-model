@@ -61,10 +61,10 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
       const data = payload[0].payload;
       return (
         <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="text-sm text-gray-500">데이터 ID: {data.id}</p>
-          <p className="text-sm font-medium text-blue-600">실제값: {data.actual.toFixed(2)}</p>
-          <p className="text-sm font-medium text-violet-600">예측값: {data.predicted.toFixed(2)}</p>
-          <p className="mt-1 text-xs text-gray-500">오차: {(data.actual - data.predicted).toFixed(2)}</p>
+          {/* <p className="text-sm text-gray-500">데이터 ID: {data.id}</p> */}
+          <p className="text-[theme(color-blue-01)] text-sm font-medium">실제값: {data.actual.toFixed(2)}</p>
+          <p className="text-[theme(color-purple-01)] text-sm font-medium">예측값: {data.predicted.toFixed(2)}</p>
+          <p className="text-[theme(color-muted-foreground)] mt-1 text-xs">오차: {(data.actual - data.predicted).toFixed(2)}</p>
         </div>
       );
     }
@@ -77,9 +77,9 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
       const data = payload[0].payload;
       return (
         <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="text-sm text-gray-500">데이터 ID: {data.id}</p>
-          <p className="text-sm font-medium text-violet-600">예측값: {data.predicted.toFixed(2)}</p>
-          <p className="text-sm font-medium text-red-600">잔차: {data.residual.toFixed(2)}</p>
+          {/* <p className="text-sm text-gray-500">데이터 ID: {data.id}</p> */}
+          <p className="text-[theme(color-purple-01)] text-sm font-medium">예측값: {data.predicted.toFixed(2)}</p>
+          <p className="text-[theme(color-rose-01)] text-sm font-medium">잔차: {data.residual.toFixed(2)}</p>
         </div>
       );
     }
@@ -92,7 +92,7 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
       const data = payload[0].payload;
       return (
         <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="text-sm font-medium text-gray-700">잔차 구간: {data.bin.toFixed(2)}</p>
+          <p className="text-[theme(color-muted-foreground)] text-sm font-medium">잔차 구간: {data.bin.toFixed(2)}</p>
           <p className="text-sm font-medium text-blue-600">빈도: {data.frequency}</p>
         </div>
       );
@@ -107,11 +107,12 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 실제값 vs 예측값 차트 */}
         <div className="flex flex-col">
-          <h3 className="mb-3 text-lg font-medium text-gray-700">실제값 vs 예측값</h3>
-          <p className="mb-4 text-sm text-gray-500">모델이 예측한 값과 실제 값의 관계를 보여줍니다. 점들이 대각선 (완벽한 예측)에 가까울수록 모델 성능이 우수합니다.</p>
+          <h3 className="text-[theme(primary-black)] mb-3 text-lg font-medium">실제값 vs 예측값</h3>
+          <p className="text-[theme(color-muted-foreground)] text-sm">모델이 예측한 값과 실제 값의 관계를 보여줍니다.</p>
+          <p className="text-[theme(color-muted-foreground)] mb-4 text-sm">점들이 대각선 (완벽한 예측)에 가까울수록 모델 성능이 우수합니다.</p>
 
           {actualVsPredicted && (
-            <div className="mt-2 h-80 w-full rounded-lg border border-gray-200 bg-gray-50 p-2">
+            <div className="bg-[theme(color-card-background)] mt-2 h-80 w-full rounded-lg border border-gray-200 p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -148,10 +149,11 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
 
         {/* 잔차 플롯 및 히스토그램 */}
         <div className="flex flex-col">
-          <h3 className="mb-3 text-lg font-medium text-gray-700">잔차 분석</h3>
-          <p className="mb-4 text-sm text-gray-500">예측값과 실제값의 차이(잔차)를 분석합니다. 잔차가 0 주변에 무작위로 분포할수록 모델이 편향되지 않았음을 의미합니다.</p>
+          <h3 className="text-[theme(primary-black)] mb-3 text-lg font-medium">잔차 분석</h3>
+          <p className="text-[theme(color-muted-foreground)] text-sm">예측값과 실제값의 차이(잔차)를 분석합니다.</p>
+          <p className="text-[theme(color-muted-foreground)] mb-4 text-sm">잔차가 0 주변에 무작위로 분포할수록 모델이 편향되지 않았음을 의미합니다.</p>
           {residualPlot && (
-            <div className="mt-2 h-48 w-full rounded-lg border border-gray-200 bg-gray-50 p-2">
+            <div className="bg-[theme(color-card-background)] mt-2 h-48 w-full rounded-lg border border-gray-200 p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -172,11 +174,11 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
           )}
 
           {histogramData && (
-            <div className="mt-4 h-32 w-full rounded-lg border border-gray-200 bg-gray-50 p-2">
+            <div className="bg-[theme(color-card-background)] mt-4 h-32 w-full rounded-lg border border-gray-200 p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={histogramData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="bin" label={{ value: '잔차 분포', position: 'bottom', offset: 0 }} />
+                  <XAxis dataKey="bin" label={{ value: '잔차 분포', position: 'bottom', offset: 0 }} tickFormatter={(value) => value.toFixed(2)} />
                   <YAxis label={{ value: '빈도', angle: -90, position: 'left', offset: 0 }} />
                   <Tooltip content={<HistogramTooltip />} />
                   <Bar dataKey="frequency" fill="#3b82f6" />
@@ -184,25 +186,6 @@ export default function RegressionEvaluation({ actualVsPredicted, residualPlot }
               </ResponsiveContainer>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-lg bg-gray-50 p-4">
-        <h3 className="text-sm font-semibold text-gray-700">모델 해석</h3>
-        <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-md bg-white p-3 shadow-sm">
-            <h4 className="text-sm font-semibold text-indigo-600">실제값 vs 예측값</h4>
-            <p className="mt-1 text-sm text-gray-600">
-              대각선에 가까울수록 예측이 정확합니다. 점들이 대각선 위에 있으면 실제값이 예측값보다 큰 것이고, 대각선 아래에 있으면 예측값이 실제값보다 큰 것입니다.
-            </p>
-          </div>
-
-          <div className="rounded-md bg-white p-3 shadow-sm">
-            <h4 className="text-sm font-semibold text-indigo-600">잔차 분석</h4>
-            <p className="mt-1 text-sm text-gray-600">
-              잔차가 0 주변에 고르게 분포하고 패턴이 없다면 모델이 편향되지 않았음을 의미합니다. 잔차 분포가 정규 분포(종 모양)에 가까울수록 모델 가정에 적합합니다.
-            </p>
-          </div>
         </div>
       </div>
     </section>
