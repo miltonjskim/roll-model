@@ -383,19 +383,27 @@ class PipelineService:
                 return_full=False
             )
 
+            columns = dataset_sample[0].keys() if dataset_sample else []
+
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
                 
                 return {
                     "latestStep": latest_step.model_dump(),
                     "totalSteps": len(latest_history.preprocessing_steps),
-                    "dataset": dataset_sample,
+                    "originalDatasets": {
+                        "columns":columns,
+                        "data": dataset_sample
+                    }
                 }
             else:
                 return {
                     "latestStep": None,
                     "totalSteps": 0,
-                    "dataset": dataset_sample,
+                    "originalDatasets": {
+                        "columns":columns,
+                        "data": dataset_sample
+                    }
                 }
         except Exception as e:
             logger.error(f"Error reverting preprocessing step: {e}")
