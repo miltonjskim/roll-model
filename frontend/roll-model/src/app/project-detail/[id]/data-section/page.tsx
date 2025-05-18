@@ -34,7 +34,7 @@ export default function DataSectionPage() {
       title: '데이터 한눈에 보기',
     },
     PreprocessingPipelineCard: {
-      title: '전처리 한눈에 보기',
+      title: '전처리 파이프라인',
       sub: '데이터에 적용된 전처리 과정과 세부 파라미터입니다',
     },
     DataSplitCard: {

@@ -46,6 +46,7 @@
   --color-orange-01: #ff8a3d; /* 진한 주황색(추가) */
   --color-orange-02: #ffc093; /* 중간 주황색(추가) */
   --color-orange-03: #ffe0d0; /* 연한 주황색(추가) */
+  --color-card-background: #f8f9fa; /* 배경색 살짝 파란색 첨가 */
 
   --color-error: #ff4949;
   --color-error-background: #ffd5d5;
@@ -161,6 +162,7 @@
   --color-orange-01: var(--color-orange-01);
   --color-orange-02: var(--color-orange-02);
   --color-orange-03: var(--color-orange-03);
+  --color-card-background: var(--color-card-background);
 
   --color-error: var(--color-error);
   --color-error-background: var(--color-error-background);

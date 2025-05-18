@@ -13,6 +13,9 @@ interface ProjectDetailCardProps {
   children?: ReactNode;
 }
 
+export const CssDetailHoveringLittle = 'transition-all duration-400 ease-in-out hover:translate-y-[-1px]';
+export const CssDetailHovering = 'transition-all duration-200 ease-in-out hover:translate-y-[-4px]';
+
 export default function ProjectDetailCard({ cardProps, children }: ProjectDetailCardProps) {
   const { title, titlePosition = 'start', sub } = cardProps || {};
   const textAlignment = `text-${titlePosition}`;
