@@ -95,7 +95,7 @@ async def upload_dataset_and_save_metadata(
         upload_success = await minio_client.upload_file(
             bucket_name=bucket_name,
             object_name=object_name,
-            file_data=indexed_data,
+            file_data=file_io,
             content_type=file.content_type,
             encoding=config.get("UTF-8")
         )

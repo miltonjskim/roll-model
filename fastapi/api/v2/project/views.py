@@ -726,7 +726,7 @@ async def fork_pipeline_preprocess(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data["data"]), round_decimals=2))
         )
 
     except Exception as e:
