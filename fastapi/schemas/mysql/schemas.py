@@ -105,6 +105,16 @@ class Pipeline(Base):
     def __repr__(self):
         return f"<Pipeline(pipeline_id={self.pipeline_id}, status='{self.status}')>"
 
+# version 모델델
+class VersionModel(Base):
+    __tablename__ = "versions"
+    
+    version_id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(Integer, nullable=False)
+    pipeline_id = Column(String(36), nullable=False)
+    version_num = Column(String(20), nullable=False)
+    parent_version = Column(String(20), nullable=False)
+
 # Download 모델
 class Download(Base):
     __tablename__ = "downloads"
@@ -146,7 +156,6 @@ class Fork(Base):
 
     def __repr__(self):
         return f"<Fork(member_id={self.member_id}, pipeline_id='{self.pipeline_id}')>"
-
 # ProjectDataset 모델
 class ProjectDataset(Base):
     __tablename__ = "project_datasets"
@@ -160,6 +169,7 @@ class ProjectDataset(Base):
 
     def __repr__(self):
         return f"<ProjectDataset(project_dataset_id={self.project_dataset_id}, project_id={self.project_id})>"
+
 
 # 매퍼 구성 - 모든 모델 정의 후 호출
 from sqlalchemy.orm import configure_mappers

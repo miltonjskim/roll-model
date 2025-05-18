@@ -24,7 +24,7 @@ import json
 import io
 import time
 from typing import Dict, List, Any, Optional, Union
-from openai import OpenAI
+from openai import OpenAI, project
 import pandas as pd
 import re
 import math
@@ -45,7 +45,7 @@ from schemas.mysql.schemas import Project, Pipeline
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.pipeline_fork_service import save_new_pipeline, prepare_response_data
 
-from service.pipeline_fork_service import get_source_pipeline, find_root_pipeline_info, determine_target_project, \
+from service.pipeline_fork_service import get_source_pipeline, determine_target_project, \
     create_new_pipeline_model
 from service.preprocessing.preprocessing_handler import PreprocessingHandler
 from utils.snake_to_camel import convert_dict_to_camel_case
@@ -394,9 +394,9 @@ async def upload_project_sample_dataset(
             error_message=f"샘플 데이터셋 업로드 중 오류가 발생했습니다: {str(e)}"
         )
 
-@router.get("/workspace", response_class=ApiResponse)
-async def reload_recent_workspace(
-    project_id: int = Path(..., title="프로젝트 ID"),                  
+@pipeline_router.get("/reload/preprocess", response_class=ApiResponse)
+async def reload_preprocess_pipeline(
+    pipeline_id: str = Path(..., description="파이프라인 ID"),                     
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db),
@@ -418,15 +418,16 @@ async def reload_recent_workspace(
         워크스페이스 정보
     """
     try:
-        latest_pipeline: Pipeline | None = db.query(Pipeline)\
-            .join(Project, Project.project_id == Pipeline.project_id)\
-            .filter(Pipeline.project_id == project_id)\
-            .filter(Project.member_id == member_id)\
+        pipeline = db.query(Pipeline)\
+            .filter(Pipeline.pipeline_id == pipeline_id)\
             .filter(Pipeline.deleted_yn == False)\
-            .order_by(Pipeline.modified_at.desc())\
+            .first()
+        project = db.query(Project)\
+            .filter(Project.project_id == pipeline.project_id)\
+            .filter(Project.deleted_yn == False)\
             .first()
                 
-        if not latest_pipeline:
+        if not pipeline:
             return ApiResponse(
                 status_code =404,
                 message="프로젝트에 파이프라인이 존재하지 않습니다.",
@@ -434,8 +435,8 @@ async def reload_recent_workspace(
             )
         
         # MongoDB에서 파이프라인 상세 정보 조회
-        pipeline_id = latest_pipeline.pipeline_id
-        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
+        pipeline_id = pipeline.pipeline_id
+        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id, pipeline.project_id, member_id)
         
         if not pipeline_details:
             return ApiResponse(
@@ -444,71 +445,65 @@ async def reload_recent_workspace(
                 data=None
             )
         
-        # 워크스페이스 응답 데이터 구성
-        workspace_data = {
-            "pipelineId": str(pipeline_details.id),
-            "status": latest_pipeline.status,
-            "registeredAt": pipeline_details.registered_at.isoformat(),
-            "modifiedAt": pipeline_details.modified_at.isoformat(),
-            "preprocessingSteps": [],
-            "modelingInfo": None
-        }
-
-        # 전처리 단계 정보 추가
+        # 5. 전처리 단계만 리로드
+        result = None
         if pipeline_details.history and len(pipeline_details.history) > 0:
             latest_history = pipeline_details.history[-1]
-            if latest_history.preprocessing_steps:
-                for step in latest_history.preprocessing_steps:
-                    workspace_data["preprocessingSteps"].append({
-                        "type": step.type,
-                        "parameters": step.parameters,
-                        "order": step.order,
-                        "active": step.active,
-                        "result": step.result,
-                    })
-            if latest_history.modeling_info:
-                workspace_data["modelingInfo"] = latest_history.modeling_info
 
-            workspace_data["status"] = latest_history.status
-        # 데이터셋 호출
-        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
-            pipeline_details,
-            minio_client,
-            n_rows=30,
-            return_full=False
+            # 전처리 단계가 있는 경우 가장 마지막 단계의 result 추출
+            if latest_history.preprocessing_steps and len(latest_history.preprocessing_steps) > 0:
+                # 리스트의 마지막 요소의 result (order 순서대로 저장되어 있다고 가정)
+                result = latest_history.preprocessing_steps[-1].result
+            
+        data_dict = await pipeline_service.get_latest_dataset_from_pipeline(
+            pipeline=pipeline_details,
+            minio_client=minio_client,
+            return_full=True
         )
+
+        # 8. 응답 데이터 준비 (카테고리 정보 포함)
+        current_step_data = PreprocessingHandler.create_response(
+            pipeline_id=pipeline_id,
+            result=result, # 전처리 단계 가장 최근 결과
+            df=pd.DataFrame(data_dict), # 데이터프레임임
+        )
+
+        response_data = await prepare_response_data(
+            new_pipeline_id=pipeline_id, 
+            new_pipeline=pipeline_details, 
+            category=project.category, 
+            include_all_history=False
+        )
+
         return ApiResponse(
-            status_code =200,
-            message="최근 워크스페이스를 불러왔습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
+            status_code=200,
+            message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data), round_decimals=2))
         )
     
     except Exception as e:
         logger.error(f"워크스페이스 조회 중 오류 발생: {str(e)}")
         return ApiResponse(
-            status_code =500,
+            status_code=500,
             message=f"워크스페이스 조회 중 오류가 발생했습니다: {str(e)}",
             data=None
         )
-
-@router.get("/pipelines/{pipeline_id}/workspace", response_class=ApiResponse)
-async def reload_workspace_by_pipeline_version(
-    project_id: int = Path(..., title="프로젝트 ID"),
-    pipeline_id: str = Path(..., description="파이프라인 ID"),                   
+    
+@pipeline_router.get("/reload/total", response_class=ApiResponse)
+async def reload_modeling_pipeline(
+    pipeline_id: str = Path(..., description="파이프라인 ID"),                       
     member_id: int = Depends(verify_token),
     pipeline_service: PipelineService = Depends(get_pipeline_service),
     db: Session = Depends(get_mysql_db),
     minio_client: MinioClient = Depends(get_minio_client)
 ):
     """
-    특정 파이프라인 버전의 워크스페이스 정보를 불러옵니다.
+    가장 최근에 작업한 파이프라인 워크스페이스 정보를 불러옵니다.
 
     Parameters:
     -----------
     project_id: int
         프로젝트 ID
-    pipeline_id: str
-        파이프라인 ID
     member_id: int
         회원 ID 
     
@@ -518,71 +513,47 @@ async def reload_workspace_by_pipeline_version(
         워크스페이스 정보
     """
     try:
-        # MySQL에서 특정 파이프라인 조회 (project_id, member_id, pipeline_id 기준)
         pipeline = db.query(Pipeline)\
-            .join(Project, Project.project_id == Pipeline.project_id)\
             .filter(Pipeline.pipeline_id == pipeline_id)\
-            .filter(Pipeline.project_id == project_id)\
             .filter(Pipeline.deleted_yn == False)\
             .first()
-        
+        project = db.query(Project)\
+            .filter(Project.project_id == pipeline.project_id)\
+            .filter(Project.deleted_yn == False)\
+            .first()
+                
         if not pipeline:
             return ApiResponse(
-                status_code=404,
-                message="해당 파이프라인을 찾을 수 없습니다.",
+                status_code =404,
+                message="프로젝트에 파이프라인이 존재하지 않습니다.",
                 data=None
             )
         
         # MongoDB에서 파이프라인 상세 정보 조회
-        pipeline_details = await pipeline_service.get_pipeline(pipeline_id, project_id, member_id)
+        pipeline_id = pipeline.pipeline_id
+        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id, pipeline.project_id, member_id)
         
         if not pipeline_details:
             return ApiResponse(
-                status_code=404,
+                status_code =404,
                 message="파이프라인 상세 정보를 찾을 수 없습니다.",
                 data=None
             )
         
-        # 워크스페이스 응답 데이터 구성
-        workspace_data = {
-            "pipelineId": str(pipeline_details.id),
-            "projectId": pipeline_details.project_id,
-            "status": None,
-            "registeredAt": pipeline_details.registered_at.isoformat(),
-            "modifiedAt": pipeline_details.modified_at.isoformat(),
-            "preprocessingSteps": [],
-            "modelingInfo": None
-        }
-        
-        # 전처리 단계 정보 추가
-        if pipeline_details.history and len(pipeline_details.history) > 0:
-            latest_history = pipeline_details.history[-1]
-            if latest_history.preprocessing_steps:
-                for step in latest_history.preprocessing_steps:
-                    workspace_data["preprocessingSteps"].append({
-                        "type": step.type,
-                        "parameters": step.parameters,
-                        "order": step.order,
-                        "active": step.active,
-                        "result": step.result,
-                    })
-            if latest_history.modeling_info:
-                workspace_data["modelingInfo"] = latest_history.modeling_info
-
-            workspace_data["status"] = latest_history.status
-
-        # 데이터셋 호출
-        workspace_data["dataset"] = await pipeline_service.get_latest_dataset_from_pipeline(
+        # 5. 모델링 단계 리로드
+        response_data = await prepare_response_data(
+            pipeline_id,
             pipeline_details,
-            minio_client,
-            n_rows=30,
-            return_full=False
+            project.category,
+            include_all_history=True
         )
 
+        columns = await pipeline_service.get_latest_dataset_columns(pipeline_details)
+        response_data["columns"] = columns
         return ApiResponse(
             status_code=200,
-            message="워크스페이스를 불러왔습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(workspace_data), round_decimals=2))
+            message="파이프라인 모델링 단계가 성공적으로 리로드되었습니다.",
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
         )
     
     except Exception as e:
@@ -686,16 +657,23 @@ async def fork_pipeline_preprocess(
                 message="파이프라인을 찾을 수 없습니다."
             )
 
-        # 2. 최초 파이프라인 정보 조회
-        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+        # 2. 원본 프로젝트 정보 조회
+        original_project:Project = db.query(Project) \
+        .filter(Project.project_id == source_pipeline.project_id) \
+        .filter(Pipeline.deleted_yn == False) \
+        .first()
 
         # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
-        target_project_id, target_project_category = await determine_target_project(
-            db, source_pipeline.project_id, member_id, source_pipeline, original_project_id, original_project_owner_id
+        target_project: Project = await determine_target_project(
+            db=db, 
+            member_id=member_id, 
+            source_pipeline=source_pipeline, 
+            original_project=original_project,
+            source_pipeline_detail=source_pipeline_details
         )
 
         # 4. 새로운 파이프라인 모델 생성
-        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+        new_pipeline = await create_new_pipeline_model(target_project.project_id, member_id, source_pipeline_details)
 
         # 5. 전처리 단계만 복제
         result = None
@@ -720,10 +698,9 @@ async def fork_pipeline_preprocess(
             db=db,
             new_pipeline=new_pipeline,
             pipeline_id=pipeline_id,
-            target_project_id=target_project_id,
+            target_project_id=target_project.project_id,
             source_pipeline=source_pipeline,  # member_id 대신 source_pipeline
             status=PipelineStatus.CREATED,  # status 매개변수 추가
-            pipeline_service=pipeline_service
         )
 
         data_dict = await pipeline_service.get_latest_dataset_from_pipeline(
@@ -740,7 +717,10 @@ async def fork_pipeline_preprocess(
         )
 
         response_data = await prepare_response_data(
-            new_pipeline_id, new_pipeline, target_project_category
+            new_pipeline_id=new_pipeline_id, 
+            new_pipeline=new_pipeline, 
+            category=target_project.category, 
+            include_all_history=False
         )
 
         return ApiResponse(
@@ -787,21 +767,29 @@ async def fork_pipeline_total(
                 message="파이프라인을 찾을 수 없습니다."
             )
 
-        # 2. 최초 파이프라인 정보 조회
-        original_project_id, original_project_owner_id = await find_root_pipeline_info(db, pipeline_id)
+        # 2. 원본 프로젝트 정보 조회
+        original_project:Project = db.query(Project) \
+        .filter(Project.project_id == source_pipeline.project_id) \
+        .filter(Pipeline.deleted_yn == False) \
+        .first()
 
         # 3. 타겟 프로젝트 결정 (카테고리도 함께 반환)
-        target_project_id, target_project_category = await determine_target_project(
-            db, source_pipeline, member_id, source_pipeline, original_project_id, original_project_owner_id
+        target_project: Project = await determine_target_project(
+            db=db, 
+            member_id=member_id, 
+            source_pipeline=source_pipeline, 
+            original_project=original_project,
+            source_pipeline_detail=source_pipeline_details
         )
 
+
         # 4. 새로운 파이프라인 모델 생성
-        new_pipeline = await create_new_pipeline_model(target_project_id, member_id, source_pipeline_details)
+        new_pipeline = await create_new_pipeline_model(target_project.project_id, member_id, source_pipeline_details)
 
         # 5. 모든 히스토리 복제
         latest_history = source_pipeline_details.history[-1]
 
-        # 전처리 단계만 포함한 새 히스토리 항목 생성
+        # 전체체 포함한 새 히스토리 항목 생성
         new_history_item = PipelineHistoryItem(
             preprocessing_steps=latest_history.preprocessing_steps if latest_history.preprocessing_steps else [],
             modeling_info=latest_history.modeling_info if latest_history.modeling_info else None,
@@ -814,8 +802,7 @@ async def fork_pipeline_total(
         new_pipeline_id = await save_new_pipeline(
             db=db,
             pipeline_id=pipeline_id,
-            pipeline_service=pipeline_service,
-            target_project_id=target_project_id,
+            target_project_id=target_project.project_id,
             source_pipeline=source_pipeline,
             new_pipeline=new_pipeline,
             status=PipelineStatus.PREPROCESSED,
@@ -825,7 +812,7 @@ async def fork_pipeline_total(
         response_data = await prepare_response_data(
             new_pipeline_id,
             new_pipeline,
-            target_project_category,
+            target_project.category,
             include_all_history=True
         )
 
