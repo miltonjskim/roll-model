@@ -231,9 +231,8 @@ class PreprocessingHandler:
         if result is not None:
             result.pop("startPoint", None)  # startPoint는 응답에서 제거
         aligned_start = (start_point // page_size) * page_size
-        # 데이터 idx 추가, dict 변환
-        df = df.reset_index(drop=True)  # 기존 인덱스 초기화
-        
+        # 데이터셋 요약 정보 생성
+        dataset_summary = PreprocessingHandler.get_dataset_summary(df)
         # 현재 페이지에 해당하는 부분 추출
         aligned_df = df.iloc[aligned_start:aligned_start + page_size].copy()
         
