@@ -32,16 +32,23 @@ export default function DataSectionPage() {
   const propsInfo: Record<string, CardProps> = {
     DatasetInfoCard: {
       title: '데이터 한눈에 보기',
+      sub: '이 데이터에는 어떤 정보가 들어있고 얼마나 큰지 보여줍니다',
     },
     PreprocessingPipelineCard: {
       title: '전처리 파이프라인',
-      sub: '데이터에 적용된 전처리 과정과 세부 파라미터입니다',
+      sub: '데이터를 정리하고 가공한 방법들을 순서대로 보여줍니다',
     },
     DataSplitCard: {
       title: '데이터 분할 정보',
+      sub: '학습용, 테스트용으로 데이터를 어떻게 나누었는지 보여줍니다',
     },
     DistributionCharts: {
       title: '주요 변수 분포',
+      sub: '데이터 안의 주요 정보들이 어떻게 분포되어 있는지 그래프로 보여줍니다',
+    },
+    CorrelationMatrix: {
+      title: '상관관계 매트릭스',
+      sub: '변수들 사이의 관계가 얼마나 강한지 한눈에 볼 수 있습니다',
     },
   };
 
@@ -67,13 +74,17 @@ export default function DataSectionPage() {
         <DistributionCharts distributions={distributions} />
       </ProjectDetailCard>
 
-      <div className="grid grid-cols-1 md:grid-cols-2">
-        {/* 상관관계 행렬 */}
+      {/* 상관관계 행렬 */}
+      <ProjectDetailCard cardProps={propsInfo.CorrelationMatrix}>
+        <CorrelationMatrix correlationMatrix={correlationMatrix} />
+      </ProjectDetailCard>
+
+      {/* <div className="grid grid-cols-1 md:grid-cols-2">
         <div className="w-full">
           <CorrelationMatrix correlationMatrix={correlationMatrix} />
         </div>
-        <div className="w-full">temp</div>
-      </div>
+        <div className="w-full">미리보기 영역 이었던 것</div>
+      </div> */}
     </div>
   );
 }
