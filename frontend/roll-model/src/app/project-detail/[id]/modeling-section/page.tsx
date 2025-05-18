@@ -10,6 +10,7 @@ import RegressionEvaluation from '@/entities/project-detail/ui/model-section/Reg
 import FeatureImportanceChart from '@/entities/project-detail/ui/model-section/FeatureImportanceChart';
 import ModelInfoCard from '@/entities/project-detail/ui/model-section/ModelInfoCard';
 import PerformanceMetricsCard from '@/entities/project-detail/ui/model-section/PerformanceMetricsCard';
+import ProjectDetailCard, { CardProps } from '@/widgets/project/project-detail/ProjectDetailCard';
 
 export default function ModelSectionPage() {
   const { id } = useParams();
@@ -33,21 +34,47 @@ export default function ModelSectionPage() {
   const algorithmName = projectDetailModel.algorithm;
   const koreanModelName = MODEL_NAME_MAPPING[algorithmName as keyof typeof MODEL_NAME_MAPPING] || algorithmName;
 
-  return (
-    <div className="space-y-8 p-4">
-      <ModelInfoCard
-        category={projectDetailModel.projectInfo.category}
-        algorithmName={algorithmName}
-        koreanModelName={koreanModelName}
-        modelParameters={projectDetailModel.modelParameters}
-        targetInfo={projectDetailModel.targetInfo}
-      />
+  const propsInfo: Record<string, CardProps> = {
+    ModelInfoCard: {},
+    PerformanceMetricsCard: {
+      title: '모델성능 한눈에 보기',
+      sub: '모델이 얼마나 정확하게 예측하는지 보여주는 중요한 지표들입니다',
+    },
+    ClassificationEvaluation: {
+      title: '분류모델 평가',
+    },
+    RegressionEvaluation: {
+      title: '회귀모델 평가',
+    },
+    FeatureImportanceChart: {
+      title: '특성 중요도',
+      sub: '모델의 예측에 각 특성이 미치는 영향력을 보여줍니다. 막대가 길수록 모델 예측에 더 중요한 역할을 합니다.',
+    },
+  };
 
-      <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} />
+  return (
+    <div>
+      {/* 모델정보 */}
+      <ProjectDetailCard cardProps={propsInfo.ModelInfoCard}>
+        <ModelInfoCard
+          category={projectDetailModel.projectInfo.category}
+          algorithmName={algorithmName}
+          koreanModelName={koreanModelName}
+          modelParameters={projectDetailModel.modelParameters}
+          targetInfo={projectDetailModel.targetInfo}
+        />
+      </ProjectDetailCard>
+      {/* 모델성능 */}
+      <ProjectDetailCard cardProps={propsInfo.PerformanceMetricsCard}>
+        <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} category={projectDetailModel.projectInfo.category} />
+      </ProjectDetailCard>
+
+      {/* <ProjectDetailCard cardProps={propsInfo.ClassificationEvaluation}></ProjectDetailCard>
+      <ProjectDetailCard cardProps={propsInfo.RegressionEvaluation}></ProjectDetailCard> */}
 
       {isClassification && (projectDetailModel as ClassificationModelData).confusionMatrix && (
-  <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />
-)}
+        <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />
+      )}
 
       {isRegression && (
         <RegressionEvaluation actualVsPredicted={(projectDetailModel as RegressionModelData).actualVsPredicted} residualPlot={(projectDetailModel as RegressionModelData).residualPlot} />
