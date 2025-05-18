@@ -168,7 +168,7 @@ async def create_new_project(db, original_project, member_id):
             domain=original_project.domain,
             member_id=member_id,  # 소유자를 현재 사용자로 변경
             category=original_project.category,
-            public_yn=False,  # 비공개로 설정
+            public_yn=True,  # 공개로 설정
             deleted_yn=False,
             registered_at=datetime.now(),
             modified_at=datetime.now()
