@@ -287,7 +287,7 @@ export default function ClassificationEvaluation({ confusionMatrix }: Classifica
           )}
           {!isOn && (
             <button
-              className="border-[theme(primary-black)] text-[theme(primary-black)] text-md hover:text-[theme(primary-white)] hover:bg-[theme(primary-black)] mt-2 h-[3rem] w-full cursor-pointer rounded-md border border-2 font-semibold transition-all duration-300 ease-in-out select-none"
+              className="border-[theme(color-gray-04)] text-[theme(primary-black)] text-md hover:text-[theme(primary-white)] hover:bg-[theme(primary-black)] mt-2 h-[3rem] w-full cursor-pointer rounded-md border border-1 font-semibold shadow-sm transition-all duration-300 ease-in-out select-none"
               onClick={() => setIsOn(!isOn)}
             >
               혼동 행렬 활용 가이드 자세히 보기

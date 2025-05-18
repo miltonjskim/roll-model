@@ -1,7 +1,7 @@
 'use client';
 
 import { FeatureImportance } from '@/entities/project-detail/model/ModelTypes';
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 interface FeatureImportanceChartProps {
@@ -9,6 +9,9 @@ interface FeatureImportanceChartProps {
 }
 
 export default function FeatureImportanceChart({ featureImportance }: FeatureImportanceChartProps) {
+  // 전체 보기 상태 추가
+  const [showAll, setShowAll] = useState(false);
+
   // 데이터 정렬 및 변환
   const sortedData = useMemo(() => {
     // 퍼센트 문자열을 숫자로 변환
@@ -22,6 +25,17 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
     return parsedData.sort((a, b) => b.value - a.value);
   }, [featureImportance]);
 
+  // 가장 긴 컬럼명의 길이 계산
+  const tempLength = useMemo(() => {
+    if (!sortedData.length) return 0;
+    return Math.max(...sortedData.map((item) => item.featureName.length));
+  }, [sortedData]);
+
+  // 표시할 데이터 (showAll이 true면 전체, false면 최대 8개)
+  const displayData = useMemo(() => {
+    return showAll ? sortedData : sortedData.slice(0, 8);
+  }, [sortedData, showAll]);
+
   // 커스텀 툴팁
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -29,8 +43,7 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
       return (
         <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm">
           <p className="text-sm font-semibold text-gray-800">{data.featureName}</p>
-          <p className="font-medium text-indigo-600">중요도: {data.importanceValue}</p>
-          <p className="mt-1 text-xs text-gray-500">키: {data.importanceKey}</p>
+          <p className="text-[theme(color-blue-01)] font-medium">중요도: {data.importanceValue}%</p>
         </div>
       );
     }
@@ -38,51 +51,90 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
   };
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">특성 중요도</h2>
-      <p className="text-[theme(color-muted-foreground)] mb-2 text-sm">모델의 예측에 각 특성이 미치는 영향력을 보여줍니다. 막대가 길수록 모델 예측에 더 중요한 역할을 합니다.</p>
-      {/* 차트 */}
-      <div className="mt-4">
-        <ResponsiveContainer width="100%" height={Math.max(300, sortedData.length * 40)}>
-          <BarChart data={sortedData} layout="vertical" margin={{ top: 5, right: 80, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-            <XAxis type="number" domain={[0, 'dataMax']} tickFormatter={(value) => `${value}%`} tickCount={6} />
-            <YAxis type="category" dataKey="featureName" width={100} tick={{ fontSize: 12 }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="value" name="중요도" fill="#181d2b">
-              <LabelList dataKey="importanceValue" position="right" style={{ fill: '#374151', fontWeight: 500, fontSize: 12 }} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      {/* 아래설명(필요없음) */}
-      {sortedData.length > 0 && (
-        <div className="mt-6 rounded-lg bg-gray-50 p-4">
-          <h3 className="text-sm font-semibold text-gray-700">인사이트</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            <span className="font-medium text-indigo-600">{sortedData[0].featureName}</span>이(가)
-            {sortedData.length > 1
-              ? ` ${sortedData[0].importanceValue}로 가장 중요한 특성으로 나타났으며, 이는 두 번째로 중요한 특성인 ${sortedData[1].featureName}(${sortedData[1].importanceValue})보다 ${(parseFloat(sortedData[0].importanceValue.replace('%', '')) - parseFloat(sortedData[1].importanceValue.replace('%', ''))).toFixed(1)}%p 높습니다.`
-              : ` ${sortedData[0].importanceValue}로 가장 중요한 특성으로 나타났습니다.`}
-          </p>
-
-          {sortedData.length >= 4 && (
-            <p className="mt-2 text-sm text-gray-600">
-              상위 3개 특성(
-              {sortedData
-                .slice(0, 3)
-                .map((d) => d.featureName)
-                .join(', ')}
-              )이 전체 중요도의 약{' '}
-              {sortedData
-                .slice(0, 3)
-                .reduce((sum, item) => sum + parseFloat(item.importanceValue.replace('%', '')), 0)
-                .toFixed(1)}
-              %를 차지하고 있어 모델 예측에 큰 영향을 미치고 있습니다.
-            </p>
-          )}
+    <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className={`mb-3 text-start text-lg font-semibold`}>특성 중요도</h2>
+          <p className={`text-[theme(color-muted-foreground)] mb-3 text-start text-sm`}>모델의 예측에 각 특성이 미치는 영향력을 보여줍니다. 막대가 길수록 모델 예측에 더 중요한 역할을 합니다.</p>
         </div>
-      )}
-    </section>
+
+        {/* 자세히 보기 버튼 (컬럼이 8개 초과일 때만 표시) */}
+        {sortedData.length > 8 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="bg-[theme(color-blue-03)] text-[theme(color-blue-01)] hover:bg-[theme(color-blue-02)] rounded-md px-4 py-2 text-sm font-medium transition-colors"
+            >
+              {showAll ? '간략히 보기' : `더보기 (${sortedData.length - 8}개 추가)`}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <section className="bg-[theme(color-card-background)] rounded-lg border p-6 shadow-sm">
+        {/* 차트 */}
+        <div className="mt-4">
+          <ResponsiveContainer width="100%" height={Math.max(300, displayData.length * 40)}>
+            <BarChart data={displayData} layout="vertical" margin={{ top: 10, right: 100, left: -80 + tempLength * 6, bottom: 10 }} barSize={24}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e8eaec" />
+              <XAxis type="number" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]} tickFormatter={(value) => `${value}%`} tickCount={5} stroke="#7d818a" fontSize={11} />
+              <YAxis type="category" dataKey="featureName" width={tempLength * 6 + 20} tick={{ fontSize: 12, fill: '#181d2b', fontWeight: 500 }} stroke="#e8eaec" />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(114, 150, 245, 0.1)' }} />
+              <Bar dataKey="value" name="중요도" fill="#181d2b" radius={[0, 4, 4, 0]} animationDuration={1500} animationEasing="ease-out">
+                <LabelList dataKey="importanceValue" position="right" style={{ fill: '#181d2b', fontWeight: 600, fontSize: 12 }} formatter={(value: string) => `${value}`} offset={8} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 아래설명(필요없음) */}
+        {sortedData.length > 0 && (
+          <div className="mt-6 rounded-lg bg-gray-50 p-4">
+            <h3 className="text-sm font-semibold text-gray-700">인사이트</h3>
+            <p className="text-[theme(color-muted-foreground)] mt-2 text-sm">
+              <span className="text-[theme(color-blue-01)] font-medium">{sortedData[0].featureName}</span>이(가)
+              {sortedData.length > 1 ? (
+                <span>
+                  <span className="text-[theme(color-blue-01)] font-medium">{sortedData[0].importanceValue}%</span>로 가장 중요한 특성으로 나타났으며, 이는 두 번째로 중요한 특성인
+                  <span className="text-[theme(color-blue-01)] font-medium">
+                    {sortedData[1].featureName}({sortedData[1].importanceValue}%)
+                  </span>
+                  보다
+                  <span className="text-[theme(color-blue-01)] font-medium">
+                    {(parseFloat(sortedData[0].importanceValue.replace('%', '')) - parseFloat(sortedData[1].importanceValue.replace('%', ''))).toFixed(1)}%p
+                  </span>
+                  높습니다.
+                </span>
+              ) : (
+                <span>
+                  <span className="text-[theme(color-blue-01)] font-medium">{sortedData[0].importanceValue}</span>로 가장 중요한 특성으로 나타났습니다.
+                </span>
+              )}
+            </p>
+
+            {sortedData.length >= 4 && (
+              <p className="mt-2 text-sm text-gray-600">
+                상위 3개 특성(
+                <span className="text-[theme(color-blue-01)] font-medium">
+                  {sortedData
+                    .slice(0, 3)
+                    .map((d) => d.featureName)
+                    .join(', ')}
+                </span>
+                )이 전체 중요도의 약
+                <span className="text-[theme(color-blue-01)] font-medium">
+                  {sortedData
+                    .slice(0, 3)
+                    .reduce((sum, item) => sum + parseFloat(item.importanceValue.replace('%', '')), 0)
+                    .toFixed(1)}
+                  %
+                </span>
+                를 차지하고 있어 모델 예측에 큰 영향을 미치고 있습니다.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

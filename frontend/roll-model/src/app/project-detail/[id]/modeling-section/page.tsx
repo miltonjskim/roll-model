@@ -70,8 +70,7 @@ export default function ModelSectionPage() {
       </ProjectDetailCard>
 
       {/* <ProjectDetailCard cardProps={propsInfo.ClassificationEvaluation}></ProjectDetailCard>
-      <ProjectDetailCard cardProps={propsInfo.RegressionEvaluation}></ProjectDetailCard>
-      <ProjectDetailCard cardProps={propsInfo.FeatureImportanceChart}></ProjectDetailCard> */}
+      <ProjectDetailCard cardProps={propsInfo.RegressionEvaluation}></ProjectDetailCard> */}
 
       {isClassification && (projectDetailModel as ClassificationModelData).confusionMatrix && (
         <ClassificationEvaluation confusionMatrix={(projectDetailModel as ClassificationModelData).confusionMatrix} />
