@@ -2,10 +2,6 @@
 
 import { ModelParameter, TargetInfo } from '@/entities/project-detail/model/ModelTypes';
 import { CLASSIFICATION_MODELS, REGRESSION_MODELS } from '@/shared/api/mocks/modeling/modelingData';
-import { MdBubbleChart } from 'react-icons/md';
-import { FaSearch } from 'react-icons/fa';
-import { IoExtensionPuzzle } from 'react-icons/io5';
-import { MdTimer } from 'react-icons/md';
 import confetti from 'canvas-confetti';
 import { useRef, useState } from 'react';
 import { ModelEmoji, getModelEmoji, getParameterEmoji, getCommonParamEmoji } from '@/shared/api/mocks/modeling/modelingEmoji';

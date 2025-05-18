@@ -66,7 +66,7 @@ export default function ModelSectionPage() {
       </ProjectDetailCard>
       {/* 모델성능 */}
       <ProjectDetailCard cardProps={propsInfo.PerformanceMetricsCard}>
-        <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} />
+        <PerformanceMetricsCard performanceMetrics={projectDetailModel.performanceMetrics} category={projectDetailModel.projectInfo.category} />
       </ProjectDetailCard>
 
       {/* <ProjectDetailCard cardProps={propsInfo.ClassificationEvaluation}></ProjectDetailCard>

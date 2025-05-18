@@ -1,66 +1,72 @@
 'use client';
 
 import { PerformanceMetric } from '@/entities/project-detail/model/ModelTypes';
-import { FaChartLine } from 'react-icons/fa6';
-import { GiArcheryTarget } from 'react-icons/gi';
-import { FaSearch } from 'react-icons/fa';
-import { FaBalanceScale } from 'react-icons/fa';
+import { getMetricEmoji } from '@/shared/api/mocks/modeling/modelingEmoji';
+import { CssDetailHovering } from '@/widgets/project/project-detail/ProjectDetailCard';
 
 interface PerformanceMetricsCardProps {
   performanceMetrics: PerformanceMetric[];
+  category: 'CLASSIFICATION' | 'REGRESSION'; // 메트릭 타입(분류/회귀)을 위해 추가
 }
 
-export default function PerformanceMetricsCard({ performanceMetrics }: PerformanceMetricsCardProps) {
-  const performanceCards = [
-    {
-      name: performanceMetrics[0]?.metricName,
-      value: performanceMetrics[0]?.metricValue,
-      description: performanceMetrics[0]?.metricDesc,
-      bg: 'bg-[theme(color-blue-03)]',
-      textColor: 'text-blue-700',
-      icon: <FaChartLine className="text-lg" />,
-    },
-    {
-      name: performanceMetrics[1]?.metricName,
-      value: performanceMetrics[1]?.metricValue,
-      description: performanceMetrics[1]?.metricDesc,
-      bg: 'bg-[theme(color-yellow-03)]',
-      textColor: 'text-yellow-700',
-      icon: <GiArcheryTarget className="text-lg" />,
-    },
-    {
-      name: performanceMetrics[2]?.metricName,
-      value: performanceMetrics[2]?.metricValue,
-      description: performanceMetrics[2]?.metricDesc,
-      bg: 'bg-[theme(color-green-03)]',
-      textColor: 'text-green-700',
-      icon: <FaSearch className="text-lg" />,
-    },
-    {
-      name: performanceMetrics[3]?.metricName,
-      value: performanceMetrics[3]?.metricValue,
-      description: performanceMetrics[3]?.metricDesc,
-      bg: 'bg-[theme(color-rose-03)]',
-      textColor: 'text-rose-700',
-      icon: <FaBalanceScale className="text-lg" />,
-    },
-  ];
+export default function PerformanceMetricsCard({ performanceMetrics, category }: PerformanceMetricsCardProps) {
+  // 카드 호버 효과를 위한 CSS 클래스
+
+  // 메트릭 값을 포맷팅하는 함수
+  const formatMetricValue = (value: string | number | undefined) => {
+    if (!value) return '-';
+
+    // 숫자인 경우 소수점 4자리까지 표시
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      return numValue.toFixed(2);
+    }
+
+    return value;
+  };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-6 text-xl font-semibold text-gray-800">모델 성능 한눈에 보기</h2>
-
+    <div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {performanceCards.map((card, index) => (
-          <div key={`metric-${index}`} className={`flex flex-col rounded-lg ${card.bg} p-4 transition-all hover:shadow-md`}>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">{card.name}</span>
-              <span className="text-lg">{card.icon}</span>
-            </div>
-            <div className={`mb-1 text-2xl font-bold ${card.textColor}`}>{card.value}</div>
-            <div className="text-xs text-gray-500">{card.description}</div>
+        {/* 첫번째카드 */}
+        <div className={`bg-[theme(color-blue-03)] hover:bg-[theme(color-blue-04)] flex justify-between rounded-lg p-3 ${CssDetailHovering} hover:shadow-lg`}>
+          <div className="flex flex-col">
+            <div className="h-[1.5rem] text-start text-sm font-medium text-gray-600">{performanceMetrics[0]?.metricName || '-'}</div>
+            <div className="text-start text-xl font-bold text-blue-700 lg:text-2xl">{formatMetricValue(performanceMetrics[0]?.metricValue)}</div>
+            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[0]?.metricDesc || ''}</div>
           </div>
-        ))}
+          <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[0]?.metricKey && getMetricEmoji(performanceMetrics[0].metricKey, category)}</div>
+        </div>
+
+        {/* 두번째카드 */}
+        <div className={`bg-[theme(color-yellow-03)] hover:bg-[theme(color-yellow-04)] flex justify-between rounded-lg p-3 ${CssDetailHovering} hover:shadow-lg`}>
+          <div className="flex flex-col">
+            <div className="h-[1.5rem] text-start text-sm font-medium text-gray-600">{performanceMetrics[1]?.metricName || '-'}</div>
+            <div className="text-start text-xl font-bold text-yellow-700 lg:text-2xl">{formatMetricValue(performanceMetrics[1]?.metricValue)}</div>
+            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[1]?.metricDesc || ''}</div>
+          </div>
+          <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[1]?.metricKey && getMetricEmoji(performanceMetrics[1].metricKey, category)}</div>
+        </div>
+
+        {/* 세번째카드 */}
+        <div className={`bg-[theme(color-green-03)] hover:bg-[theme(color-green-04)] flex justify-between rounded-lg p-3 ${CssDetailHovering} hover:shadow-lg`}>
+          <div className="flex flex-col">
+            <div className="h-[1.5rem] text-start text-sm font-medium text-gray-600">{performanceMetrics[2]?.metricName || '-'}</div>
+            <div className="text-start text-xl font-bold text-green-700 lg:text-2xl">{formatMetricValue(performanceMetrics[2]?.metricValue)}</div>
+            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[2]?.metricDesc || ''}</div>
+          </div>
+          <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[2]?.metricKey && getMetricEmoji(performanceMetrics[2].metricKey, category)}</div>
+        </div>
+
+        {/* 네번째카드 */}
+        <div className={`bg-[theme(color-rose-03)] hover:bg-[theme(color-rose-04)] flex justify-between rounded-lg p-3 ${CssDetailHovering} hover:shadow-lg`}>
+          <div className="flex flex-col">
+            <div className="h-[1.5rem] text-start text-sm font-medium text-gray-600">{performanceMetrics[3]?.metricName || '-'}</div>
+            <div className="text-start text-xl font-bold text-rose-700 lg:text-2xl">{formatMetricValue(performanceMetrics[3]?.metricValue)}</div>
+            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[3]?.metricDesc || ''}</div>
+          </div>
+          <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[3]?.metricKey && getMetricEmoji(performanceMetrics[3].metricKey, category)}</div>
+        </div>
       </div>
     </div>
   );
