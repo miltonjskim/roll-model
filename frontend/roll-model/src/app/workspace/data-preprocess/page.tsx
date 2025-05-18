@@ -5,6 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { aiRecommendedStepsAtom, completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { guide } from '@/features/guide/GuideProvider';
+import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPreprocessGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
+import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/PreprocessingInfoDialog';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
@@ -28,6 +32,13 @@ const PreprocessDataPage = () => {
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
   const [steps, setSteps] = useState<Step[]>([]);
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
+
+  useEffect(() => {
+    guide.cancel();
+    guide.steps = [];
+    registerPreprocessGuideSteps();
+    startGuide();
+  }, []);
 
   useEffect(() => {
     if (!uploadedData) {
@@ -113,13 +124,15 @@ const PreprocessDataPage = () => {
           {/* 전처리 기능 */}
           <div className="bg-[theme(primary-white)] flex flex-1 flex-col overflow-hidden rounded-lg p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="preprocessing-options mt-4 mb-6 min-h-0 flex-1 overflow-y-auto">
+            <div className="preprocessing-options preprocessing-options mt-4 mb-6 min-h-0 flex-1 overflow-y-auto">
               <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
             </div>
             <div className="text-center text-xs">
               <span className="text-[var(--color-error-text)]">*</span> 결측 컬럼 상세 정보를 보시려면 아래를 클릭하세요.
             </div>
-            <PreprocessingSummary />
+            <div className="data-summary-area">
+              <PreprocessingSummary />
+            </div>
           </div>
         </div>
 
@@ -129,13 +142,13 @@ const PreprocessDataPage = () => {
             {/* 추천 단계 + 데이터 미리보기 */}
             <div className="flex min-h-0 flex-[5] flex-col gap-2 md:flex-row">
               {/* AI 추천 단계: 가장 작게 (1 비율) */}
-              <div className="bg-[theme(primary-white)] ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
+              <div className="bg-[theme(primary-white)] ai-recommended-section ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
                 <h4 className="text-base font-semibold">AI 추천 전처리 단계</h4>
                 <PreprocessingPipeline steps={recommendedSteps} cardStyle="small" highlight="gray" />
               </div>
 
               {/* 데이터 미리보기: 가장 크게 (3 비율) */}
-              <div className="bg-[theme(primary-white)] min-h-0 flex-[3] overflow-y-auto rounded-md p-4">
+              <div className="bg-[theme(primary-white)] preprocessing-table min-h-0 flex-[3] overflow-y-auto rounded-md p-4">
                 <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
                 <p className="text-sm text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
                 <PreprocessingTable changedCells={changedCells} />
@@ -143,7 +156,7 @@ const PreprocessDataPage = () => {
             </div>
 
             {/* 적용한 전처리 단계: 중간 크기 (2 비율) */}
-            <div className="bg-[theme(primary-white)] min-h-0 flex-[2] overflow-y-auto rounded-md p-4">
+            <div className="bg-[theme(primary-white)] applied-steps min-h-0 flex-[2] overflow-y-auto rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-left text-base font-semibold">적용한 전처리 단계</h4>
@@ -158,7 +171,7 @@ const PreprocessDataPage = () => {
           </div>
 
           {/* 완료 버튼 */}
-          <div className="mt-2">
+          <div className="complete-button mt-2">
             <Button variant="black" size="lg" className="w-full p-6 text-base" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
               전처리 결과 확인
             </Button>

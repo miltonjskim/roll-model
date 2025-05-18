@@ -20,7 +20,7 @@ export const DataPreviewTable = ({ header, previewRow, columnTypes, editableHead
   <Table className="rounded border">
     <TableHeader>
       <TableRow>
-        <TableHead className="bg-[theme(color-gray-05)] border-r">헤더</TableHead>
+        <TableHead className="guide-header-toggle bg-[theme(color-gray-05)] border-r">헤더</TableHead>
         {header.map((col, idx) => (
           <TableHead key={idx} className="bg-[theme(color-gray-05)] border-r">
             {editableHeaderIndex === idx ? (

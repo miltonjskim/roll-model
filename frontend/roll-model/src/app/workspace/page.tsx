@@ -1,9 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { registerInitProjectSteps } from '@/features/guide/steps/initProjectSteps';
+import { guide } from '@/features/guide/GuideProvider';
+import { registerInitProjectSteps } from '@/features/guide/steps/registerInitProjectSteps';
 import { startGuide } from '@/features/guide/useGuide';
-import GuideStartButton from '@/shared/ui/GuideStartButton';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -11,6 +11,8 @@ const Workspace = () => {
   const router = useRouter();
 
   useEffect(() => {
+    guide.cancel();
+    guide.steps = [];
     registerInitProjectSteps();
     startGuide();
   }, []);

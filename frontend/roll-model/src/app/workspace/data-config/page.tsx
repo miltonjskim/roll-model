@@ -22,6 +22,10 @@ import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import { registerConfigDataGuideSteps } from '@/features/guide/steps/registerConfigDataGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
+import { guide } from '@/features/guide/GuideProvider';
+import DataTypeInfoDialog from '@/features/workspace/data-upload/ui/DataTypeInfoDialog';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -204,6 +208,10 @@ const ConfigDataPage = () => {
 
   useEffect(() => {
     parseFile();
+    guide.cancel();
+    guide.steps = [];
+    registerConfigDataGuideSteps();
+    startGuide();
     // 아래 주석 지우면 eslint 경고 뜸 삭제 금지!!
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, delimiter, encoding, useHeaderRow]);
@@ -243,11 +251,11 @@ const ConfigDataPage = () => {
               </div>
               <div className="mt-2 mr-4 flex items-center justify-end space-x-2">
                 <Checkbox id="use-header-row" checked={useHeaderRow} onCheckedChange={(checked) => setUseHeaderRow(Boolean(checked))} />
-                <label htmlFor="use-header-row" className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="use-header-row" className="guide-header-toggle text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   첫 줄을 헤더로 사용
                 </label>
               </div>
-              <div className="overflow-x-auto p-4">
+              <div className="guide-header-edit overflow-x-auto p-4">
                 <DataPreviewTable
                   header={header}
                   previewRow={previewRow}
@@ -265,14 +273,17 @@ const ConfigDataPage = () => {
 
           {header.length > 0 && (
             <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-              <div>
-                <h3 className="font-semibold">
-                  <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
-                </h3>
-                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">
+                    <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
+                  </h3>
+                  <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+                </div>
+                <DataTypeInfoDialog />
               </div>
 
-              <div className="flex flex-wrap gap-x-12 p-4">
+              <div className="guide-column-type flex flex-wrap gap-x-12 p-4">
                 {header.map((col, idx) => (
                   <div key={idx} className="my-2 flex items-center gap-6 text-sm">
                     <span className="w-32 font-semibold">{col.length === 0 ? `컬럼 ${idx + 1}` : col}</span>
@@ -304,7 +315,7 @@ const ConfigDataPage = () => {
 
         <div className="flex basis-[24rem] flex-col justify-between">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-            <div>
+            <div className="guide-delimiter-select">
               <h3 className="font-semibold">
                 <span className="text-[color:var(--color-error-text)]">*</span>구분자 선택
               </h3>
@@ -321,7 +332,7 @@ const ConfigDataPage = () => {
             </div>
 
             <div className="mt-6">
-              <div>
+              <div className="guide-delimiter-select">
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>인코딩 선택
                 </h3>
@@ -333,8 +344,9 @@ const ConfigDataPage = () => {
                   다른 인코딩을 선택해 보세요.
                 </p>
               </div>
-
-              <EncodingSelector value={encoding} onChange={setEncoding} />
+              <div className="guide-encoding-select">
+                <EncodingSelector value={encoding} onChange={setEncoding} />
+              </div>
             </div>
           </div>
 

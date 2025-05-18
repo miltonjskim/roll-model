@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { projectCategory, projectDomain } from '@/entities/workspace/model/types';
+import { guide } from '@/features/guide/GuideProvider';
+import { registerMetaDataGuideSteps } from '@/features/guide/steps/registerMetaDataGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
 import { CATEGORY_OPTIONS, DOMAIN_OPTIONS } from '@/features/workspace/constants/selectOptions';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
@@ -26,6 +29,10 @@ const InputProjectMetaDataPage = () => {
 
   useEffect(() => {
     // 페이지 최초 진입 시만 초기화
+    guide.cancel();
+    guide.steps = [];
+    registerMetaDataGuideSteps();
+    startGuide();
   }, [setTitle, setDescription, setDomain, setType, setIsPublic]);
 
   const handleSubmit = () => {
@@ -41,7 +48,7 @@ const InputProjectMetaDataPage = () => {
 
       <div className="bg-[theme(primary-white)] mx-auto mt-4 flex max-w-[70%] min-w-[44rem] flex-col justify-between gap-12 rounded-lg px-6 pt-8 pb-6 text-left">
         <div className="my-auto flex flex-col justify-center gap-8">
-          <div className="flex items-center gap-2">
+          <div className="guide-project-title flex items-center gap-2">
             <label htmlFor="project-name" className="flex-1/5 font-semibold select-none">
               프로젝트 이름
             </label>
@@ -55,7 +62,7 @@ const InputProjectMetaDataPage = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 select-none">
+          <div className="guide-project-description flex items-center gap-2 select-none">
             <label htmlFor="project-description" className="flex-1/5 font-semibold">
               프로젝트 목적
             </label>
@@ -68,7 +75,7 @@ const InputProjectMetaDataPage = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 select-none">
+          <div className="guide-project-domain flex items-center gap-2 select-none">
             <label htmlFor="project-domain" className="flex-1/5 font-semibold">
               도메인 선택
             </label>
@@ -86,7 +93,7 @@ const InputProjectMetaDataPage = () => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2 select-none">
+          <div className="guide-project-type flex items-center gap-2 select-none">
             <label htmlFor="project-category" className="flex-1/5 font-semibold">
               예측 방식 선택
             </label>
@@ -104,7 +111,7 @@ const InputProjectMetaDataPage = () => {
             </Select>
           </div>
 
-          <div className="flex gap-2 select-none">
+          <div className="guide-project-public flex gap-2 select-none">
             <label htmlFor="project-public" className="flex-1/5 font-semibold">
               프로젝트 공개 여부
             </label>
