@@ -26,7 +26,7 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
   // console.log('dynamicColumns:', dynamicColumns);
 
   return (
-    <div className="mt-4 max-h-[80%] overflow-x-auto overflow-y-auto rounded-md border border-gray-200">
+    <div className="mt-4 max-h-[42vh] overflow-x-auto overflow-y-auto rounded-md border border-gray-200">
       <Table>
         <TableHeader>
           <TableRow>
