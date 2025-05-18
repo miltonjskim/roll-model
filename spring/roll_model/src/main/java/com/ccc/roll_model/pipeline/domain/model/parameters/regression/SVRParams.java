@@ -3,25 +3,25 @@ package com.ccc.roll_model.pipeline.domain.model.parameters.regression;
 import java.util.Set;
 
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @Builder
+@Getter
 @AllArgsConstructor
 public class SVRParams implements ModelParameter {
 
-	@Builder.Default
-	private Double C = 1.0;
+	@JsonProperty("C")
+	private Double C;
 
-	@Builder.Default
-	private Double epsilon = 0.1;
+	private Double epsilon;
 
-	@Builder.Default
-	private String kernel = "rbf";
+	private String kernel;
 
 	@Override
 	public boolean validateParameters() {
@@ -34,5 +34,10 @@ public class SVRParams implements ModelParameter {
 		}
 
 		return kernel == null || Set.of("linear", "rbf", "poly", "sigmoid").contains(kernel.toLowerCase());
+	}
+
+	@JsonGetter("C")
+	public Double getC() {
+		return C;
 	}
 }
