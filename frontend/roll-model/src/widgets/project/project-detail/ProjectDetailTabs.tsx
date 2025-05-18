@@ -41,7 +41,7 @@ export default function ProjectDetailTabs() {
           <Link
             key={tab.path}
             href={tab.path}
-            className={`cursor-pointer rounded-md px-4 py-2 text-lg transition-colors select-none ${getButtonClass(tab.path)}`}
+            className={`md:text-md cursor-pointer rounded-md py-2 text-sm transition-colors select-none md:px-4 lg:text-lg ${getButtonClass(tab.path)}`}
             onMouseEnter={() => setHoveredCategory(tab.path)}
             onMouseLeave={() => setHoveredCategory(null)}
           >

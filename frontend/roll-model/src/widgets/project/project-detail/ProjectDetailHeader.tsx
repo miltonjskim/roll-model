@@ -154,7 +154,7 @@ export default function ProjectDetailHeader() {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 items-center justify-between gap-3 md:flex">
         {/* 흰색영역 */}
         <div className="flex h-24 w-full items-center space-x-4 rounded-[var(--radius-lg)] bg-[var(--primary-white)] p-4 shadow-md">
           {/* 아이콘 */}
@@ -165,8 +165,8 @@ export default function ProjectDetailHeader() {
           </div>
           {/* 아이콘 옆 정보 */}
           <div>
-            <h1 className="text-12 text-start font-bold md:text-lg lg:text-xl">{projectDetail.title}</h1>
-            <div className="mt-1 flex space-x-2 text-sm text-[var(--color-gray-01)]">
+            <h1 className="truncate text-start font-bold md:text-lg lg:text-xl">{projectDetail.title}</h1>
+            <div className="mt-1 flex space-x-2 truncate text-sm text-[var(--color-gray-01)]">
               <p>{getDomainDisplayName(projectDetail.domain)}</p>
               <p>|</p>
               <p>{projectDetail.category === 'CLASSIFICATION' ? '분류' : '회귀'}</p>
@@ -175,8 +175,9 @@ export default function ProjectDetailHeader() {
             </div>
           </div>
         </div>
-        {/* 기타버튼 */}
-        <div className="flex h-24 space-x-3">
+        {/* 버튼 */}
+        <div className="mt-2 flex h-24 justify-center space-x-3 md:mt-0">
+          {/* 기타버튼 */}
           {projectDetail.ownerYn && (
             <>
               {/* 삭제버튼 */}
