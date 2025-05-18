@@ -79,7 +79,7 @@ async def determine_target_project(db, original_project: Project, member_id, sou
         # 같은 프로젝트에 새 버전 생성
         target_project = db.query(Project.category).filter(
             Project.project_id == project_id
-        ).first().category
+        ).first()
         logger.info(f"본인의 파이프라인 복제: {target_project.project_id}")
     else:
         # 2. 타인의 파이프라인 복제
