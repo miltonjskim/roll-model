@@ -158,7 +158,7 @@ export default function ProjectDetailHeader() {
         {/* 흰색영역 */}
         <div className="flex h-24 w-full items-center space-x-4 rounded-[var(--radius-lg)] bg-[var(--primary-white)] p-4 shadow-md">
           {/* 아이콘 */}
-          <div className={`${domainColor} flex h-[4rem] w-[4rem] items-center justify-center overflow-hidden rounded-lg`}>
+          <div className={`${domainColor} flex h-[4rem] w-[4rem] cursor-pointer items-center justify-center overflow-hidden rounded-lg select-none`}>
             <div className={`flex w-full justify-center rounded-lg text-[3rem] transition-all duration-600 hover:text-[3.5rem]`} onClick={triggerConfetti} ref={iconRef}>
               {domainIcon}
             </div>
