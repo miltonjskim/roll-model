@@ -234,8 +234,9 @@ class PreprocessingHandler:
         dataset = df.to_dict(orient="records")
         dataset_summary = PreprocessingHandler.get_dataset_summary(df)
         page_size = 30
-        start_point = result.get("startPoint", 0)
-        result.pop("startPoint", None)  # startPoint는 응답에서 제거
+        start_point = result.get("startPoint", 0) if result is not None else 0
+        if result is not None:
+            result.pop("startPoint", None)  # startPoint는 응답에서 제거
         aligned_start = (start_point // page_size) * page_size
         # 기본 응답 구조
         response = {
