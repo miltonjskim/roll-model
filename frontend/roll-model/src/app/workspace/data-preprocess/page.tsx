@@ -35,10 +35,14 @@ const PreprocessDataPage = () => {
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
 
   useEffect(() => {
-    guide.cancel();
-    guide.steps = [];
-    registerPreprocessGuideSteps();
-    startGuide();
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerPreprocessGuideSteps();
+      startGuide();
+    }
   }, []);
 
   useEffect(() => {
@@ -115,7 +119,7 @@ const PreprocessDataPage = () => {
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="mt-6 flex h-full flex-col gap-2 xl:flex-row xl:gap-2">
+      <div className="mt-6 flex h-[calc(100%-4.5rem)] flex-col gap-2 xl:flex-row xl:gap-2">
         {/* 좌측 영역 */}
         <div className="flex max-h-full min-h-0 flex-col xl:max-w-[20rem] xl:min-w-[16rem] xl:basis-[20%]">
           {/* 프로젝트 정보 */}

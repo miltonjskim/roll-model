@@ -12,10 +12,14 @@ const Workspace = () => {
   const router = useRouter();
 
   useEffect(() => {
-    guide.cancel();
-    guide.steps = [];
-    registerInitProjectSteps();
-    startGuide();
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerInitProjectSteps();
+      startGuide();
+    }
   }, []);
 
   const handleCreateProject = () => {

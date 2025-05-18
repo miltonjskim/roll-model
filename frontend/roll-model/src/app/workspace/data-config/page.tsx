@@ -209,10 +209,6 @@ const ConfigDataPage = () => {
 
   useEffect(() => {
     parseFile();
-    guide.cancel();
-    guide.steps = [];
-    registerConfigDataGuideSteps();
-    startGuide();
     // 아래 주석 지우면 eslint 경고 뜸 삭제 금지!!
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, delimiter, encoding, useHeaderRow]);
@@ -224,6 +220,17 @@ const ConfigDataPage = () => {
       setDelimiter(selectedDelimiterOption);
     }
   }, [selectedDelimiterOption, customDelimiter]);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerConfigDataGuideSteps();
+      startGuide();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col justify-center">

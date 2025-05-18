@@ -30,10 +30,14 @@ const InputProjectMetaDataPage = () => {
 
   useEffect(() => {
     // 페이지 최초 진입 시만 초기화
-    guide.cancel();
-    guide.steps = [];
-    registerMetaDataGuideSteps();
-    startGuide();
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerMetaDataGuideSteps();
+      startGuide();
+    }
   }, [setTitle, setDescription, setDomain, setType, setIsPublic]);
 
   const handleSubmit = () => {
