@@ -80,7 +80,7 @@ class PreprocessingHandler:
 
         # 5. 처리된 데이터 MinIO에 저장
         df: DataFrame = handler.df if hasattr(handler, "df") else result.get("data")
-        if df is None:
+        if df is None or df.empty:
             raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
 
         object_name, etag = await self._save_to_minio(pipeline_id, df, encoding)
@@ -134,7 +134,9 @@ class PreprocessingHandler:
         object_name = f"pipeline_{pipeline_id}/dataset_{timestamp}.csv"
 
         buffer = io.BytesIO()   
+        df.to_csv(buffer, index=False, encoding=encoding)
         buffer.seek(0)
+
 
         try:
             etag = await self.minio_client.save_object_with_etag(
