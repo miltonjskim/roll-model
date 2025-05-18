@@ -36,7 +36,7 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
       setPipelineId(data.pipelineId);
       setProjectTitle(project.title);
 
-      router.push('/workspace/preprocess');
+      router.push('/workspace/data-preprocess');
     } catch (error) {
       showErrorToast((error as ApiError).message);
     } finally {
