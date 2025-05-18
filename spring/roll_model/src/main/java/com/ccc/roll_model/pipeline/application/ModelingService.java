@@ -68,8 +68,8 @@ public class ModelingService {
 		PipelineEntity pipeline = pipelineRepository.findById(command.getPipelineId())
 				.orElseThrow(() -> new EntityNotFoundException("파이프라인을 찾을 수 없습니다. : mysql"));
 
-		// PREPROCESSED 인 경우마 모델링 가능 (정상 절차 실행 시 PREPROCESSED가 됨)
-		if (pipeline.getStatus() != Status.PREPROCESSED) {
+		// PREPROCESSED, FAILED 인 경우에 모델링 가능 (정상 절차 실행 시 PREPROCESSED가 됨)
+		if (pipeline.getStatus() == Status.COMPLETED) {
 			throw new ApiException(ErrorCode.INVALID_MODELING_STATUS);
 		}
 
@@ -233,9 +233,14 @@ public class ModelingService {
 			ModelingInfo modelingInfo,
 			ModelParameter modelParameter
 	) {
-		// 1. MongoDB에 초기 Model 문서 생성
-		ModelDocument initialModelDocument = initializeModelDocument(command, pipelineDocument, modelParameter);
-		ObjectId modelId = modelRepository.save(initialModelDocument).getId();
+		// 1. MODEL 문서 중복 제거
+		ModelDocument modelDocument = modelRepository.findByPipelineId(pipeline.getPipelineId());
+
+		if (modelDocument == null) {
+			modelDocument = initializeModelDocument(command, pipelineDocument, modelParameter);
+		}
+
+		ObjectId modelId = modelRepository.save(modelDocument).getId();
 
 		// 2. MongoDB 파이프라인 문서 업데이트
 		PipelineDocument.PipelineHistoryItem latestHistoryItem;
