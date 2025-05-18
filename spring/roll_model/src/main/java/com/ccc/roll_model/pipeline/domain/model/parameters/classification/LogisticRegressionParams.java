@@ -3,6 +3,8 @@ package com.ccc.roll_model.pipeline.domain.model.parameters.classification;
 import java.util.Set;
 
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,17 +15,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class LogisticRegressionParams implements ModelParameter {
-	@Builder.Default
-	private String penalty = "l2";
 
-	@Builder.Default
-	private Double C = 1.0;
+	private String penalty;
 
-	@Builder.Default
-	private String solver = "lbfgs";
+	@JsonProperty("C")
+	private Double C;
 
-	@Builder.Default
-	private Integer max_iter = 100;
+	private String solver;
+
+	private Integer max_iter;
 
 	@Override
 	public boolean validateParameters() {
@@ -46,5 +46,10 @@ public class LogisticRegressionParams implements ModelParameter {
 
 		// max_iter 검증 - 양의 정수여야 함
 		return max_iter != null && max_iter > 0;
+	}
+
+	@JsonGetter("C")
+	public Double getC() {
+		return C;
 	}
 }

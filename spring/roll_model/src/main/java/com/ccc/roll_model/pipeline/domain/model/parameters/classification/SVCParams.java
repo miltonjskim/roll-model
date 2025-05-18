@@ -3,26 +3,26 @@ package com.ccc.roll_model.pipeline.domain.model.parameters.classification;
 import java.util.Set;
 
 import com.ccc.roll_model.pipeline.domain.model.common.ModelParameter;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-@Getter
 @Builder
+@Getter
 @AllArgsConstructor
 public class SVCParams implements ModelParameter {
-	@Builder.Default
-	private Double C = 1.0;
 
-	@Builder.Default
-	private String kernel = "rbf";
+	@JsonProperty("C")
+	private Double C;
 
-	@Builder.Default
-	private String gamma = "scale";
+	private String kernel;
 
-	@Builder.Default
-	private Integer degree = 3;
+	private String gamma;
+
+	private Integer degree;
 
 	@Override
 	public boolean validateParameters() {
@@ -50,8 +50,16 @@ public class SVCParams implements ModelParameter {
 				}
 			}
 		}
+		if (this.degree == null) {
+			this.degree = 3;
+		}
 
 		// degree 검증 - 양의 정수여야 함
-		return degree != null && degree > 0;
+		return !"poly".equalsIgnoreCase(kernel) || degree > 0;
+	}
+
+	@JsonGetter("C")
+	public Double getC() {
+		return C;
 	}
 }
