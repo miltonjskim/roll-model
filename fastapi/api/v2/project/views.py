@@ -478,7 +478,7 @@ async def reload_preprocess_pipeline(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data['data']), round_decimals=2))
         )
     
     except Exception as e:
@@ -531,7 +531,7 @@ async def reload_modeling_pipeline(
         
         # MongoDB에서 파이프라인 상세 정보 조회
         pipeline_id = pipeline.pipeline_id
-        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id, pipeline.project_id, member_id)
+        pipeline_details:PipelineModel | None = await pipeline_service.get_pipeline(pipeline_id)
         
         if not pipeline_details:
             return ApiResponse(
