@@ -2,6 +2,31 @@ import { guide } from '@/features/guide/GuideProvider';
 
 export const registerPreprocessGuideSteps = () => {
   guide.addStep({
+    id: 'intro',
+    title: '<span class="font-tossface">📦</span> 전처리 단계 시작!',
+    text: `업로드한 데이터를 바탕으로 <b>전처리 작업</b>을 진행할 수 있어요.<br/>
+    AI 추천부터 결측치/이상치 처리, 인코딩까지<br/>
+    필요한 작업을 하나씩 선택해보세요.`,
+    classes: 'bg-white shadow-xl rounded-md border border-gray-200 text-gray-900 max-w-md px-4 py-3',
+    highlightClass: 'shepherd-highlight',
+    buttons: [
+      {
+        text: '다시 보지 않기',
+        classes: `shepherd-button outline text-xs text-red-500 border-red-200 hover:bg-red-50`,
+        action: () => {
+          localStorage.setItem('guide.dismissed', 'true');
+          guide.cancel();
+        },
+      },
+      {
+        text: '좋아요! 다음 단계',
+        classes: `shepherd-button black text-xs`,
+        action: guide.next,
+      },
+    ],
+  });
+
+  guide.addStep({
     id: 'preprocessing-option-area',
     title: '<span class="font-tossface">🛠️</span> 전처리 기능 선택',
     text: `여기에서 <b>결측치, 이상치, 인코딩 등</b> 다양한 전처리 기능을 적용할 수 있어요.`,
