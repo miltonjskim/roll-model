@@ -211,11 +211,6 @@ class PreprocessingHandler:
                     "rowIndices": missing_indices
                 }
 
-        data_sample = {
-            "columns": df.columns.tolist(),
-            "data": df[:].to_dict(orient="records")  # 지정된 행 수만 반환
-        }
-
         return {
             "total_rows": total_rows,
             "total_columns": total_columns,
@@ -231,13 +226,24 @@ class PreprocessingHandler:
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
         logger.info(f"result: {result}")
         # 7. 데이터셋 요약 정보 생성
-        dataset = df.to_dict(orient="records")
-        dataset_summary = PreprocessingHandler.get_dataset_summary(df)
         page_size = 30
         start_point = result.get("startPoint", 0) if result is not None else 0
         if result is not None:
             result.pop("startPoint", None)  # startPoint는 응답에서 제거
         aligned_start = (start_point // page_size) * page_size
+        # 데이터 idx 추가, dict 변환
+        df = df.reset_index(drop=True)  # 기존 인덱스 초기화
+        
+        # 현재 페이지에 해당하는 부분 추출
+        aligned_df = df.iloc[aligned_start:aligned_start + page_size].copy()
+        
+        # aligned_start에 맞춰 인덱스 추가
+        aligned_df.index = range(aligned_start, aligned_start + len(aligned_df))
+        aligned_df = aligned_df.reset_index().rename(columns={'index': 'idx'})
+        
+        # dict로 변환
+        dataset = aligned_df.to_dict(orient="records")
+ 
         # 기본 응답 구조
         response = {
             "data": {
