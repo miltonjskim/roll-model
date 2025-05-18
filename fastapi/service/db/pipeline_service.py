@@ -500,7 +500,6 @@ class PipelineService:
             print(dataset_id)
             datasets = get_dataset_collection()
             dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
-            print(dataset)
             data_types_dict = dataset["metadata"]["data_types"]
 
             columns = []

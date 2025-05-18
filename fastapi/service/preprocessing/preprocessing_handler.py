@@ -133,12 +133,7 @@ class PreprocessingHandler:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         object_name = f"pipeline_{pipeline_id}/dataset_{timestamp}.csv"
 
-        buffer = io.BytesIO()
-        if df.columns[0] != "idx":
-            df.to_csv(buffer, index=True, index_label='idx', encoding=encoding)
-        else:
-            df.to_csv(buffer, index=False, encoding=encoding)
-            
+        buffer = io.BytesIO()   
         buffer.seek(0)
 
         try:
