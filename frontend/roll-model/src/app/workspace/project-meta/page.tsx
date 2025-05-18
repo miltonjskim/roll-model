@@ -59,6 +59,7 @@ const InputProjectMetaDataPage = () => {
               placeholder="프로젝트 이름은 필수 입력 값입니다."
               onChange={(e) => setTitle(e.target.value)}
               className="flex-4/5 font-medium select-none"
+              required
             />
           </div>
 
@@ -72,6 +73,7 @@ const InputProjectMetaDataPage = () => {
               placeholder="예측하고자 하는 것(목표 변수)을 입력해주세요."
               className="flex-4/5 font-medium"
               id="project-description"
+              required
             />
           </div>
 
@@ -79,7 +81,7 @@ const InputProjectMetaDataPage = () => {
             <label htmlFor="project-domain" className="flex-1/5 font-semibold">
               도메인 선택
             </label>
-            <Select value={domain} onValueChange={(val) => setDomain(val as projectDomain)}>
+            <Select value={domain} onValueChange={(val) => setDomain(val as projectDomain)} required>
               <SelectTrigger className="flex-4/5 font-medium">
                 <SelectValue placeholder="선택하세요" />
               </SelectTrigger>
@@ -97,7 +99,7 @@ const InputProjectMetaDataPage = () => {
             <label htmlFor="project-category" className="flex-1/5 font-semibold">
               예측 방식 선택
             </label>
-            <Select value={type} onValueChange={(val) => setType(val as projectCategory)}>
+            <Select value={type} onValueChange={(val) => setType(val as projectCategory)} required>
               <SelectTrigger className="flex-4/5 font-medium">
                 <SelectValue placeholder="선택하세요" />
               </SelectTrigger>
