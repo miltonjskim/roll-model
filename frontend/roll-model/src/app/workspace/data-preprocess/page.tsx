@@ -97,6 +97,8 @@ const PreprocessDataPage = () => {
       setSteps((prev) => prev.slice(0, -1));
 
       console.log('단계 삭제 response:', response);
+      console.log('response.data.data.datset', response.data.data.dataset);
+
       setUploadedData(response.data.data.dataset);
     } catch (error: unknown) {
       const apiArror = error as ApiError;
