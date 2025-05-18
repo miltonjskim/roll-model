@@ -306,7 +306,7 @@ async def prepare_response_data(new_pipeline_id, new_pipeline, category, include
         response_data["modelingInfo"] = latest_history.modeling_info.model_dump(exclude=dataset_fields_to_exclude) if latest_history.modeling_info else None
         # modelingInfo는 포함하지 않음
     elif new_pipeline.history:
-        new_history_item = new_pipeline.history[0]
+        new_history_item = new_pipeline.history[-1]
         response_data["preprocessingSteps"] = [
             step.model_dump(exclude=dataset_fields_to_exclude)
             for step in new_history_item.preprocessing_steps
