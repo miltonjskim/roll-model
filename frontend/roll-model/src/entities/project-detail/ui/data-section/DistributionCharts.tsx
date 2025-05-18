@@ -14,19 +14,25 @@ export const DistributionCharts = ({ distributions }: DistributionChartsProps) =
       count: distribution.yAxis.values[i],
     }));
   };
+  const barColorIndex = ['var(--color-blue-02)', 'var(--color-yellow-02)', 'var(--color-green-02)', 'var(--color-pink-02)'];
 
   return (
     <div className="bg-[theme(color-card)] mb-4 rounded-lg p-4 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold">주요 변수 분포</h2>
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {distributions.map((dist, index) => (
-          <div key={index} className="bg-[theme(color-gray-05)] rounded p-3">
+          <div key={index} className="bg-[theme(color-card-background)] rounded p-3">
             <h3 className="text-md mb-2 font-medium">{dist.name}</h3>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={transformDistributionData(dist)}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-04)" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--color-card)',
+                      borderColor: 'var(--color-border)',
+                    }}
+                  />
+                  <Bar dataKey="count" fill={`${barColorIndex[index]}`} />
                   <XAxis
                     dataKey="x"
                     label={{
@@ -44,13 +50,6 @@ export const DistributionCharts = ({ distributions }: DistributionChartsProps) =
                     }}
                     tick={{ fill: 'var(--color-gray-01)' }}
                   />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-card)',
-                      borderColor: 'var(--color-border)',
-                    }}
-                  />
-                  <Bar dataKey="count" fill="var(--color-purple-01)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

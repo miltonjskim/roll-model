@@ -1,11 +1,12 @@
 // /entities/project-detail/ui/PreprocessingPipelineCard.tsx
 import { PreprocessingStep } from '@/entities/project-detail/model/dataTypes';
+import { CssDetailHovering, CssDetailHoveringLittle } from '@/widgets/project/project-detail/ProjectDetailCard';
+import { useState } from 'react';
 
 interface PreprocessingPipelineCardProps {
   steps: PreprocessingStep[];
 }
 
-// 전처리 타입별 정보 객체
 // 전처리 타입별 정보 객체
 const preprocessingConfig: Record<string, { icon: string; name: string; ariaLabel: string }> = {
   ORIGINAL_DATA: {
@@ -119,6 +120,7 @@ const defaultConfig = {
 };
 
 export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardProps) => {
+  const [selectedStepIndices, setSelectedStepIndices] = useState<Set<number>>(new Set());
   // 전처리 단계에 원본 데이터(시작)와 전처리 완료(끝) 항목 추가
   const fullPipeline = [
     { type: 'ORIGINAL_DATA', parameters: {}, order: 0, active: true },
@@ -131,27 +133,50 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
     },
   ];
 
-  return (
-    <div className="bg-[theme(primary-white)] mb-4 rounded-lg p-4 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold text-[var(--primary-black)]">전처리 파이프라인</h2>
-      <p className="text-[theme(color-muted-foreground)] mb-2 text-sm">데이터에 적용된 전처리 과정과 세부 파라미터입니다</p>
+  // 클릭 핸들러 수정
+  const toggleStep = (index: number) => {
+    const newIndices = new Set(selectedStepIndices);
+    if (newIndices.has(index)) {
+      newIndices.delete(index);
+    } else {
+      newIndices.add(index);
+    }
+    setSelectedStepIndices(newIndices);
+  };
 
-      <div className="w-full overflow-x-auto py-6">
-        <div className="flex items-center justify-between">
+  return (
+    <div className={`bg-[theme(color-card-background)] border-[theme(color-gray-05)] mb-4 rounded-lg border p-4 shadow-sm ${CssDetailHoveringLittle}`}>
+      <div className="relative w-full overflow-x-auto py-6">
+        <div className="border-[theme(primary-black)] absolute top-[3.8rem] right-0 left-0 z-0 mx-[3.5rem] border-t-2 border-dashed"></div>
+        <div className={`z-10 flex items-center justify-between ${fullPipeline.length <= 4 ? 'px-[3rem]' : ''}`}>
           {fullPipeline.map((step, index) => {
             // 해당 타입의 설정 가져오기 (없으면 기본값 사용)
             const config = preprocessingConfig[step.type] || defaultConfig;
 
             return (
-              <div key={index} className="relative mx-2 flex flex-col items-center">
+              <div key={index} className="relative mx-2 flex flex-col items-center select-none">
                 {/* 아이콘 */}
-                <div className="bg-[theme(color-gray-05)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2">
+                <div
+                  className={`bg-[theme(primary-black)] border-[theme(color-blue-01)] mb-2 flex h-20 w-20 items-center justify-center border-2 ${config.name === '원본 데이터' || config.name === '전처리 완료' ? 'rounded-full' : 'rounded-xl'} ${CssDetailHovering} ${step.type !== 'ORIGINAL_DATA' && step.type !== 'PREPROCESSING_COMPLETE' ? 'cursor-pointer' : 'cursor-default'} hover:shadow-lg`}
+                  onClick={() => toggleStep(index)}
+                >
                   <span role="img" aria-label={config.ariaLabel} className="font-tossface text-3xl">
                     {config.icon}
                   </span>
                 </div>
                 {/* 이름 */}
                 <div className="text-center text-sm font-medium">{config.name}</div>
+                {/* 파라미터 */}
+                {selectedStepIndices.has(index) && step.type !== 'ORIGINAL_DATA' && step.type !== 'PREPROCESSING_COMPLETE' && Object.keys(step.parameters).length > 0 && (
+                  <div className="absolute mt-2 w-32 cursor-pointer rounded-md bg-gray-100 p-2 text-xs text-gray-600" onClick={() => toggleStep(index)}>
+                    {Object.entries(step.parameters).map(([key, value]) => (
+                      <div key={key} className="flex justify-between truncate">
+                        <span className="font-medium capitalize">{key}:</span>
+                        <span className="ml-1 truncate">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

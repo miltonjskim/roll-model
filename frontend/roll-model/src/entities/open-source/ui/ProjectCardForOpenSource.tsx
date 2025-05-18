@@ -37,8 +37,16 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     });
     router.push(`/project-detail/${project.id}`);
   };
-  // 도메인 정보를 표시하는 부분 수정:
-  const domainIndex = project.dataCount % 4;
+
+  // 도메인 정보
+  function GetDomainIndex(n: string): number {
+    let sum = 0;
+    for (let i = 0; i < n.length; i++) {
+      sum += n.charCodeAt(i);
+    }
+    return sum % 4;
+  }
+  const domainIndex = GetDomainIndex(project.title);
   const domainStyle = DOMAIN_STYLES[project.domain] || DOMAIN_STYLES['GENERAL'];
   const domainIcon = domainStyle.icons[domainIndex];
   const domainColor = domainStyle.colors[domainIndex];

@@ -33,8 +33,15 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
     router.push(`/project-detail/${pipeline.pipelineId}`);
   };
 
-  // 도메인 정보를 표시하는 부분 수정:
-  const domainIndex = pipeline.dataCount % 4;
+  // 도메인 정보
+  function GetDomainIndex(n: string): number {
+    let sum = 0;
+    for (let i = 0; i < n.length; i++) {
+      sum += n.charCodeAt(i);
+    }
+    return sum % 4;
+  }
+  const domainIndex = GetDomainIndex(projectDetail.title);
   const domainStyle = DOMAIN_STYLES[projectDetail.domain] || DOMAIN_STYLES['GENERAL'];
   const domainIcon = domainStyle.icons[domainIndex];
   const domainColor = domainStyle.colors[domainIndex];
