@@ -66,7 +66,7 @@ public class ProjectVersionService {
             .map(version -> pipelineRepository.findByPipelineId(version.getPipelineId()).orElse(null))
             .filter(Objects::nonNull)
             .filter(pipeline -> pipeline.getStatus() == Status.COMPLETED)
-            .sorted(Comparator.comparing(PipelineEntity::getModifiedAt).reversed())
+            .sorted(Comparator.comparing(PipelineEntity::getRegisteredAt).reversed())
             .toList();
         log.debug("Found {} pipelines for project", pipelines.size());
 
