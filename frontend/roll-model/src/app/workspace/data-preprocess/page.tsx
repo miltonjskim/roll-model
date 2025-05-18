@@ -13,6 +13,7 @@ import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/Prepro
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { globalLoadingAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
@@ -103,15 +104,18 @@ const PreprocessDataPage = () => {
   };
 
   return (
-    <div className="mx-auto h-[calc(100vh-6rem)] w-full overflow-hidden px-4">
+    <div className="mx-auto w-full overflow-y-auto px-4 pb-4">
       {/* 상단 제목 */}
-      <div className="mb-4">
-        <h1 className="text-lg font-bold">전처리 설정하기</h1>
-        <h2 className="mt-[-0.4rem] text-base">필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
+      <div className="flex items-center justify-between">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">5. 전처리 설정하기</h1>
+          <h2 className="mt-[-0.4rem] text-base">필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
+        </div>
+        <StepProgress />
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="flex h-[calc(100%-4.5rem)] flex-col gap-2 xl:flex-row xl:gap-2">
+      <div className="mt-6 flex h-full flex-col gap-2 xl:flex-row xl:gap-2">
         {/* 좌측 영역 */}
         <div className="flex max-h-full min-h-0 flex-col xl:max-w-[20rem] xl:min-w-[16rem] xl:basis-[20%]">
           {/* 프로젝트 정보 */}

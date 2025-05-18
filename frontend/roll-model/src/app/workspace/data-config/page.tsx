@@ -26,6 +26,7 @@ import { registerConfigDataGuideSteps } from '@/features/guide/steps/registerCon
 import { startGuide } from '@/features/guide/useGuide';
 import { guide } from '@/features/guide/GuideProvider';
 import DataTypeInfoDialog from '@/features/workspace/data-upload/ui/DataTypeInfoDialog';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -226,12 +227,15 @@ const ConfigDataPage = () => {
 
   return (
     <div className="flex flex-col justify-center">
-      <div>
-        <h1 className="text-lg font-bold">데이터 설정하기</h1>
-        <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+      <div className="flex items-center justify-between px-28">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">4. 데이터 설정하기</h1>
+          <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+        </div>
+        <StepProgress />
       </div>
 
-      <div className="mx-auto mt-4 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
+      <div className="mx-auto mt-8 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
         <div className="flex max-w-[90%] basis-[60rem] flex-col gap-4">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md">
             <div className="p-6 text-left">
@@ -351,7 +355,7 @@ const ConfigDataPage = () => {
           </div>
 
           <div className="pt-4">
-            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-4 h-12 w-full">
+            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-2 h-12 w-full">
               ← 이전 단계로
             </BackButton>
             <Button variant="black" size="lg" className="h-12 w-full" onClick={handleCreateProject}>
