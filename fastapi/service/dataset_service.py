@@ -30,7 +30,6 @@ import numpy as np
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from schemas.mongo.dataset import ColumnType, DatasetModel
 from service.db.pipeline_mysql_service import create_mysql_pipeline
-from service.storage.storage import add_index_to_csv
 import chardet
 
 from utils.execution_time_checker import execution_time
@@ -91,7 +90,6 @@ async def upload_dataset_and_save_metadata(
 
         utf_8_bytes = convert_to_utf8_bytes(file_content)
         file_io = io.BytesIO(utf_8_bytes)
-        indexed_data = add_index_to_csv(file_io, encoding="UTF-8")
 
         # MinIO에 파일 업로드
         upload_success = await minio_client.upload_file(
