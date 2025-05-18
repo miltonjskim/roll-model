@@ -224,28 +224,6 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
                   상세
                 </button>
               )}
-              {project.status === 'PREPROCESSED' && (
-                <button
-                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.stopPropagation(); // 이벤트 버블링 중단
-                    handleAfterSchoolClick(project.id);
-                  }}
-                >
-                  재학습
-                </button>
-              )}
-              {project.status === 'FAILED' && (
-                <button
-                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.stopPropagation(); // 이벤트 버블링 중단
-                    handleAfterSchoolClick(project.id);
-                  }}
-                >
-                  재학습
-                </button>
-              )}
 
               {project.status === 'COMPLETED' && <AfterSchoolDropdown project={project} />}
 
