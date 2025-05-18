@@ -27,10 +27,11 @@ const ProjectRetrainSelectionPage = () => {
       const { data } = await axiosInstance.get('/api/v1/projects/my');
       console.log(data);
 
-      setMyProjectList(data.data.projects);
+      setMyProjectList(data.data.projects ?? []);
     } catch (error) {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
+      setMyProjectList([]);
     } finally {
       setIsLoading(false);
     }
