@@ -29,6 +29,7 @@ import pandas as pd
 import re
 import math
 
+from ....models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
 from service.column_type_inferer import ColumnTypeInferrer
 from utils.execution_time_checker import execution_time
 
@@ -423,7 +424,9 @@ async def reload_preprocess_pipeline(
         columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
         response_data["projectTitle"] = project.title
-        
+        if response_data["preprocessingSteps"] is not None:
+            for step in response_data["preprocessingSteps"]:
+                step["type"] = client_preprocess_step_label_mapper(step["type"])
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",

@@ -4,6 +4,7 @@ from bson import ObjectId
 
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
+from ...models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
 from schemas.mongo.dataset import DatasetModel, DatasetColumn
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus, PyObjectId
 
@@ -412,6 +413,7 @@ class PipelineService:
                 logger.info(f"최신 스텝 타입: {type(latest_step)}")
                 
                 columns = list(dataset_sample[0].keys()) if dataset_sample else []
+                
                 result = {
                     "latestStep": latest_step.model_dump(mode='json'),
                     "totalSteps": len(latest_history.preprocessing_steps),
@@ -420,6 +422,7 @@ class PipelineService:
                         "data": dataset_sample
                     }
                 }
+                result["latestStep"]["type"] = client_preprocess_step_label_mapper(result["latestStep"]["type"])
                 logger.info("반환 데이터 구성 완료")
                 logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
                 return result
