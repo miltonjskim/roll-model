@@ -4,7 +4,7 @@ from bson import ObjectId
 
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
-from ...models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
+from models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
 from schemas.mongo.dataset import DatasetModel, DatasetColumn
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus, PyObjectId
 
