@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { aiRecommendedStepsAtom, completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, completedDatasetAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { guide } from '@/features/guide/GuideProvider';
@@ -32,6 +32,7 @@ const PreprocessDataPage = () => {
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
   const [steps, setSteps] = useState<Step[]>([]);
+  const preprocessingSteps = useAtomValue(preprocessingStepsAtom);
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
 
   useEffect(() => {
@@ -57,10 +58,16 @@ const PreprocessDataPage = () => {
       router.push('/workspace');
       return;
     } else {
-      console.log('uploadedData:', uploadedData);
+      // console.log('uploadedData:', uploadedData);
       // console.log('recommededSteps:', recommendedSteps);
     }
   }, [uploadedData, router]);
+
+  useEffect(() => {
+    if (preprocessingSteps && preprocessingSteps.length > 0) {
+      setSteps(preprocessingSteps);
+    }
+  }, [preprocessingSteps]);
 
   const handleAddStep = (newStep: Step) => {
     setSteps((prev) => [...prev, newStep]);
@@ -75,7 +82,7 @@ const PreprocessDataPage = () => {
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/complete`);
 
-      console.log('response:', response);
+      // console.log('response:', response);
 
       setCompletedDataset(response.data.data.data);
 
@@ -96,8 +103,8 @@ const PreprocessDataPage = () => {
 
       setSteps((prev) => prev.slice(0, -1));
 
-      console.log('단계 삭제 response:', response);
-      console.log('response.data.data.datset', response.data.data.dataset);
+      // console.log('단계 삭제 response:', response);
+      // console.log('response.data.data.datset', response.data.data.dataset);
 
       setUploadedData(response.data.data.dataset);
     } catch (error: unknown) {

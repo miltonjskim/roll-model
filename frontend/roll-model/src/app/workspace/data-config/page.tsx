@@ -27,6 +27,10 @@ import { startGuide } from '@/features/guide/useGuide';
 import { guide } from '@/features/guide/GuideProvider';
 import DataTypeInfoDialog from '@/features/workspace/data-upload/ui/DataTypeInfoDialog';
 import StepProgress from '@/features/workspace/ui/StepProgress';
+import { requestPreprocessingStepsFromAI } from '@/features/workspace/data-upload/service/requestPreprocessingStepsFromAI';
+import { inferType } from '@/entities/workspace/data-config/utils/inferType';
+import { generateColumnPayload } from '@/entities/workspace/data-config/utils/generateColumnPayload';
+import { getDelimiterType } from '@/entities/workspace/data-config/utils/getDelimiterType';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -87,95 +91,79 @@ const ConfigDataPage = () => {
       type: projectCategory,
       isPublic: projectPublic,
     };
+
     try {
       const response = await createProject(payload);
-
-      const projectId = response.data.id;
-      setProjectId(projectId.toString());
+      const projectId = response.data.id.toString();
+      setProjectId(projectId);
       setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
 
-      handleUpload(projectId.toString());
+      const [uploadSuccess, aiResponse] = await Promise.all([handleUpload(projectId), fetchRecommendedPreprocessingSteps(projectId)]);
+
+      if (uploadSuccess && aiResponse) {
+        router.push('/workspace/data-preprocess');
+      }
     } catch (err) {
+      showErrorToast('프로젝트 생성에 실패했습니다.');
       console.error('프로젝트 생성 실패:', err);
     } finally {
-      // setGlobalLoading(false);
-      // setLoadingMessage(null);
+      setGlobalLoading(false);
+      setLoadingMessage(null);
     }
   };
 
   // 원본 데이터셋 업로드 함수
-  const handleUpload = (projectId: string) => {
-    if (!file) return;
+  const handleUpload = async (projectId: string): Promise<boolean> => {
+    if (!file) return false;
 
-    const delimiterMap: Record<string, UploadDatasetRequest['delimiter']> = {
-      ',': 'comma',
-      ';': 'semicolon',
-      '\t': 'tab',
-      '기타 입력': 'other',
-    };
-
-    const delimiter = delimiterMap[selectedDelimiterOption] ?? 'other';
+    const { delimiter, customDelimiter: resolvedCustomDelimiter } = getDelimiterType(selectedDelimiterOption, customDelimiter);
+    const columns = generateColumnPayload(header, columnTypes);
 
     const payload = {
       delimiter: delimiter,
-      customDelimiter: selectedDelimiterOption === '기타 입력' ? customDelimiter : undefined,
-      encoding: encoding as UploadDatasetRequest['encoding'], // 캐스팅
+      customDelimiter: resolvedCustomDelimiter,
+      encoding: encoding as UploadDatasetRequest['encoding'],
       hasHeader: useHeaderRow,
-      columns: header.map((col, idx) => ({
-        name: col.length > 0 ? col : `컬럼 ${idx + 1}`,
-        type: columnTypes[idx] as UploadDatasetRequest['columns'][number]['type'], // 캐스팅
-      })),
+      columns: columns,
     };
 
-    mutation.mutate(
-      { projectId, config: payload, file },
-      {
-        onSuccess: (response) => {
-          console.log('onSuccessData:', response.data);
-
-          if (response.data) {
-            const data = response.data;
-            setUploadedDataset(data.result);
-            setAiRecommendedStepsAtom(data.step);
-
-            router.push('/workspace/data-preprocess');
-          }
-        },
-        onError: (err) => {
-          showErrorToast(err.message);
-          console.error(err);
-        },
-        onSettled: () => {
-          setGlobalLoading(false);
-          setLoadingMessage(null);
-        },
-      },
-    );
+    try {
+      const response = await mutation.mutateAsync({ projectId, config: payload, file });
+      const data = response.data;
+      setUploadedDataset(data.result);
+      setAiRecommendedStepsAtom(data.step);
+      return true;
+    } catch (err) {
+      showErrorToast((err as Error).message);
+      console.error(err);
+      return false;
+    }
   };
 
-  // 컬럼 타입 확인하는 함수
-  const inferType = (value: string): string => {
-    const trimmed = value.trim();
-    const lower = trimmed.toLowerCase();
+  // AI 추천 단계 요청
+  const fetchRecommendedPreprocessingSteps = async (projectId: string) => {
+    // console.log('file:', file);
 
-    if (lower === 'true' || lower === 'false') {
-      return 'boolean';
+    if (!file) return false;
+
+    setGlobalLoading(true);
+    setLoadingMessage('AI에게 전처리 단계를 추천받고 있어요.');
+    try {
+      const response = await requestPreprocessingStepsFromAI(file, projectId);
+      console.log('ai response.data:', response.data);
+      console.log('ai response,data,step:', response.data.step);
+
+      setAiRecommendedStepsAtom(response.data.step);
+      return true;
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+      return false;
+    } finally {
+      setGlobalLoading(false);
+      setLoadingMessage(null);
     }
-
-    const num = Number(trimmed);
-    if (!isNaN(num)) {
-      if (Number.isInteger(num)) {
-        return 'integer';
-      } else {
-        return 'double';
-      }
-    }
-
-    if (!isNaN(Date.parse(trimmed))) {
-      return 'datetime';
-    }
-
-    return 'string';
   };
 
   // csv 데이터 파싱
