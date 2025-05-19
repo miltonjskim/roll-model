@@ -1,14 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { guide } from '@/features/guide/GuideProvider';
 import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPreprocessGuideSteps';
 import { startGuide } from '@/features/guide/useGuide';
-import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/PreprocessingInfoDialog';
+import EmptyDataAlertDialog from '@/features/workspace/data-preprocess/ui/EmptyDataAlertDialog';
+import PreprocessDataSkeleton from '@/features/workspace/data-preprocess/ui/PreprocessDataSkeleton';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
@@ -17,7 +17,6 @@ import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
-import { ApiResponse } from '@/shared/model/types/apiResponse';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { ApiError } from 'next/dist/server/api-utils';
 import { useRouter } from 'next/navigation';
@@ -25,11 +24,12 @@ import { useEffect, useRef, useState } from 'react';
 
 const PreprocessDataPage = () => {
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
   const [uploadedData, setUploadedData] = useAtom(uploadedDatasetAtom);
   const [pipelineId, setPipelineId] = useAtom(pipelineIdAtom);
 
   const [projectTitle, setProjectTitle] = useAtom(projectTitleAtom);
-  const setIsLoading = useSetAtom(globalLoadingAtom);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
@@ -37,6 +37,7 @@ const PreprocessDataPage = () => {
   const [preprocessingSteps, setPreprocessingSteps] = useAtom(preprocessingStepsAtom);
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
   const setProjectCategory = useSetAtom(projectCategoryAtom);
+  const [showEmptyDataAlert, setShowEmptyDataAlert] = useState(false);
 
   const reloadData = async (storedPipelineId: string) => {
     setIsLoading(true);
@@ -46,6 +47,11 @@ const PreprocessDataPage = () => {
       console.log('response:', response);
 
       const data = response.data.data;
+
+      if (Array.isArray(data.dataset) && data.dataset.length === 0) {
+        setShowEmptyDataAlert(true);
+        return;
+      }
 
       setPipelineId(data.pipelineId);
       setProjectTitle(data.title);
@@ -61,7 +67,7 @@ const PreprocessDataPage = () => {
       setPreprocessingSteps(data.preprocessingSteps);
     } catch (error) {
       const apiError = error as ApiError;
-      showErrorToast(apiError.message);
+      setShowEmptyDataAlert(true);
       console.error(apiError);
     } finally {
       setIsLoading(false);
@@ -117,6 +123,8 @@ const PreprocessDataPage = () => {
       // console.log('response:', response);
 
       setCompletedDataset(response.data.data.data);
+      setSteps([]);
+      setPreprocessingSteps([]);
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {
@@ -147,6 +155,13 @@ const PreprocessDataPage = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) return null;
+  if (isLoading) return <PreprocessDataSkeleton />;
 
   return (
     <div className="mx-auto w-full overflow-y-auto px-4 pb-4">
@@ -227,6 +242,7 @@ const PreprocessDataPage = () => {
           </div>
         </div>
       </div>
+      <EmptyDataAlertDialog open={showEmptyDataAlert} onOpenChange={setShowEmptyDataAlert} />
     </div>
   );
 };
