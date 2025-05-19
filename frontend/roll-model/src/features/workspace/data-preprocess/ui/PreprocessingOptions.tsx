@@ -31,7 +31,7 @@ interface PreprocessingCategory {
 
 const preprocessingCategories: PreprocessingCategory[] = [
   {
-    id: 'missing-values',
+    id: 'MISSING_VALUES',
     name: '결측치 처리',
     icon: '❓',
     description: '빠진 데이터를 채우거나 삭제할 수 있습니다.',
@@ -44,7 +44,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     ],
   },
   {
-    id: 'outlier-detection',
+    id: 'OUTLIER_DETECTION',
     name: '이상치 탐지',
     icon: '🔍',
     description: '데이터에서 통계적 기준(Z-score, IQR 등)을 활용해 이상값을 탐지합니다.',
@@ -54,7 +54,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     ],
   },
   {
-    id: 'outlier-handle',
+    id: 'OUTLIER_HANDLE',
     name: '이상치 처리',
     icon: '🛠️',
     description: '탐지된 이상치를 제거하거나 평균, 중앙값 등으로 대체합니다.',
@@ -67,8 +67,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
     ],
   },
   {
-    id: 'data-transformation',
-    name: '데이터 변환',
+    id: 'DATA_TRANSFORMATION',
+    name: '데이터 정규화',
     icon: '🔁',
     description: '데이터 분포나 범위를 조정하여 모델 학습에 적합하도록 변환합니다.',
     options: [
@@ -79,7 +79,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     ],
   },
   {
-    id: 'encoding',
+    id: 'ENCODING',
     name: '인코딩',
     icon: '🧮',
     description: '문자형 데이터를 숫자형으로 변환합니다.',
@@ -90,7 +90,7 @@ const preprocessingCategories: PreprocessingCategory[] = [
     ],
   },
   {
-    id: 'class-balancing',
+    id: 'CLASS_BALANCING',
     name: '클래스 불균형 처리',
     icon: '⚖️',
     description: '데이터 내 클래스 간 샘플 수의 불균형 문제를 해결합니다.',
@@ -139,19 +139,20 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
       if (option.method) {
         console.log('option:', option);
 
-        if (categoryId === 'outlier-detection') {
+        if (categoryId === 'OUTLIER_DETECTION') {
           console.log('categoryId:', categoryId);
-
           body.detection = option.method;
           console.log('option.method:', option.method);
           console.log('body.detection:', body.detection);
-        } else if (categoryId === 'outlier-handle') {
+        } else if (categoryId === 'OUTLIER_HANDLE') {
           body.detection = 'ZSCORE';
           body.method = option.method;
         } else {
           body.method = option.method;
         }
       }
+
+      console.log('body:', body);
 
       if (option.apiEndpoint.includes('log')) body.offset = offset;
       if (option.apiEndpoint.includes('target')) body.targetColumn = targetColumn;
@@ -198,27 +199,153 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
             }
           : prev,
       );
+
       onAddStep?.({
         type: categoryId.toUpperCase(),
         parameters: {
-          columnId: selectedColumn ?? 'ALL',
-          ...(categoryId === 'outlier-detection' && option.method && { detection: option.method }),
-          ...(categoryId !== 'outlier-detection' && option.method && { method: option.method }),
-          ...(option.apiEndpoint.includes('log') && { offset }),
-          ...(option.apiEndpoint.includes('target') && { targetColumn }),
-          ...(option.apiEndpoint.includes('class-balancing') && { samplingRatio }),
+          column: result.column,
+
+          // 결측치 대체
+          ...(categoryId === 'MISSING_VALUES' &&
+            option.apiEndpoint.includes('imputation') && {
+              fillValue: result.fillValue,
+              imputedCount: result.imputedCount,
+              imputedRows: result.imputedRows,
+              method: result.method,
+              missingCount: result.missingCount,
+              missingIndices: result.missingIndices,
+            }),
+
+          // 결측치 제거
+          ...(categoryId === 'MISSING_VALUES' &&
+            option.apiEndpoint.includes('remove') && {
+              method: result.method,
+              missingCount: result.missingCount,
+              missingIndices: result.missingIndices,
+              removeColumns: result.removeColumns,
+              removedCount: result.removedCount,
+              removedRows: result.removedRows,
+            }),
+
+          // 이상치 탐지
+          ...(categoryId === 'OUTLIER_DETECTION' &&
+            option.apiEndpoint.includes('detection') && {
+              detection: result.detection,
+              maxThreshold: result.maxThreshold,
+              minThreshold: result.minThreshold,
+              outlierCount: result.outlierCount,
+              outlierIndices: result.outlierIndices,
+            }),
+
+          // 이상치 대체
+          ...(categoryId === 'OUTLIER_HANDLE' &&
+            option.apiEndpoint.includes('imputation') && {
+              detection: result.detection,
+              imputedCount: result.imputedCount,
+              imputedRows: result.imputedRows,
+              method: result.method,
+              minThreshold: result.minThreshold,
+              maxThreshold: result.maxThreshold,
+              outlierCount: result.outlierCount,
+              outlierIndices: result.outlierIndices,
+            }),
+
+          // 이상치 제거
+          ...(categoryId === 'OUTLIER_HANDLE' &&
+            option.apiEndpoint.includes('remove') && {
+              method: result.method,
+              detection: result.detection,
+              minThreshold: result.minThreshold,
+              maxThreshold: result.maxThreshold,
+              outlierCount: result.outlierCount,
+              outlierIndices: result.outlierIndices,
+              removedColumns: result.removedColumns,
+              removedCount: result.removedCount,
+              removedRows: result.removedRows,
+            }),
+
+          // 데이터 정규화: z-score 정규화
+          ...(categoryId === 'DATA_TRANSFORMATION' &&
+            option.apiEndpoint.includes('z-score') && {
+              transformType: result.transformType,
+              statistics_mean: result.statistics.mean,
+              statistics_std: result.statistics.std,
+            }),
+
+          // 데이터 정규화: min-max 정규화
+          ...(categoryId === 'DATA_TRANSFORMATION' &&
+            option.apiEndpoint.includes('min-max') && {
+              transformType: result.transformType,
+              newRange_min: result.newRange.min,
+              newRange_max: result.newRange.max,
+            }),
+
+          // 데이터 정규화: 로그 변환
+          ...(categoryId === 'DATA_TRANSFORMATION' &&
+            option.apiEndpoint.includes('log') && {
+              transformType: result.transformType,
+              negativeValues: result.negativeValues,
+              offset: result.offset,
+              transformedIndices: result.transformedIndices,
+            }),
+
+          // 데이터 정규화: 제곱근 변환
+          ...(categoryId === 'DATA_TRANSFORMATION' &&
+            option.apiEndpoint.includes('sqrt') && {
+              transformType: result.transformType,
+              negativeValues: result.negativeValues,
+              transformedIndices: result.transformedIndices,
+            }),
+
+          // 인코딩: 원핫 인코딩
+          ...(categoryId === 'ENCODING' &&
+            option.apiEndpoint.includes('one-hot') && {
+              affectedRows: result.affectedRows,
+              categories: result.categories,
+              encodingType: result.encodingType,
+              newColumns: result.newColumns,
+            }),
+
+          // 인코딩: 레이블 인코딩
+          ...(categoryId === 'ENCODING' &&
+            option.apiEndpoint.includes('label') && {
+              affectedRows: result.affectedRows,
+              encodingType: result.encodingType,
+              mapping: result.mapping,
+            }),
+
+          // 인코딩: 타겟 인코딩
+          ...(categoryId === 'ENCODING' &&
+            option.apiEndpoint.includes('target') && {
+              affectedRows: result.affectedRows,
+              encodingType: result.encodingType,
+              mapping: result.mapping,
+              targetColumn: result.targetColumn,
+            }),
+
+          // 클래스 불균형 처리
+          ...(categoryId === 'CLASS_BALANCING' &&
+            option.apiEndpoint.includes('class-balancing') && {
+              balanceType: result.balanceType,
+              originalDistributuin: result.originalDistribution,
+              newDistribution: result.newDistribution,
+              samplingRatio: result.samplingRatio,
+              sampleVariation: result.sampleVariation,
+            }),
         },
         order: Date.now(),
         active: true,
         categoryId,
         optionId: option.id,
         optionName: option.name,
-        optionDescription: option.description,
       });
 
       setExpanded([]);
       setSelected({});
       setSelectedColumn(undefined);
+      setTargetColumn('');
+      setOffset(1.0);
+      setSamplingRatio(200);
     } catch (error) {
       console.error('전처리 요청 실패:', error);
     } finally {
@@ -260,7 +387,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
                 const isSelected = selected[cat.id] === opt.id;
                 const needsTargetColumn = opt.apiEndpoint.includes('/target');
                 const needsOffset = opt.apiEndpoint.includes('/log');
-                const needsSampling = cat.id === 'class-balancing';
+                const needsSampling = cat.id === 'CLASS_BALANCING';
 
                 const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
 
