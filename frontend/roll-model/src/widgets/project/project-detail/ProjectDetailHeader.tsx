@@ -49,8 +49,6 @@ export default function ProjectDetailHeader() {
     try {
       // API 호출
       await toggePublicPipeline(projectDetail.id, newPipelinePublicYn);
-      // 성공 시 알림 (선택사항)
-      alert('공개 여부가 변경되었습니다.');
     } catch (e) {
       // 실패 시 이전 상태로 롤백
       setProjectDetail({
@@ -58,7 +56,6 @@ export default function ProjectDetailHeader() {
         pipelinePublicYn: previousPublicState,
       });
       console.error('공개 상태 변경 실패', e);
-      alert('공개 여부 변경에 실패했습니다.');
     }
   };
 

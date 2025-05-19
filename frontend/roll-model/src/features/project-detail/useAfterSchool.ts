@@ -3,7 +3,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
 import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { completedDatasetAtom, dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
-import { YouHaveToAfterSchool } from '@/shared/api/modelingApi';
+import { YouHadBetterAfterSchool, YouHaveToAfterSchool } from '@/shared/api/modelingApi';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/entities/project-detail/model/ApiTypes';
 import { ApiResponse } from '@/shared/model/types/apiResponse';
@@ -20,30 +20,27 @@ export const useAfterSchool = () => {
   const setDataColumnsAtom = useSetAtom(dataColumnsAtom);
   const setProjectTitle = useSetAtom(projectTitleAtom);
 
-  const handleAfterSchoolClick = async (pipelineId: string) => {
+  const handleAfterSchoolClick = async (pipelineId: string, fromWhere?: string) => {
     try {
-      const response = await YouHaveToAfterSchool(pipelineId);
-      console.log('모델링 테스트 결과:', response);
+      if (fromWhere === 'PREPROCESSED' || fromWhere === 'FAILED') {
+        console.log('리로딩/포크 중 리로딩');
 
-      setProjectCategoryAtom(response.data.category);
+        const response = await YouHadBetterAfterSchool(pipelineId);
+        console.log('모델링 테스트 결과:', response);
 
-      // setProjectDetailAtom({
-      //   ...projectDetail,
-      //   id: pipelineId,
-      //   category: response.data.category,
-      // });
+        setProjectCategoryAtom(response.data.category);
+        setPipelineIdAtom(response.data.pipelineId);
+        setDataColumnsAtom(response.data.columns);
+      } else {
+        console.log('리로딩/포크 중 포크');
 
-      // setCompletedDatasetAtom({
-      //   pipelineId: response.data.pipelineId,
-      //   columns: response.data.columns,
-      //   category: response.data.category,
-      // });
-      setPipelineIdAtom(response.data.pipelineId);
-      console.log('0517test/모델링컬럼 : ', response);
-      console.log('0517test/모델링컬럼 : ', response.data);
+        const response = await YouHaveToAfterSchool(pipelineId);
+        console.log('모델링 테스트 결과:', response);
 
-      setDataColumnsAtom(response.data.columns);
-
+        setProjectCategoryAtom(response.data.category);
+        setPipelineIdAtom(response.data.pipelineId);
+        setDataColumnsAtom(response.data.columns);
+      }
       router.push('/workspace/modeling-section');
     } catch (error) {
       console.error('처리 중 오류가 발생했습니다:', error);
