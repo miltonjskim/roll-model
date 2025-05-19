@@ -98,44 +98,47 @@ PreprocessingStep = Union[
 class PreprocessPipelineRequest(BaseModel):
     """전처리 파이프라인 요청 모델"""
     preprocessing_steps: List[Dict[str, Any]] = Field(..., description="전처리 단계 리스트")
-    target_column: str | None = Field(None, description="타겟 컬럼 이름")
     
-    # 딕셔너리를 적절한 요청 객체로 변환하는 함수
     def get_parsed_steps(self) -> List[PreprocessingStep]:
         parsed_steps = []
         for step_dict in self.preprocessing_steps:
             step_type = step_dict.get("type")
+            if not step_type:
+                raise ValueError("각 전처리 단계에는 'type' 필드가 필요합니다")
+
+            request_data = step_dict.copy()
+            request_data.pop("type", None)
             
             if step_type == "MISSING_VALUE_REMOVE":
-                parsed_steps.append(MissingValueRemoveRequest(**step_dict))
+                parsed_steps.append(MissingValueRemoveRequest(**request_data))
             elif step_type == "MISSING_VALUE_IMPUTATION":
-                parsed_steps.append(MissingValueImputationRequest(**step_dict))
+                parsed_steps.append(MissingValueImputationRequest(**request_data))
             elif step_type == "OUTLIER_REMOVE":
-                parsed_steps.append(OutlierRemoveRequest(**step_dict))
+                parsed_steps.append(OutlierRemoveRequest(**request_data))
             elif step_type == "OUTLIER_IMPUTATION":
-                parsed_steps.append(OutlierImputationRequest(**step_dict))
+                parsed_steps.append(OutlierImputationRequest(**request_data))
             elif step_type == "OUTLIER_DETECTION":
-                parsed_steps.append(OutlierDetectionRequest(**step_dict))
+                parsed_steps.append(OutlierDetectionRequest(**request_data))
             elif step_type == "ZSCORE_SCALING":
-                parsed_steps.append(ZScoreRequest(**step_dict))
+                parsed_steps.append(ZScoreRequest(**request_data))
             elif step_type == "MINMAX_SCALING":
-                parsed_steps.append(MinMaxScalingRequest(**step_dict))
+                parsed_steps.append(MinMaxScalingRequest(**request_data))
             elif step_type == "LOG_TRANSFORM":
-                parsed_steps.append(LogTransformRequest(**step_dict))
+                parsed_steps.append(LogTransformRequest(**request_data))
             elif step_type == "SQRT_TRANSFORM":
-                parsed_steps.append(SqrtTransformRequest(**step_dict))
+                parsed_steps.append(SqrtTransformRequest(**request_data))
             elif step_type == "ONEHOT_ENCODING":
-                parsed_steps.append(OneHotEncodingRequest(**step_dict))
+                parsed_steps.append(OneHotEncodingRequest(**request_data))
             elif step_type == "LABEL_ENCODING":
-                parsed_steps.append(LabelEncodingRequest(**step_dict))
+                parsed_steps.append(LabelEncodingRequest(**request_data))
             elif step_type == "TARGET_ENCODING":
-                parsed_steps.append(TargetEncodingRequest(**step_dict))
+                parsed_steps.append(TargetEncodingRequest(**request_data))
             elif step_type == "CLASS_BALANCING":
-                parsed_steps.append(ClassBalancingRequest(**step_dict))
+                parsed_steps.append(ClassBalancingRequest(**request_data))
             elif step_type == "COLUMN_DROP":
-                parsed_steps.append(ColumnDropRequest(**step_dict))
+                parsed_steps.append(ColumnDropRequest(**request_data))
             elif step_type == "COLUMN_KEEP":
-                parsed_steps.append(ColumnKeepRequest(**step_dict))
+                parsed_steps.append(ColumnKeepRequest(**request_data))
             else:
                 raise ValueError(f"알 수 없는 전처리 단계 유형: {step_type}")
                 
