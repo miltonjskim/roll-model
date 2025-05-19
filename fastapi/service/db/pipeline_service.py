@@ -210,24 +210,14 @@ class PipelineService:
         return await _update_pipeline_in_db(pipeline)
 
     async def update_pipeline_status(self,
-                                     pipeline_id: str,
-                                     new_status: PipelineStatus,
-                                     project_id: int = None,
-                                     member_id: int = None,
-                                     preprocessed_dataset_id: str = None,
-                                     ) -> Optional[PipelineModel]:
+                              pipeline_id: str,
+                              new_status: PipelineStatus,
+                              project_id: int = None,
+                              member_id: int = None,
+                              preprocessed_dataset_id: str = None,
+                              ) -> Optional[PipelineModel]:
         """
         파이프라인의 상태를 업데이트합니다.
-
-        Args:
-            pipeline_id: 파이프라인 ID
-            new_status: 새로운 파이프라인 상태 (PipelineStatus enum)
-            project_id: 프로젝트 ID (선택적)
-            member_id: 멤버 ID (선택적)
-            preprocessed_dataset_id: 전처리된 데이터셋 ID (선택적)
-
-        Returns:
-            업데이트된 파이프라인 모델 또는 None
         """
         try:
             # 현재 파이프라인 데이터 가져오기
@@ -247,8 +237,11 @@ class PipelineService:
             else:
                 # 히스토리의 마지막 항목 상태 업데이트
                 current_history = pipeline.history[-1]
+                
+                # preprocessed_dataset_id 업데이트 (result 필드는 그대로 유지)
                 if preprocessed_dataset_id is not None and current_history.preprocessing_steps:
                     current_history.preprocessing_steps[-1].preprocessed_dataset_id = preprocessed_dataset_id
+                    
                 # 상태가 이미 같으면 업데이트 불필요
                 if current_history.status == new_status:
                     return pipeline
