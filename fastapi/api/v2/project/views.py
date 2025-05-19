@@ -467,6 +467,7 @@ async def reload_preprocess_pipeline(
             result=result, # 전처리 단계 가장 최근 결과
             df=pd.DataFrame(data_dict), # 데이터프레임임
         )
+        del current_step_data['data']['result']
 
         response_data = await prepare_response_data(
             new_pipeline_id=pipeline_id, 
@@ -474,7 +475,8 @@ async def reload_preprocess_pipeline(
             category=project.category, 
             include_all_history=False
         )
-
+        columns = await pipeline_service.get_latest_dataset_columns(pipeline_details)
+        response_data["columns"] = columns
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
@@ -722,6 +724,8 @@ async def fork_pipeline_preprocess(
             category=target_project.category, 
             include_all_history=False
         )
+        columns = await pipeline_service.get_latest_dataset_columns(source_pipeline_details)
+        response_data["columns"] = columns
 
         return ApiResponse(
             status_code=200,
@@ -781,7 +785,6 @@ async def fork_pipeline_total(
             original_project=original_project,
             source_pipeline_detail=source_pipeline_details
         )
-
 
         # 4. 새로운 파이프라인 모델 생성
         new_pipeline = await create_new_pipeline_model(target_project.project_id, member_id, source_pipeline_details)
