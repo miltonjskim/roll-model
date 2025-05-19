@@ -125,18 +125,12 @@ public class PipelineService {
 
 		log.info("파이프라인:{}", pipeline.getPipelineId());
 
-		//ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
+		ModelDocument modelDocument = modelRepository.findByPipelineId(pipelineId);
 
-		List<ModelDocument> modelDocuments =modelRepository.findAllByPipelineId(pipelineId);
-
-		if (modelDocuments == null) {
+		if (modelDocument == null) {
 			throw new EntityNotFoundException("모델을 찾을 수 없습니다.");
 
 		}
-
-		log.info("모델 ModelDocument:{}", modelDocuments.size());
-
-		ModelDocument modelDocument = modelDocuments.get(modelDocuments.size() - 1);
 
 		ProjectEntity project= projectRepository.findById(pipeline.getProjectId())
 				.orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
