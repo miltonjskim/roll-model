@@ -139,11 +139,11 @@ public class ProjectVersionService {
 
         if (pipeline.getResult() != null) {
             if (project.getCategory() == Category.CLASSIFICATION) {
-                // 소수점 둘째 자리까지 반올림
-                accuracy = Math.round(pipeline.getResult().doubleValue() * 100) / 100.0;
+                // 소수점 넷째 자리까지 반올림  
+                accuracy = Math.round(pipeline.getResult().doubleValue() * 10000) / 10000.0;
             } else if (project.getCategory() == Category.REGRESSION) {
-                // 소수점 둘째 자리까지 반올림
-                rSquared = Math.round(pipeline.getResult().doubleValue() * 100) / 100.0;
+                // 소수점 넷째 자리까지 반올림
+                rSquared = Math.round(pipeline.getResult().doubleValue() * 10000) / 10000.0;
             }
         }
 
