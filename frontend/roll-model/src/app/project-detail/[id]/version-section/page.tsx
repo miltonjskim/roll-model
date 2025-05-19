@@ -30,10 +30,9 @@ export default function VersionSectionPage() {
   return (
     <div className="py-6">
       <h1 className="mb-6 text-2xl font-bold">버전 정보</h1>
-
       <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
         <div className="flex min-h-[600px] flex-col gap-8 lg:flex-row">
-          {/* 왼쪽: 버전 그래프 */}
+          {/* 버전 그래프 */}
           <div className="w-full lg:w-full">
             {pipelines.length > 0 && (
               <ReactFlowProvider>
@@ -41,17 +40,6 @@ export default function VersionSectionPage() {
               </ReactFlowProvider>
             )}
           </div>
-
-          {/* 오른쪽: 버전 상세 정보 */}
-          {/* <div className="w-full lg:w-1/2">
-            {selectedPipeline ? (
-              <VersionDetailCard pipeline={selectedPipeline} />
-            ) : (
-              <div className="bg-gray-50 p-4 rounded-lg text-gray-500 text-center">
-                버전을 선택하여 상세 정보를 확인하세요.
-              </div>
-            )}
-          </div> */}
         </div>
       </div>
     </div>

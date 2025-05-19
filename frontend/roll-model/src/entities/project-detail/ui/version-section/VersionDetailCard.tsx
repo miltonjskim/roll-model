@@ -70,7 +70,10 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
       <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
         {/* 헤더/왼쪽 */}
         <div className="flex items-center space-x-2">
-          <h2 className="truncate text-lg font-semibold">{projectDetail.title}</h2>
+          <h2 className="truncate text-lg font-semibold">
+            <span className="text-[theme(color-rose-01)]">{!pipeline.deletedYn && pipeline.publicYn ? '' : '[삭제/비공개] '}</span>
+            {projectDetail.title}
+          </h2>
           {projectDetail.category === 'CLASSIFICATION' ? (
             <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
           ) : (
@@ -78,7 +81,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
           )}
         </div>
       </div>
-      {!pipeline.deletedYn && pipeline.publicYn ? (
+      {pipeline.ownerYn || (!pipeline.deletedYn && pipeline.publicYn) ? (
         <center className="flex items-center justify-between p-4 select-none">
           {/* 센터 왼쪽 */}
           <section className="w-[7.5rem]">
