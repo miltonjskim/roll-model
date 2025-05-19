@@ -14,8 +14,8 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
   const uploaded = useAtomValue(uploadedDatasetAtom);
   const dataset: OriginalDatasetType | null = uploaded?.originalDatasets ?? null;
 
-  console.log('changedCells:', changedCells);
-  console.log('dataset:', dataset);
+  // console.log('changedCells:', changedCells);
+  // console.log('dataset:', dataset);
 
   if (!dataset || dataset.columns.length === 0 || dataset.data.length === 0) {
     return <p className="mt-2 text-sm text-gray-500">표시할 데이터가 없습니다.</p>;

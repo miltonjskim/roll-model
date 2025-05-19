@@ -77,7 +77,7 @@ interface PreprocessPipelineProps {
 }
 
 const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' }: PreprocessPipelineProps) => {
-  console.log('steps:', steps);
+  // console.log('steps:', steps);
   const lastStepRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
