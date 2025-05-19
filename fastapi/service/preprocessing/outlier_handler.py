@@ -547,6 +547,7 @@ class OutlierHandler:
                 "maxThreshold": float(max_threshold),
                 "outlierIndices": detection_result["outlier_indices"],
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "startPoint": detection_result["outlier_indices"][0] if len(detection_result["outlier_indices"])>0 else 0,
             }
             
             return result
