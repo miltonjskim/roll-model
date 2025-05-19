@@ -1,5 +1,6 @@
 // /entities/project-detail/ui/DatasetInfoCard.tsx
 import { Dataset } from '@/entities/project-detail/model/dataTypes';
+import { formatNumber } from '@/shared/lib/utils/formatNumber';
 import { CssDetailHovering } from '@/widgets/project/project-detail/ProjectDetailCard';
 
 interface DatasetInfoCardProps {
@@ -7,18 +8,6 @@ interface DatasetInfoCardProps {
 }
 
 export const DatasetInfoCard = ({ dataset }: DatasetInfoCardProps) => {
-  const formatNumber = (num: number): string => {
-    if (num >= 1_000_000_000) {
-      return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-    }
-    if (num >= 1_000_000) {
-      return (num / 1_000_000).toFixed(2).replace(/\.0$/, '') + 'M';
-    }
-    if (num >= 1_000) {
-      return (num / 1_000).toFixed(2).replace(/\.0$/, '') + 'k';
-    }
-    return num.toLocaleString();
-  };
   const tempRecordCount = formatNumber(dataset.recordCount);
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

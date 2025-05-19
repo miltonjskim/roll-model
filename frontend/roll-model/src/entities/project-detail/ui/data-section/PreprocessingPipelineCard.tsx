@@ -165,7 +165,7 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
                   </span>
                 </div>
                 {/* 이름 */}
-                <div className="text-center text-sm font-medium">{config.name}</div>
+                <div className="truncate text-center text-sm font-medium">{config.name}</div>
                 {/* 파라미터 */}
                 {selectedStepIndices.has(index) && step.type !== 'ORIGINAL_DATA' && step.type !== 'PREPROCESSING_COMPLETE' && Object.keys(step.parameters).length > 0 && (
                   <div className="absolute mt-2 w-32 cursor-pointer rounded-md bg-gray-100 p-2 text-xs text-gray-600" onClick={() => toggleStep(index)}>

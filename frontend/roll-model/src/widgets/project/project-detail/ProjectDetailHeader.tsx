@@ -19,6 +19,8 @@ export default function ProjectDetailHeader() {
   // confetti
   const iconRef = useRef<HTMLDivElement>(null);
   const [isConfettiActive, setIsConfettiActive] = useState(false);
+  //로딩 처리
+  const [isLoading, setIsLoading] = useState(true);
 
   // 파이프라인 삭제
   const handleDeletePipeline = async () => {
@@ -87,6 +89,21 @@ export default function ProjectDetailHeader() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [contentVisible, setContentVisible] = useState(false);
+
+  useEffect(() => {
+    // projectDetail 데이터가 있고 유효하면 로딩 완료
+    if (projectDetail && projectDetail.id) {
+      setIsLoading(false);
+    } else {
+      // 실제 환경에서는 API 호출 후 데이터가 설정될 때 setIsLoading(false) 호출
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1500); // 예시: 1.5초 후 로딩 완료
+
+      return () => clearTimeout(timer);
+    }
+  }, [projectDetail]);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
@@ -148,6 +165,32 @@ export default function ProjectDetailHeader() {
       setIsConfettiActive(false);
     }, 2000);
   };
+
+  const SkeletonHeader = () => (
+    <div className="mb-4 animate-pulse items-center justify-between gap-3 md:flex">
+      {/* 흰색영역 스켈레톤 */}
+      <div className="flex h-24 w-full items-center space-x-4 rounded-[var(--radius-lg)] bg-[var(--primary-white)] p-4 shadow-md">
+        {/* 아이콘 스켈레톤 */}
+        <div className="h-[4rem] w-[4rem] rounded-lg bg-slate-200"></div>
+        {/* 아이콘 옆 정보 스켈레톤 */}
+        <div className="w-full">
+          <div className="mb-2 h-6 w-3/4 rounded-md bg-slate-200"></div>
+          <div className="h-4 w-1/2 rounded-md bg-slate-200"></div>
+        </div>
+      </div>
+      {/* 버튼 스켈레톤 */}
+      <div className="mt-2 flex h-24 justify-center space-x-3 md:mt-0">
+        <div className="h-24 w-12 rounded-[var(--radius-lg)] bg-slate-200"></div>
+        <div className="h-24 w-12 rounded-[var(--radius-lg)] bg-slate-200"></div>
+        <div className="h-24 w-20 rounded-[var(--radius-lg)] bg-slate-200"></div>
+      </div>
+    </div>
+  );
+
+  // 로딩 중이면 스켈레톤 UI 반환
+  if (isLoading) {
+    return <SkeletonHeader />;
+  }
 
   return (
     <>
