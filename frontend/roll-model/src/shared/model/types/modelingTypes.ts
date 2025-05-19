@@ -23,6 +23,7 @@ export interface ForkPreprocessResponse {
   pipelineId: string;
   category: projectCategory;
   preprocessingSteps: PreviousPreprocessingSteps[];
+  columns: ColumnConfig[];
   dataset: Array<Record<string, CellValue>>;
   summary: {
     totalRows: number; // 총 행 수
