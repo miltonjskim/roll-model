@@ -1,5 +1,6 @@
 'use client';
 import { useProjectDetailApi } from '@/app/project-detail/[id]/api-section/model/useProjectDetailApi';
+import ProjectDetailLoading from '@/app/project-detail/[id]/loading';
 import ApiDownloadCard from '@/entities/project-detail/ui/api-section/ApiDownloadCard';
 import ApiEndpointCard from '@/entities/project-detail/ui/api-section/ApiEndpointCard';
 import ApiExamplesCard from '@/entities/project-detail/ui/api-section/ApiExamplesCard';
@@ -13,11 +14,7 @@ export default function ApiSectionPage() {
   const { projectDetailApi, isLoading, isError } = useProjectDetailApi(pipelineId);
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <ProjectDetailLoading />;
   }
 
   if (isError || !projectDetailApi) {
@@ -29,7 +26,7 @@ export default function ApiSectionPage() {
   return (
     <>
       <ApiDownloadCard pipelineId={pipelineId}></ApiDownloadCard>
-      <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} />
+      <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} apiKey={projectDetailApi.endpoint.apiKey}/>
       <ApiEndpointCard endpoint={endpoint}></ApiEndpointCard>
       <ApiExamplesCard inputSchema={inputSchema} endpoint={endpoint} projectCategory={projectDetailApi.projectInfo.category}></ApiExamplesCard>
     </>
