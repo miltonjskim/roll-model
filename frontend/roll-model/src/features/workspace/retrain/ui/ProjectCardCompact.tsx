@@ -41,13 +41,18 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
       const data = response.data.data;
       console.log('data:', data);
 
+      const columns = data.columns;
+      const columnNames = columns.map((col) => col.name);
+
       setPipelineId(data.pipelineId);
+      localStorage.setItem('pipelineId', data.pipelineId);
       setProjectTitle(project.title);
       setUploadDataset({
         pipelineId: data.pipelineId,
         summary: data.summary,
         missingValues: data.summary.missingValues,
         originalDatasets: {
+          columns: columnNames,
           data: data.dataset,
         },
       });
