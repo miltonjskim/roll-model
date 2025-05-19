@@ -74,17 +74,14 @@ public class ProjectVersionService {
         PipelineEntity pipelineEntity = pipelineRepository.findByPipelineId(command.getPipelineId())
             .orElseThrow(() -> new ApiException(ErrorCode.PIPELINE_DATA_NOT_FOUND));
 
-        Integer projectId = pipelineEntity.getProjectEntity().getProjectId();
-
-        ProjectEntity project = projectRepository.findById(projectId)
-            .orElseThrow(() -> new ApiException(ErrorCode.INVALID_INPUT_PARAMETER));
-
         // 4. 프로젝트 소유자 여부 확인
-        boolean isProjectOwner = project.getMemberEntity().getMemberId().equals(member.getMemberId());
+        boolean isProjectOwner = pipelineEntity.getProjectEntity().getMemberEntity().getMemberId().equals(member.getMemberId());
         log.debug("User is project owner: {}", isProjectOwner);
 
         // 5. 파이프라인 정보 매핑 및 응답 구성
         List<PipelineInfo> pipelineInfoList = new ArrayList<>();
+
+        boolean isPipelineOwner;
 
         for (PipelineEntity pipeline : pipelines) {
             // 삭제된 파이프라인 필터링 (프로젝트 소유자가 아닌 경우)
@@ -92,10 +89,14 @@ public class ProjectVersionService {
                 continue;
             }
 
+            // 4. 프로젝트 소유자 여부 확인
+            isPipelineOwner = pipeline.getProjectEntity().getMemberEntity().getMemberId().equals(member.getMemberId());
+            log.debug("User is project owner: {}", isProjectOwner);
+
             // 모델 정보 조회 (runningDuration 용)
             ModelDocument model = modelRepository.findByPipelineId(pipeline.getPipelineId());
 
-            PipelineInfo pipelineInfo = buildPipelineInfo(pipeline, model, project, isProjectOwner, versionMap);
+            PipelineInfo pipelineInfo = buildPipelineInfo(pipeline, model, pipelineEntity.getProjectEntity(), isPipelineOwner, versionMap);
             pipelineInfoList.add(pipelineInfo);
         }
 
@@ -103,11 +104,11 @@ public class ProjectVersionService {
 
         // 프로젝트 정보 구성
         ProjectInfo projectInfo = ProjectInfo.builder()
-            .title(project.getTitle())
-            .category(project.getCategory().name())
-            .domain(project.getDomain().name())
+            .title(pipelineEntity.getProjectEntity().getTitle())
+            .category(pipelineEntity.getProjectEntity().getCategory().name())
+            .domain(pipelineEntity.getProjectEntity().getDomain().name())
             .version(versionEntity.getVersionNum())
-            .projectPublicYn(project.getPublicYn())
+            .projectPublicYn(pipelineEntity.getProjectEntity().getPublicYn())
             .pipelinePublicYn(pipelineEntity.getPublicYn())
             .ownerYn(isProjectOwner)
             .build();
@@ -176,7 +177,7 @@ public class ProjectVersionService {
             .rSquared(rSquared)
             .dataCount(pipeline.getDataCount())
             .target(pipeline.getTargetFeature())
-            .runnungDuration(runningDuration)
+            .runningDuration(runningDuration)
             .likeCount(pipeline.getLikeCount())
             .downloadCount(pipeline.getDownloadCount())
             .updatedAt(pipeline.getModifiedAt())
