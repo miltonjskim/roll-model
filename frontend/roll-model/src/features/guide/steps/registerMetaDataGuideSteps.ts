@@ -7,7 +7,7 @@ export const registerMetaDataGuideSteps = () => {
     text: `지금부터 <b>프로젝트 기본 정보</b>를 설정할 거예요.<br/>
     이름, 예측 목표, 도메인 등을 차근차근 입력하면<br/>
     나만의 AI 프로젝트가 시작됩니다!`,
-    classes: 'bg-white shadow-xl rounded-md border border-gray-200 text-gray-900 max-w-md px-4 py-3',
+    classes: 'bg-white shadow-xl rounded-md border border-gray-200 text-gray-900 max-w-md px-4 py-3 shepherd-step-intro',
     highlightClass: 'shepherd-highlight',
     buttons: [
       {
@@ -42,13 +42,14 @@ export const registerMetaDataGuideSteps = () => {
         action: guide.next,
       },
     ],
-    classes: 'shepherd-rounded',
+    classes: 'shepherd-rounded shepherd-step-1',
   });
 
   guide.addStep({
     id: 'project-description',
     title: '<span class="font-tossface">🎯</span> 예측 목적',
     text: `이 프로젝트의 <b>목표 변수</b>를 입력해주세요.<br/>예: 매출, 이탈률, 질병 유무 등`,
+    classes: 'shepherd-step-2',
     attachTo: {
       element: '.guide-project-description',
       on: 'bottom',
@@ -72,6 +73,7 @@ export const registerMetaDataGuideSteps = () => {
     id: 'project-domain',
     title: '<span class="font-tossface">🌐 </span> 도메인 선택',
     text: `어떤 산업/분야에 해당하는 프로젝트인지 선택해주세요.<br/>선택한 도메인에 따라 추천 기능이 달라질 수 있어요.`,
+    classes: 'shepherd-step-1',
     attachTo: {
       element: '.guide-project-domain',
       on: 'bottom',
@@ -100,6 +102,7 @@ export const registerMetaDataGuideSteps = () => {
       <b>📈 회귀 (Regression)</b>은 결과가 <u>숫자</u>일 때 사용합니다.<br/>
       예: 매출 예측, 체온 예측, 주가 예측 등
     `,
+    classes: 'shepherd-step-2',
     attachTo: {
       element: '.guide-project-type',
       on: 'bottom',
@@ -123,6 +126,7 @@ export const registerMetaDataGuideSteps = () => {
     id: 'project-public',
     title: '<span class="font-tossface">🔓 </span> 공개 여부 설정',
     text: `이 프로젝트를 다른 사람들과 공유할 수 있도록 <b>공개 여부</b>를 설정할 수 있어요.`,
+    classes: 'shepherd-step-1',
     attachTo: {
       element: '.guide-project-public',
       on: 'top',
