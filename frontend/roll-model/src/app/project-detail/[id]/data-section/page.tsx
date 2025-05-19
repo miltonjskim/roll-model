@@ -8,6 +8,7 @@ import { DataSplitCard } from '@/entities/project-detail/ui/data-section/DataSpl
 import { DistributionCharts } from '@/entities/project-detail/ui/data-section/DistributionCharts';
 import { CorrelationMatrix } from '@/entities/project-detail/ui/data-section/CorrelationMatrix';
 import ProjectDetailCard, { CardProps } from '@/widgets/project/project-detail/ProjectDetailCard';
+import ProjectDetailLoading from '@/app/project-detail/[id]/loading';
 
 export default function DataSectionPage() {
   const { id } = useParams();
@@ -16,11 +17,7 @@ export default function DataSectionPage() {
   const { projectDetailData, isLoading, isError } = useProjectDetailData(pipelineId);
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <ProjectDetailLoading />;
   }
 
   if (isError || !projectDetailData) {

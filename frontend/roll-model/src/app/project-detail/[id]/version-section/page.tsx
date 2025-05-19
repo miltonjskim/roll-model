@@ -7,6 +7,7 @@ import { ReactFlowProvider } from 'reactflow';
 import VersionGraphDagre from '@/entities/project-detail/ui/version-section/VersionGraphDagre';
 import VersionDetailCard from '@/entities/project-detail/ui/version-section/VersionDetailCard';
 import { useProjectDetailVersionSelection } from '@/app/project-detail/[id]/version-section/model/useProjectDetailVersionSelection';
+import ProjectDetailLoading from '@/app/project-detail/[id]/loading';
 
 export default function VersionSectionPage() {
   const { id } = useParams();
@@ -19,11 +20,7 @@ export default function VersionSectionPage() {
   const { selectedVersion, selectedPipeline, pipelines, handleSelectVersion } = useProjectDetailVersionSelection(projectDetailVersion);
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="border-[theme(color-blue-01)] h-12 w-12 animate-spin rounded-full border-t-2 border-b-2"></div>
-      </div>
-    );
+    return <ProjectDetailLoading />;
   }
 
   if (isError || !projectDetailVersion) {
@@ -40,7 +37,7 @@ export default function VersionSectionPage() {
           <div className="w-full lg:w-full">
             {pipelines.length > 0 && (
               <ReactFlowProvider>
-                <VersionGraphDagre pipelines={pipelines}  selectedVersion={selectedVersion} onSelectVersion={handleSelectVersion} selectedPipeline={selectedPipeline} />
+                <VersionGraphDagre pipelines={pipelines} selectedVersion={selectedVersion} onSelectVersion={handleSelectVersion} selectedPipeline={selectedPipeline} />
               </ReactFlowProvider>
             )}
           </div>

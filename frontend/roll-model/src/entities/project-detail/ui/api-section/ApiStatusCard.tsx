@@ -7,6 +7,7 @@ interface ApiStatusCardProps {
   apiStatus: ApiStatus;
   endpoint?: string;
   inputSchema?: any;
+  apiKey: string;
 }
 
 interface Feature {
@@ -17,7 +18,7 @@ interface Feature {
   options: string[] | null;
 }
 
-export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiStatusCardProps) {
+export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey }: ApiStatusCardProps) {
   const [apiActiveStatus, setApiActiveStatus] = useState<{
     isActive: boolean;
     performance: number;
@@ -42,7 +43,9 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
 
       // 프록시 적용
       const modelId = endpoint.split('/').pop(); // 'model-681dc05b94fed8acc6f1dc6d' 추출
-      const apiEndpoint = `/api/model/${modelId}${endpoint.endsWith(':predict') ? '' : ':predict'}`;
+      // const apiEndpoint = `/api/model/${modelId}${endpoint.endsWith(':predict') ? '' : ':predict'}`;
+      const apiEndpoint = `/api/model/${modelId}`;
+      // const apiEndpoint = endpoint;
 
       const exampleValues = inputSchema.features.map((feature: Feature) => feature.example);
 
@@ -61,7 +64,12 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema }: ApiS
       // POST 요청 보내기
       console.log('요청 가보자', apiEndpoint, '그리고', requestBody);
 
-      const response = await axios.post(apiEndpoint, requestBody);
+      const response = await axios.post(apiEndpoint, requestBody, {
+        headers: {
+          apiKey: apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
       // 응답 시간 계산
       const responseTime = Date.now() - startTime;
