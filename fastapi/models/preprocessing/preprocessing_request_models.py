@@ -8,75 +8,62 @@ class BasePreprocessingRequest(BaseModel):
 
 # 결측치 제거 요청
 class MissingValueRemoveRequest(BasePreprocessingRequest):
-    type: str = "MISSING_VALUE_REMOVE"
     column: str | None = Field(None, description="처리할 컬럼 이름")
     method: str = Field(..., description="제거 방법 ('ROW_REMOVE' 또는 'COL_REMOVE')")
 
 # 결측치 대체 요청
 class MissingValueImputationRequest(BasePreprocessingRequest):
-    type: str = "MISSING_VALUE_IMPUTATION"
     column: str = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="대체 방법 ('MEAN', 'MEDIAN', 'MODE')")
 
 class OutlierRemoveRequest(BasePreprocessingRequest):
-    type: str = "OUTLIER_REMOVE"
     column: str = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="제거 방법 ('ROW_REMOVE' 또는 'COL_REMOVE')")
     detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
 
 # 결측치 대체 요청
 class OutlierImputationRequest(BasePreprocessingRequest):
-    type: str = "OUTLIER_IMPUTATION"
     column: str = Field(..., description="처리할 컬럼 이름")
     method: str = Field(..., description="제거 방법 ('MEAN', 'MEDIAN', 'MODE', ‘THRESHOLD’)")
     detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
 
 
 class OutlierDetectionRequest(BasePreprocessingRequest):
-    type: str = "OUTLIER_DETECTION"
     column: str | None = Field(None, description="처리할 컬럼 이름")
     detection: str = Field(..., description="탐지 방법 ('ZSCORE', 'IQR')")
 
 # Z-Score 표준화 요청
 class ZScoreRequest(BasePreprocessingRequest):
-    type: str = "ZSCORE_SCALING"
     column: str | None = Field(None,description="표준화할 컬럼 이름")
 
 # Min-Max 스케일링 요청
 class MinMaxScalingRequest(BasePreprocessingRequest):
-    type: str = "MINMAX_SCALING"
     column: str | None = Field(None, description="스케일링할 컬럼 이름")
 
 # 로그 변환 요청
 class LogTransformRequest(BasePreprocessingRequest):
-    type: str = "LOG_TRANSFORM"
     column: str = Field(..., description="변환할 컬럼 이름")
     offset: float = Field(1.0, description="오프셋 값")
 
 # 제곱근 변환 요청
 class SqrtTransformRequest(BasePreprocessingRequest):
-    type: str = "SQRT_TRANSFORM"
     column: str = Field(..., description="변환할 컬럼 이름")
 
 # 원-핫 인코딩 요청
 class OneHotEncodingRequest(BasePreprocessingRequest):
-    type: str = "ONEHOT_ENCODING"
     column: str = Field(..., description="인코딩할 컬럼 이름")
 
 # 레이블 인코딩 요청
 class LabelEncodingRequest(BasePreprocessingRequest):
-    type: str = "LABEL_ENCODING"
     column: str = Field(..., description="인코딩할 컬럼 이름")
 
 # 타겟 인코딩 요청
 class TargetEncodingRequest(BasePreprocessingRequest):
-    type: str = "TARGET_ENCODING"
     column: str = Field(..., description="인코딩할 컬럼 이름")
     target_column: str = Field(..., description="타겟 컬럼 이름", alias="targetColumn")
 
 # 클래스 불균형 처리 요청
 class ClassBalancingRequest(BasePreprocessingRequest):
-    type: str = "CLASS_BALANCING"
     target_column: str = Field(..., description="타겟 컬럼 이름", alias="column")
     sampling_ratio: int = Field(200, description="샘플링 비율 (%)", alias="samplingRatio")
     method: str = Field(..., description="불균형 처리 방법 ('OVER', 'UNDER')")
