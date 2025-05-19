@@ -2,7 +2,7 @@ import io
 import pandas as pd
 from datetime import datetime
 
-from ...core.exception import CustomAPIException
+from core.exception import CustomAPIException
 
 class ColumnHandler:
     def __init__(self, data_path=None, df=None, encoding="utf-8"):
