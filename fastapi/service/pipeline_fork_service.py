@@ -153,10 +153,6 @@ async def create_new_project(db, original_project, member_id):
     """
     try:
         # 원본 프로젝트 정보 조회
-        original_project = db.query(Project).filter(
-            Project.project_id == original_project.project_id,
-        ).first()
-
         if not original_project:
             logger.error(f"원본 프로젝트 {original_project.project_id}를 찾을 수 없습니다.")
             return None, None

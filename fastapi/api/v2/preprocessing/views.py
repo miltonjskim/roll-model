@@ -386,14 +386,21 @@ async def complete_preprocessing(
             "hasHeader": True,
             "columns": inferred_columns  # 정리된 컬럼 정보
         }
-
+        logger.info(f"Config: {config}")
         project = db.query(Project).filter(Project.project_id == pipelineModel.project_id).first()
 
         # 수정된 데이터프레임을 다시 CSV로 변환하여 buffer에 저장
         updated_buffer = io.BytesIO()
+        logger.info(f"Updated dataframe shape: {df_filtered.columns}")
         df_filtered.to_csv(updated_buffer, index=False, encoding='utf-8')
-        updated_buffer.seek(0)
         
+        final_dataset_etag = await minio_client.save_object_with_etag(
+            bucket_name="datasets",
+            object_name=final_dataset_object_name,
+            data=updated_buffer,
+            content_type="text/csv",
+            encoding="utf-8",
+        )
         # 5. 전처리된 데이터셋 메타데이터 추출 및 저장
         dataset_analysis = await analyze_dataset(updated_buffer, config)
 
@@ -418,7 +425,8 @@ async def complete_preprocessing(
             new_status=PipelineStatus.PREPROCESSED,
             project_id=pipelineModel.project_id,
             member_id=member_id,
-            preprocessed_dataset_id=dataset_id
+            preprocessed_dataset_id=dataset_id,
+            
         )
 
         if not updated_pipeline:
