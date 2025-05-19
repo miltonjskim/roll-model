@@ -1,5 +1,6 @@
 import { ApiStatus } from '@/entities/project-detail/model/ApiTypes';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
+import { CssDetailHovering } from '@/widgets/project/project-detail/ProjectDetailCard';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 
@@ -117,8 +118,13 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey
     {
       name: '활성화 상태',
       icon: (
-        <button onClick={checkApiStatus} className="rounded-full p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-50" disabled={apiActiveStatus.isChecking || !endpoint} title="상태 새로고침">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button
+          onClick={checkApiStatus}
+          className="cursor-pointer rounded-full p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+          disabled={apiActiveStatus.isChecking || !endpoint}
+          title="상태 새로고침"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
@@ -130,13 +136,14 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey
         </div>
       ) : (
         <div className="flex items-center">
-          <div className={`mr-2 h-3 w-3 rounded-full ${apiActiveStatus.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <div className={`mr-2 h-3 w-3 rounded-full ${apiActiveStatus.isActive ? 'bg-[theme(color-green-01)]' : 'bg-[theme(color-rose-01)]'}`}></div>
           <span>{apiActiveStatus.isActive ? '활성화' : '비활성화'}</span>
         </div>
       ),
       description: '현재 API 서비스 상태',
-      bg: apiActiveStatus.isActive ? 'bg-green-50' : 'bg-red-50',
-      textColor: apiActiveStatus.isActive ? 'text-green-700' : 'text-red-700',
+      bg: apiActiveStatus.isActive ? 'bg-[theme(color-green-03)]' : 'bg-[theme(color-rose-03)]',
+      textColor: apiActiveStatus.isActive ? 'text-[theme(color-green-01)]' : 'text-[theme(color-rose-01)]',
+      textSize: 'lg:text-3xl',
     },
     {
       name: '평균 응답 시간',
@@ -149,24 +156,27 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey
         <span className="text-gray-400">사용 불가</span>
       ),
       description: '최근 API 호출 응답 시간',
-      bg: 'bg-blue-50',
-      textColor: 'text-blue-700',
+      bg: 'bg-[theme(color-blue-03)]',
+      textColor: 'text-[theme(color-blue-01)]',
+      textSize: 'lg:text-3xl',
     },
     {
       name: 'API 키 만료일',
       icon: '🔑',
       value: formatExpiryDate(apiStatus.expiresAt),
       description: 'API 키 갱신이 필요한 날짜',
-      bg: 'bg-amber-50',
-      textColor: 'text-amber-700',
+      bg: 'bg-[theme(color-yellow-03)]',
+      textColor: 'text-[theme(color-yellow-01)]',
+      textSize: 'lg:text-xl',
     },
     {
       name: '모델 정확도',
       icon: '📊',
       value: apiStatus.accuracy ? `${(apiStatus.accuracy * 100).toFixed(2)}%` : apiStatus.rSquared ? `R²: ${(apiStatus.rSquared * 100).toFixed(2)}` : '정보 없음',
       description: apiStatus.accuracy ? '분류 모델 정확도' : '회귀 모델 성능',
-      bg: 'bg-violet-50',
-      textColor: 'text-violet-700',
+      bg: 'bg-[theme(color-purple-03)]',
+      textColor: 'text-[theme(color-purple-01)]',
+      textSize: 'lg:text-3xl',
     },
   ];
 
@@ -180,16 +190,16 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* 주석: map 함수로 카드 데이터 배열을 순회하여 동일한 스타일의 카드 생성 */}
         {statusCards.map((card, index) => (
-          <div key={`api-status-${index}`} className={`flex flex-col rounded-lg ${card.bg} p-4 transition-all hover:shadow-md`}>
+          <div key={`api-status-${index}`} className={`${CssDetailHovering} flex flex-col rounded-lg ${card.bg} p-4 transition-all hover:shadow-md`}>
             {/* 주석: 카드 헤더 영역 - 이름과 아이콘 배치 */}
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">{card.name}</span>
-              <span className="text-lg">{card.icon}</span>
+              <span className="h-[2rem] text-start text-sm text-gray-500">{card.name}</span>
+              <span className="font-tossface mt-1 mr-3 text-2xl lg:text-3xl">{card.icon}</span>
             </div>
             {/* 주석: 카드 값 영역 - 동적 스타일 적용 */}
-            <div className={`mb-1 text-2xl font-bold ${card.textColor}`}>{card.value}</div>
+            <div className={`text-start text-xl font-bold ${card.textSize} ${card.textColor}`}>{card.value}</div>
             {/* 주석: 카드 설명 영역 */}
-            <div className="text-xs text-gray-500">{card.description}</div>
+            {/* <div className="text-xs text-gray-500">{card.description}</div> */}
           </div>
         ))}
       </div>
