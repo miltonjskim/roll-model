@@ -231,7 +231,9 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   return (
     <div className="flex flex-col space-y-2 overflow-y-auto">
       <PreprocessingInfoDialog />
-
+      <div className="mb-2 text-center text-sm">
+        <span className="text-[var(--color-error-text)]">*</span> 문자형 데이터는 인코딩이 꼭 필요합니다!
+      </div>
       {preprocessingCategories.map((cat) => {
         const isOpen = expanded.includes(cat.id);
         return (
