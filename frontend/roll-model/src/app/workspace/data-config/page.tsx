@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { aiRecommendedStepsAtom, pipelineIdAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -57,6 +57,7 @@ const ConfigDataPage = () => {
   const setGlobalLoading = useSetAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const setPipelineId = useSetAtom(pipelineIdAtom);
+  const setPreprocessingSteps = useSetAtom(preprocessingStepsAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -98,6 +99,7 @@ const ConfigDataPage = () => {
       const projectId = response.data.id.toString();
       setProjectId(projectId);
       setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
+      setPreprocessingSteps([]);
 
       const [uploadSuccess, aiResponse] = await Promise.all([handleUpload(projectId), fetchRecommendedPreprocessingSteps(projectId)]);
 
