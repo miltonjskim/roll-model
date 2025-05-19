@@ -681,7 +681,10 @@ async def fork_pipeline_preprocess(
         columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
         response_data["projectTitle"] = target_project.title
-
+        if response_data["preprocessingSteps"] is not None:
+            for step in response_data["preprocessingSteps"]:
+                step["type"] = client_preprocess_step_label_mapper(step["type"])
+                
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",

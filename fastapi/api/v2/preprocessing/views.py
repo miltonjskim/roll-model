@@ -511,10 +511,10 @@ async def complete_preprocessing(
 
 
 
-@router.post("/batch")
+@router.post("/pipelines/{pipeline_id}/preprocessing/batch", response_model=PreprocessingResponse)
 async def perform_batch_preprocessing(
     pipeline_id: str,
-    request: PreprocessPipelineRequest,  # 단일 파이프라인 요청으로 수정
+    request: PreprocessPipelineRequest,
     member_id: int = Depends(verify_pipeline_ownership),
     preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
 ):
@@ -523,16 +523,19 @@ async def perform_batch_preprocessing(
     # 전처리 작업 목록 준비
     tasks = []
     
-    # 요청에서 전처리 단계 추출
-    for step in request.preprocessing_steps:
-        # 요청 유형에 따라 적절한 핸들러 클래스와 메서드 매핑
+    # 요청에서 전처리 단계 파싱하여 객체로 변환
+    parsed_steps = request.get_parsed_steps()
+    
+    # 파싱된 단계 객체 처리
+    for step in parsed_steps:
+        # 요청 객체의 클래스 유형에 따라 적절한 핸들러 결정
         handler_config = get_handler_config_by_request_type(step)
         
         tasks.append({
-            'type': handler_config['preprocessing_type'],  # 전처리 유형 (MissingValue, Outlier 등)
+            'type': handler_config['preprocessing_type'],
             'handler_class': handler_config['handler_class'],
             'handler_method': handler_config['handler_method'],
-            'request': step  # 전체 요청 객체 전달
+            'request': step
         })
     
     # 파이프라인 전처리 실행
@@ -550,73 +553,73 @@ def get_handler_config_by_request_type(request):
     # 이 함수는 요청 객체의 클래스 유형에 따라 적절한 핸들러를 반환
     if isinstance(request, MissingValueRemoveRequest):
         return {
-            'preprocessing_type': 'MISSING_VALUE',
+            'preprocessing_type': 'MISSING_VALUE_REMOVE',
             'handler_class': MissingValueHandler,
             'handler_method': 'handle_missing_values_remove'
         }
     elif isinstance(request, MissingValueImputationRequest):
         return {
-            'preprocessing_type': 'MISSING_VALUE',
+            'preprocessing_type': 'MISSING_VALUE_IMPUTATION',
             'handler_class': MissingValueHandler,
             'handler_method': 'handle_missing_values_imputation'
         }
     elif isinstance(request, OutlierRemoveRequest):
         return {
-            'preprocessing_type': 'OUTLIER',
+            'preprocessing_type': 'OUTLIER_REMOVE',
             'handler_class': OutlierHandler,
             'handler_method': 'handle_outliers_remove'
         }
     elif isinstance(request, OutlierImputationRequest):
         return {
-            'preprocessing_type': 'OUTLIER',
+            'preprocessing_type': 'OUTLIER_IMPUTATION',
             'handler_class': OutlierHandler,
             'handler_method': 'handle_outliers_imputation'
         }
     elif isinstance(request, OutlierDetectionRequest):
         return {
-            'preprocessing_type': 'OUTLIER',
+            'preprocessing_type': 'OUTLIER_DETECTION',
             'handler_class': OutlierHandler,
             'handler_method': 'handle_outliers_detection'
         }
     elif isinstance(request, ZScoreRequest):
         return {
-            'preprocessing_type': 'TRANSFORMATION',
+            'preprocessing_type': 'ZSCORE_SCALING',
             'handler_class': TransformationHandler,
             'handler_method': 'scale_zscore'
         }
     elif isinstance(request, MinMaxScalingRequest):
         return {
-            'preprocessing_type': 'TRANSFORMATION',
+            'preprocessing_type': 'MINMAX_SCALING',
             'handler_class': TransformationHandler,
             'handler_method': 'scale_minmax'
         }
     elif isinstance(request, LogTransformRequest):
         return {
-            'preprocessing_type': 'TRANSFORMATION',
+            'preprocessing_type': 'LOG_TRANSFORM',
             'handler_class': TransformationHandler,
             'handler_method': 'transform_log'
         }
     elif isinstance(request, SqrtTransformRequest):
         return {
-            'preprocessing_type': 'TRANSFORMATION',
+            'preprocessing_type': 'SQRT_TRANSFORM',
             'handler_class': TransformationHandler,
             'handler_method': 'transform_sqrt'
         }
     elif isinstance(request, OneHotEncodingRequest):
         return {
-            'preprocessing_type': 'ENCODING',
+            'preprocessing_type': 'ONEHOT_ENCODING',
             'handler_class': EncodingHandler,
             'handler_method': 'encode_onehot'
         }
     elif isinstance(request, LabelEncodingRequest):
         return {
-            'preprocessing_type': 'ENCODING',
+            'preprocessing_type': 'LABEL_ENCODING',
             'handler_class': EncodingHandler,
             'handler_method': 'encode_label'
         }
     elif isinstance(request, TargetEncodingRequest):
         return {
-            'preprocessing_type': 'ENCODING',
+            'preprocessing_type': 'TARGET_ENCODING',
             'handler_class': EncodingHandler,
             'handler_method': 'encode_target'
         }
@@ -625,6 +628,18 @@ def get_handler_config_by_request_type(request):
             'preprocessing_type': 'CLASS_BALANCING',
             'handler_class': ClassBalancingHandler,
             'handler_method': 'balance_class'
+        }
+    elif isinstance(request, ColumnDropRequest):
+        return {
+            'preprocessing_type': 'COLUMN_DROP',
+            'handler_class': ColumnHandler,
+            'handler_method': 'remove_columns'
+        }
+    elif isinstance(request, ColumnKeepRequest):
+        return {
+            'preprocessing_type': 'COLUMN_KEEP',
+            'handler_class': ColumnHandler,
+            'handler_method': 'keep_columns'
         }
     else:
         raise ValueError(f"지원하지 않는 전처리 요청 유형: {type(request)}")
