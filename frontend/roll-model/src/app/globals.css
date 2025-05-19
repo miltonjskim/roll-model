@@ -322,6 +322,10 @@ body {
   @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
 }
 
+.shepherd-button {
+  border-radius: 0.5rem !important;
+}
+
 /* black 스타일 */
 .shepherd-button.black {
   @apply bg-[#181d2b] text-white hover:bg-[#181d2b]/90;
@@ -368,13 +372,54 @@ body {
   @apply rounded-lg;
 }
 
-/* shepherd-content를 말풍선처럼 보이게 */
 .shepherd-element {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  overflow: visible !important;
   background: #fffaf0 !important;
   border: 2px solid #fcd34d !important;
   border-radius: 16px !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  font-family: 'Pretendard', sans-serif;
+}
+
+.shepherd-element::before {
+  content: '';
+  position: absolute;
+  top: -54px;
+  left: 16px;
+  width: 64px;
+  height: 64px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 2147483648;
+  pointer-events: none;
+}
+
+.shepherd-element.shepherd-step-intro::before {
+  background-image: url('/guide/auto-cat.png');
+}
+
+.shepherd-element.shepherd-step-1::before {
+  background-image: url('/guide/auto-cat-smile.png');
+  top: -61px;
+  left: 320px;
+  width: 80px !important;
+  height: 80px !important;
+}
+
+.shepherd-element.shepherd-step-2::before {
+  background-image: url('/guide/auto-cat-study.png');
+  top: -53px;
+  left: 240px;
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.parent-wrapper {
+  transform: translateZ(0); /* stacking context 생성 */
+  filter: blur(0); /* stacking context 생성 */
+  will-change: transform;
+  perspective: 1000px;
 }
 
 .shepherd-title {
@@ -385,15 +430,4 @@ body {
 .shepherd-text {
   font-size: 0.9rem;
   color: #333;
-}
-
-/* 말풍선 꼬리 모양 흉내내기 */
-.shepherd-element::after {
-  content: '';
-  position: absolute;
-  bottom: -12px;
-  left: 30px;
-  border-width: 12px 12px 0;
-  border-style: solid;
-  border-color: #fcd34d transparent transparent;
 }
