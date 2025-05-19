@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { aiRecommendedStepsAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, pipelineIdAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -56,6 +56,7 @@ const ConfigDataPage = () => {
   const setProjectId = useSetAtom(projectIdAtom);
   const setGlobalLoading = useSetAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
+  const setPipelineId = useSetAtom(pipelineIdAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -130,6 +131,11 @@ const ConfigDataPage = () => {
     try {
       const response = await mutation.mutateAsync({ projectId, config: payload, file });
       const data = response.data;
+
+      console.log('config response:', data);
+
+      localStorage.setItem('pipelineId', data.result.pipelineId);
+      setPipelineId(data.result.pipelineId);
       setUploadedDataset(data.result);
       setAiRecommendedStepsAtom(data.step);
       return true;
