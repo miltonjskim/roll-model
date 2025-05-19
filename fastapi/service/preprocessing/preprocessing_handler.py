@@ -237,20 +237,20 @@ class PreprocessingHandler:
         dataset_summary = PreprocessingHandler.get_dataset_summary(df)
         # 현재 페이지에 해당하는 부분 추출
         aligned_df = df.iloc[aligned_start:aligned_start + page_size].copy()
-        
+
         # aligned_start에 맞춰 인덱스 추가
         aligned_df.index = range(aligned_start, aligned_start + len(aligned_df))
         aligned_df = aligned_df.reset_index().rename(columns={'index': 'idx'})
         
         # dict로 변환
         dataset = aligned_df.to_dict(orient="records")
- 
+        # logger.info(f"aligned_df: {dataset}")
         # 기본 응답 구조
         response = {
             "data": {
                 "pipelineId": pipeline_id,
                 "result": result,  # result 구조에 따라 조정
-                "dataset": dataset[aligned_start:aligned_start + page_size],
+                "dataset": dataset,
                 "total": len(dataset),
                 "page": (aligned_start // page_size) + 1,
                 "pageSize": page_size,

@@ -524,9 +524,7 @@ class OutlierHandler:
                 "outlierCount": total_outlier_count,
                 "minThreshold": None,  # 전체 분석에서는 단일 임계값이 없음
                 "maxThreshold": None,
-                "outlierIndices": sorted(
-                    list(all_outlier_indices)
-                ),  # 중복 제거된 전체 이상치 인덱스
+                "outlierIndices": sorted_outlier_indices,  # 중복 제거된 전체 이상치 인덱스
                 "details": all_results,  # 각 컬럼별 상세 결과
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 "startPoint": sorted_outlier_indices[0] if sorted_outlier_indices else 0,
