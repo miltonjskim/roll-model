@@ -293,15 +293,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
               </div>
             )}
           </div>
-          {/* 그리드 전처리완료 */}
-          {/* {project.status === 'PREPROCESSED' && (
-            <div className="mb-4 flex h-26 w-42 items-end">
-              <div className="w-full rounded-lg border border-1 pl-2 text-start">
-                <div>전처리 완료 상태 입니다</div>
-                <div>학습을 시작해 주세요</div>
-              </div>
-            </div>
-          )} */}
+
           {/* 하단 버튼 */}
           <div className="mt-4 flex justify-end gap-3 select-none">
             {project.status === 'COMPLETED' && (
@@ -312,12 +304,13 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                 상세
               </button>
             )}
+
             {project.status === 'PREPROCESSED' && (
               <button
                 className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation(); // 이벤트 버블링 중단
-                  handleAfterSchoolClick(project.id);
+                  handleAfterSchoolClick(project.id, 'PREPROCESSED');
                 }}
               >
                 학습시작
@@ -328,7 +321,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                 className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation(); // 이벤트 버블링 중단
-                  handleAfterSchoolClick(project.id);
+                  handleAfterSchoolClick(project.id, 'FAILED');
                 }}
               >
                 재시도

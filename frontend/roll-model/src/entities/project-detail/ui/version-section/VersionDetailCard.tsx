@@ -1,9 +1,7 @@
-// app/entities/project-detail/ui/version-section/VersionDetailCard.tsx
 // 'use client';
 
 import { Pipeline } from '@/entities/project-detail/model/versionTypes';
 import { AfterSchoolDropdown } from '@/features/project-detail/AfterSchoolDropdown';
-import { useAfterSchool } from '@/features/project-detail/useAfterSchool';
 import { formatDate, getRelativeTime } from '@/shared/lib/utils/dateUtils';
 import { getDomainDisplayName } from '@/shared/lib/utils/domainMapping';
 import { projectDetailAtom } from '@/shared/model/atoms/projectDetail.atoms';
@@ -19,7 +17,6 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
   // const projectDetail = useAtomValue(projectDetailAtom);
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
   const router = useRouter();
-  const { handleAfterSchoolClick } = useAfterSchool();
   if (!pipeline) return null;
 
   //상세보기
