@@ -55,7 +55,7 @@ public class GetProjectVersionsResponse {
 
         private Integer dataCount;
         private String target;
-        private Double runnungDuration;
+        private Double runningDuration;
         private Integer likeCount;
         private Integer downloadCount;
 
