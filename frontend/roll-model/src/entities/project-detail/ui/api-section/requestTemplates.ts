@@ -10,21 +10,26 @@ interface TemplateProps {
   inputSchema: InputSchema;
 }
 
+/**
+ * 선택된 언어에 맞는 API 요청 예제 코드를 생성합니다.
+ * @param language 요청 예제를 생성할 프로그래밍 언어
+ * @param param1 엔드포인트 정보와 입력 스키마 정보
+ * @returns 해당 언어로 작성된 요청 예제 코드 문자열
+ */
 export const getRequestExample = (language: LanguageType, { endpoint, inputSchema }: TemplateProps): string => {
-  // 입력 데이터 구성
-  const requestData = inputSchema.features.reduce(
-    (obj, feature) => {
-      obj[feature.name] = feature.example;
-      return obj;
-    },
-    {} as Record<string, any>,
-  );
+  // 입력 스키마로부터 예제 데이터 배열 생성
+  const exampleValues = inputSchema.features.map((feature) => feature.example);
+
+  // API 요청에 필요한 형식으로 데이터 구조화
+  const requestData = {
+    inputs: [exampleValues],
+  };
 
   switch (language) {
     case 'curl':
       return `curl -X POST "${endpoint.url}" \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer [여기에 ApiKey입력]" \\
+  -H "apiKey: ${endpoint.apiKey}" \\
   -d '${JSON.stringify(requestData, null, 2)}'`;
 
     case 'python':
@@ -33,33 +38,39 @@ export const getRequestExample = (language: LanguageType, { endpoint, inputSchem
 url = "${endpoint.url}"
 headers = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer [여기에 ApiKey입력]"
+    "apiKey": "${endpoint.apiKey}"
 }
-data = ${JSON.stringify(requestData, null, 2)
-        .replace(/"True"/g, 'True')
-        .replace(/"False"/g, 'False')}
+data = ${JSON.stringify(requestData, null, 2)}
 
 response = requests.post(url, headers=headers, json=data)
 result = response.json()
 print(result)`;
 
     case 'javascript':
-      return `// Fetch API 사용
-const url = "${endpoint.url}";
-const headers = {
-  "Content-Type": "application/json",
-  "Authorization": "Bearer [여기에 ApiKey입력]"
-};
-const data = ${JSON.stringify(requestData, null, 2)};
+      return `// API 호출 코드
+const modelId = "${endpoint.url.split('/').pop()}"; // 모델 ID
+const apiKey = "${endpoint.apiKey}"; // API 키
 
-fetch(url, {
-  method: 'POST',
-  headers: headers,
-  body: JSON.stringify(data)
-})
-.then(response => response.json())
-.then(result => console.log(result))
-.catch(error => console.error('API 요청 오류:', error));`;
+// 입력 데이터
+const inputData = {
+  inputs: ${JSON.stringify([exampleValues], null, 2)}
+};
+
+// API 호출
+const response = await fetch(\`/api/model/\${modelId}\`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    apiKey: apiKey,
+  },
+  body: JSON.stringify(inputData),
+});
+
+if (!response.ok) {
+  throw new Error(\`API 요청 오류: \${response.status}\`);
+}
+// 결과는 result에 저장
+const result = await response.json();`;
 
     case 'java':
       return `import java.net.http.HttpClient;
@@ -77,7 +88,7 @@ public class ApiExample {
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer [여기에 ApiKey입력]")
+                .header("apiKey", "${endpoint.apiKey}")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
                 
@@ -96,15 +107,19 @@ public class ApiExample {
   }
 };
 
-// 응답 예제 생성 함수도 여기에 추가할 수 있습니다
+/**
+ * 프로젝트 카테고리에 따른 API 응답 예제를 생성합니다.
+ * @param category 프로젝트 카테고리 (분류 또는 회귀)
+ * @returns 해당 카테고리에 맞는 응답 예제 JSON 문자열
+ */
 export const getResponseExample = (category: 'CLASSIFICATION' | 'REGRESSION'): string => {
   if (category === 'CLASSIFICATION') {
     return `{
-  "predicted_class": "Positive"
+  "predictions": ["Class A"]
 }`;
   } else {
     return `{
-  "predicted_value": 42.8
+  "predictions": [42.8]
 }`;
   }
 };
