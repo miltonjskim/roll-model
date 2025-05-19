@@ -44,7 +44,7 @@ export const YouHaveToAfterSchool = async (pipelineId: string): Promise<ApiRespo
 // 재학습 (모델링부터 리~~~로딩)
 export const YouHadBetterAfterSchool = async (pipelineId: string): Promise<ApiResponse<ForkTotalResponse>> => {
   try {
-    const { data } = await axiosInstance.post<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${pipelineId}/reload/total`);
+    const { data } = await axiosInstance.get<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${pipelineId}/reload/total`);
     return data;
   } catch (error) {
     console.error('모델링 테스트 API 호출 실패:', error);

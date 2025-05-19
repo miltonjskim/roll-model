@@ -59,11 +59,9 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     setIsLiked(newLiked);
     try {
       await likeThisPipeline(project.id, newLiked);
-      alert('좋아요 성공.');
     } catch (e) {
       setIsLiked(preLiked);
       console.error('아..사실 싫어요', e);
-      alert('좋아요 실패.');
     }
   };
 
