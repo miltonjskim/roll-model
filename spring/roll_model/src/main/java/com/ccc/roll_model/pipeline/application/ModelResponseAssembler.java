@@ -370,7 +370,7 @@ public class ModelResponseAssembler {
 
             if (rp.getRSquared() != null) {
                 metrics.add(GetModelAndMetricResponse.PerformanceMetric.builder()
-                        .metricName("R² (결정 개수)")
+                        .metricName("R² (결정 계수)")
                         .metricValue(String.format("%.0f%%", rp.getRSquared() * 100))
                         .metricDesc("모델이 설명하는 분산의 비율")
                         .metricKey("r_squared")
@@ -380,7 +380,7 @@ public class ModelResponseAssembler {
             if (rp.getMae() != null) {
                 metrics.add(GetModelAndMetricResponse.PerformanceMetric.builder()
                         .metricName("MAE (평균 절대 오차)")
-                        .metricValue(String.format("%.0f%%", rp.getMae() * 100))
+                        .metricValue(String.format("%.0f", rp.getMae() * 100))
                         .metricDesc("예측값과 실제값 차이의 절대값 평균")
                         .metricKey("mae")
                         .build());
@@ -389,7 +389,7 @@ public class ModelResponseAssembler {
             if (rp.getMse() != null) {
                 metrics.add(GetModelAndMetricResponse.PerformanceMetric.builder()
                         .metricName("MSE (평균 제곱 오차)")
-                        .metricValue(String.format("%.0f%%", rp.getMse() * 100))
+                        .metricValue(String.format("%.0f", rp.getMse() * 100))
                         .metricDesc("예측값과 실제값 차이의 제곱 평균")
                         .metricKey("mse")
                         .build());
@@ -398,7 +398,7 @@ public class ModelResponseAssembler {
             if (rp.getRmse() != null) {
                 metrics.add(GetModelAndMetricResponse.PerformanceMetric.builder()
                         .metricName("RMSE (평균 제곱근 오차)")
-                        .metricValue(String.format("%.0f%%", rp.getRmse() * 100))
+                        .metricValue(String.format("%.0f", rp.getRmse() * 100))
                         .metricDesc("MSE의 제곱근 값")
                         .metricKey("rmse")
                         .build());
