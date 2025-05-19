@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 import json
+from xml.sax import handler
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, HTTPException, UploadFile, background
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
@@ -11,7 +12,7 @@ from core.api_response import ApiResponse
 from core.security import verify_token, verify_pipeline_ownership
 from core.storage import get_minio_client, MinioClient
 from db.mysql_config import get_mysql_db
-from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, OutlierDetectionRequest, OutlierImputationRequest, OutlierRemoveRequest, TargetEncodingRequest, \
+from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, OutlierDetectionRequest, OutlierImputationRequest, OutlierRemoveRequest, PreprocessPipelineRequest, TargetEncodingRequest, \
     LabelEncodingRequest, OneHotEncodingRequest, SqrtTransformRequest, LogTransformRequest, MinMaxScalingRequest, \
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
@@ -22,7 +23,7 @@ from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Any, Dict, List, Optional
 import pandas as pd
 import logging
 
@@ -291,7 +292,7 @@ async def delete_preprocessing(
             add_to_history=True,
             minio_client=minio_client
         )
-        
+        logger.info(f"전처리 스텝 삭제 결과: {result}")
         if result is None:
             raise HTTPException(
                 status_code=404, 
@@ -471,3 +472,125 @@ async def complete_preprocessing(
     except Exception as e:
         logger.error(f"전처리 완료 처리 중 오류 발생: {str(e)}")
         raise HTTPException(status_code=500, detail=f"전처리 완료 처리 중 오류 발생: {str(e)}")
+
+
+
+
+
+@router.post("/batch")
+async def perform_batch_preprocessing(
+    pipeline_id: str,
+    request: PreprocessPipelineRequest,  # 단일 파이프라인 요청으로 수정
+    member_id: int = Depends(verify_pipeline_ownership),
+    preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
+):
+    """여러 전처리 작업을 파이프라인으로 한번에 실행"""
+    
+    # 전처리 작업 목록 준비
+    tasks = []
+    
+    # 요청에서 전처리 단계 추출
+    for step in request.preprocessing_steps:
+        # 요청 유형에 따라 적절한 핸들러 클래스와 메서드 매핑
+        handler_config = get_handler_config_by_request_type(step)
+        
+        tasks.append({
+            'type': handler_config['preprocessing_type'],  # 전처리 유형 (MissingValue, Outlier 등)
+            'handler_class': handler_config['handler_class'],
+            'handler_method': handler_config['handler_method'],
+            'request': step  # 전체 요청 객체 전달
+        })
+    
+    # 파이프라인 전처리 실행
+    result = await preprocessing_handler.process_pipeline(
+        pipeline_id=pipeline_id,
+        preprocessing_tasks=tasks,
+        member_id=member_id
+    )
+    
+    return result
+
+def get_handler_config_by_request_type(request):
+    """요청 객체 타입에 따라 적절한 핸들러 구성 반환"""
+    
+    # 이 함수는 요청 객체의 클래스 유형에 따라 적절한 핸들러를 반환
+    if isinstance(request, MissingValueRemoveRequest):
+        return {
+            'preprocessing_type': 'MISSING_VALUE',
+            'handler_class': MissingValueHandler,
+            'handler_method': 'handle_missing_values_remove'
+        }
+    elif isinstance(request, MissingValueImputationRequest):
+        return {
+            'preprocessing_type': 'MISSING_VALUE',
+            'handler_class': MissingValueHandler,
+            'handler_method': 'handle_missing_values_imputation'
+        }
+    elif isinstance(request, OutlierRemoveRequest):
+        return {
+            'preprocessing_type': 'OUTLIER',
+            'handler_class': OutlierHandler,
+            'handler_method': 'handle_outliers_remove'
+        }
+    elif isinstance(request, OutlierImputationRequest):
+        return {
+            'preprocessing_type': 'OUTLIER',
+            'handler_class': OutlierHandler,
+            'handler_method': 'handle_outliers_imputation'
+        }
+    elif isinstance(request, OutlierDetectionRequest):
+        return {
+            'preprocessing_type': 'OUTLIER',
+            'handler_class': OutlierHandler,
+            'handler_method': 'handle_outliers_detection'
+        }
+    elif isinstance(request, ZScoreRequest):
+        return {
+            'preprocessing_type': 'TRANSFORMATION',
+            'handler_class': TransformationHandler,
+            'handler_method': 'scale_zscore'
+        }
+    elif isinstance(request, MinMaxScalingRequest):
+        return {
+            'preprocessing_type': 'TRANSFORMATION',
+            'handler_class': TransformationHandler,
+            'handler_method': 'scale_minmax'
+        }
+    elif isinstance(request, LogTransformRequest):
+        return {
+            'preprocessing_type': 'TRANSFORMATION',
+            'handler_class': TransformationHandler,
+            'handler_method': 'transform_log'
+        }
+    elif isinstance(request, SqrtTransformRequest):
+        return {
+            'preprocessing_type': 'TRANSFORMATION',
+            'handler_class': TransformationHandler,
+            'handler_method': 'transform_sqrt'
+        }
+    elif isinstance(request, OneHotEncodingRequest):
+        return {
+            'preprocessing_type': 'ENCODING',
+            'handler_class': EncodingHandler,
+            'handler_method': 'encode_onehot'
+        }
+    elif isinstance(request, LabelEncodingRequest):
+        return {
+            'preprocessing_type': 'ENCODING',
+            'handler_class': EncodingHandler,
+            'handler_method': 'encode_label'
+        }
+    elif isinstance(request, TargetEncodingRequest):
+        return {
+            'preprocessing_type': 'ENCODING',
+            'handler_class': EncodingHandler,
+            'handler_method': 'encode_target'
+        }
+    elif isinstance(request, ClassBalancingRequest):
+        return {
+            'preprocessing_type': 'CLASS_BALANCING',
+            'handler_class': ClassBalancingHandler,
+            'handler_method': 'balance_class'
+        }
+    else:
+        raise ValueError(f"지원하지 않는 전처리 요청 유형: {type(request)}")

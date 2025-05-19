@@ -35,7 +35,41 @@ class TransformationHandler:
 
     def _get_numeric_columns(self):
         """숫자형 컬럼 목록 반환"""
-        return self.df.select_dtypes(include=[np.number]).columns.tolist()
+        numeric_cols = self.df.select_dtypes(include=[np.number]).columns.tolist()
+        if not numeric_cols:
+            raise CustomAPIException(
+                status_code=400,
+                error_code="TRANSFORM_002",
+                message="숫자형 컬럼이 없습니다."
+            )
+        return numeric_cols
+
+    def _check_column_exists(self, column):
+        """컬럼 존재 여부 확인"""
+        if column not in self.df.columns:
+            raise CustomAPIException(
+                status_code=400,
+                error_code="TRANSFORM_003",
+                message=f"컬럼 '{column}'이 데이터에 존재하지 않습니다."
+            )
+
+    def _check_numeric_column(self, column, transform_type):
+        """숫자형 컬럼인지 확인"""
+        if not pd.api.types.is_numeric_dtype(self.df[column]):
+            raise CustomAPIException(
+                status_code=400,
+                error_code="TRANSFORM_004",
+                message=f"컬럼 '{column}'은 숫자형이 아니므로 {transform_type}이 불가능합니다."
+            )
+
+    def _check_missing_values(self, column, transform_type):
+        """결측치 확인"""
+        if self.df[column].isnull().any():
+            raise CustomAPIException(
+                status_code=400,
+                error_code="TRANSFORM_005",
+                message=f"컬럼 '{column}'에 결측치가 있어 {transform_type}이 불가능합니다. 먼저 결측치를 처리해주세요."
+            )
 
     def scale_zscore(self, column=None):
         """
@@ -56,23 +90,28 @@ class TransformationHandler:
         if column is None:
             # 모든 숫자형 컬럼에 적용
             numeric_columns = self._get_numeric_columns()
-            if not numeric_columns:
-                raise CustomAPIException(
-                    status_code=400,
-                    error_code="TRANSFORM_002",
-                    message="숫자형 컬럼이 없습니다."
-                )
 
             for col in numeric_columns:
-                result = self._apply_zscore_to_column(col)
-                results.append(result)
+                try:
+                    result = self._apply_zscore_to_column(col)
+                    results.append(result)
+                except CustomAPIException:
+                    # 특정 컬럼 처리 실패 시 다음 컬럼으로 진행
+                    continue
+
+            if not results:
+                raise CustomAPIException(
+                    status_code=400,
+                    error_code="TRANSFORM_010",
+                    message="모든 숫자형 컬럼에 대해 Z-Score 표준화를 적용할 수 없습니다."
+                )
 
             # 전체 결과를 하나로 합치기
             return {
                 "transformType": "ZSCORE",
                 "column": "all_numeric",
                 "statistics": {
-                    "columns_processed": numeric_columns,
+                    "columns_processed": [r["column"] for r in results],
                     "details": results
                 },
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -80,32 +119,16 @@ class TransformationHandler:
             }
         else:
             # 특정 컬럼에만 적용
-            if column not in self.df.columns:
-                raise CustomAPIException(
-                    status_code=400,
-                    error_code="TRANSFORM_003",
-                    message=f"컬럼 '{column}'이 데이터에 존재하지 않습니다."
-                )
-
+            self._check_column_exists(column)
             return self._apply_zscore_to_column(column)
 
     def _apply_zscore_to_column(self, column):
         """단일 컬럼에 Z-score 표준화 적용"""
         # 숫자형 확인
-        if not pd.api.types.is_numeric_dtype(self.df[column]):
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_004",
-                message=f"컬럼 '{column}'은 숫자형이 아니므로 Z-Score 표준화가 불가능합니다."
-            )
+        self._check_numeric_column(column, "Z-Score 표준화")
 
         # 결측치 확인
-        if self.df[column].isnull().any():
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_005",
-                message=f"컬럼 '{column}'에 결측치가 있어 표준화가 불가능합니다. 먼저 결측치를 처리해주세요."
-            )
+        self._check_missing_values(column, "표준화")
 
         # 표준화 전 통계량 저장
         mean_val = self.df[column].mean()
@@ -157,59 +180,48 @@ class TransformationHandler:
         if column is None:
             # 모든 숫자형 컬럼에 적용
             numeric_columns = self._get_numeric_columns()
-            if not numeric_columns:
-                raise CustomAPIException(
-                    status_code=400,
-                    error_code="TRANSFORM_002",
-                    message="숫자형 컬럼이 없습니다."
-                )
 
             for col in numeric_columns:
-                result = self._apply_minmax_to_column(col, min_value, max_value)
-                results.append(result)
+                try:
+                    result = self._apply_minmax_to_column(col, min_value, max_value)
+                    results.append(result)
+                except CustomAPIException:
+                    # 특정 컬럼 처리 실패 시 다음 컬럼으로 진행
+                    continue
+
+            if not results:
+                raise CustomAPIException(
+                    status_code=400,
+                    error_code="TRANSFORM_010",
+                    message="모든 숫자형 컬럼에 대해 Min-Max 스케일링을 적용할 수 없습니다."
+                )
 
             # 전체 결과를 하나로 합치기
             return {
                 "transformType": "MINMAX",
                 "column": "all_numeric",
                 "originalRange": {
-                    "columns_processed": numeric_columns,
+                    "columns_processed": [r["column"] for r in results],
                     "details": results
                 },
                 "newRange": {
                     "min": min_value,
                     "max": max_value
                 },
-                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             }
         else:
             # 특정 컬럼에만 적용
-            if column not in self.df.columns:
-                raise CustomAPIException(
-                    status_code=400,
-                    error_code="TRANSFORM_003",
-                    message=f"컬럼 '{column}'이 데이터에 존재하지 않습니다."
-                )
-
+            self._check_column_exists(column)
             return self._apply_minmax_to_column(column, min_value, max_value)
 
     def _apply_minmax_to_column(self, column, min_value=0, max_value=1):
         """단일 컬럼에 Min-Max 스케일링 적용"""
         # 숫자형 확인
-        if not pd.api.types.is_numeric_dtype(self.df[column]):
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_004",
-                message=f"컬럼 '{column}'은 숫자형이 아니므로 Min-Max 스케일링이 불가능합니다."
-            )
+        self._check_numeric_column(column, "Min-Max 스케일링")
 
         # 결측치 확인
-        if self.df[column].isnull().any():
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_005",
-                message=f"컬럼 '{column}'에 결측치가 있어 스케일링이 불가능합니다. 먼저 결측치를 처리해주세요."
-            )
+        self._check_missing_values(column, "스케일링")
 
         # 기존 범위 저장
         original_min = self.df[column].min()
@@ -241,17 +253,16 @@ class TransformationHandler:
             },
             "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             "startPoint": 0
-            
         }
 
-    def transform_log(self, column, offset=1.0):
+    def transform_log(self, column=None, offset=1.0):
         """
         로그 변환 적용
 
         Parameters:
         -----------
-        column : str
-            변환할 컬럼 이름
+        column : str, optional
+            변환할 컬럼 이름. None인 경우 모든 숫자형 컬럼에 적용
         offset : float, default=1.0
             오프셋 값 (음수나 0을 피하기 위해 추가)
 
@@ -260,28 +271,51 @@ class TransformationHandler:
         dict
             처리 결과 정보
         """
-        if column not in self.df.columns:
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_003",
-                message=f"컬럼 '{column}'이 데이터에 존재하지 않습니다."
-            )
+        results = []
 
+        if column is None:
+            # 모든 숫자형 컬럼에 적용
+            numeric_columns = self._get_numeric_columns()
+
+            for col in numeric_columns:
+                try:
+                    result = self._apply_log_to_column(col, offset)
+                    results.append(result)
+                except CustomAPIException:
+                    # 특정 컬럼 처리 실패 시 다음 컬럼으로 진행
+                    continue
+
+            if not results:
+                raise CustomAPIException(
+                    status_code=400,
+                    error_code="TRANSFORM_010",
+                    message="모든 숫자형 컬럼에 대해 로그 변환을 적용할 수 없습니다."
+                )
+
+            # 전체 결과를 하나로 합치기
+            return {
+                "transformType": "LOG",
+                "column": "all_numeric",
+                "offset": float(offset),
+                "transformedDetails": {
+                    "columns_processed": [r["column"] for r in results],
+                    "details": results
+                },
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "startPoint": 0
+            }
+        else:
+            # 특정 컬럼에만 적용
+            self._check_column_exists(column)
+            return self._apply_log_to_column(column, offset)
+
+    def _apply_log_to_column(self, column, offset=1.0):
+        """단일 컬럼에 로그 변환 적용"""
         # 숫자형 확인
-        if not pd.api.types.is_numeric_dtype(self.df[column]):
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_004",
-                message=f"컬럼 '{column}'은 숫자형이 아니므로 로그 변환이 불가능합니다."
-            )
+        self._check_numeric_column(column, "로그 변환")
 
         # 결측치 확인
-        if self.df[column].isnull().any():
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_005",
-                message=f"컬럼 '{column}'에 결측치가 있어 로그 변환이 불가능합니다. 먼저 결측치를 처리해주세요."
-            )
+        self._check_missing_values(column, "로그 변환")
 
         # 음수 값 확인
         negative_count = (self.df[column] < 0).sum()
@@ -312,42 +346,64 @@ class TransformationHandler:
             "startPoint": 0
         }
 
-    def transform_sqrt(self, column):
+    def transform_sqrt(self, column=None):
         """
         제곱근 변환 적용
 
         Parameters:
         -----------
-        column : str
-            변환할 컬럼 이름
+        column : str, optional
+            변환할 컬럼 이름. None인 경우 모든 숫자형 컬럼에 적용
 
         Returns:
         --------
         dict
             처리 결과 정보
         """
-        if column not in self.df.columns:
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_003",
-                message=f"컬럼 '{column}'이 데이터에 존재하지 않습니다."
-            )
+        results = []
 
+        if column is None:
+            # 모든 숫자형 컬럼에 적용
+            numeric_columns = self._get_numeric_columns()
+
+            for col in numeric_columns:
+                try:
+                    result = self._apply_sqrt_to_column(col)
+                    results.append(result)
+                except CustomAPIException:
+                    # 특정 컬럼 처리 실패 시 다음 컬럼으로 진행
+                    continue
+
+            if not results:
+                raise CustomAPIException(
+                    status_code=400,
+                    error_code="TRANSFORM_010",
+                    message="모든 숫자형 컬럼에 대해 제곱근 변환을 적용할 수 없습니다."
+                )
+
+            # 전체 결과를 하나로 합치기
+            return {
+                "transformType": "SQRT",
+                "column": "all_numeric",
+                "transformedDetails": {
+                    "columns_processed": [r["column"] for r in results],
+                    "details": results
+                },
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "startPoint": 0
+            }
+        else:
+            # 특정 컬럼에만 적용
+            self._check_column_exists(column)
+            return self._apply_sqrt_to_column(column)
+
+    def _apply_sqrt_to_column(self, column):
+        """단일 컬럼에 제곱근 변환 적용"""
         # 숫자형 확인
-        if not pd.api.types.is_numeric_dtype(self.df[column]):
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_004",
-                message=f"컬럼 '{column}'은 숫자형이 아니므로 제곱근 변환이 불가능합니다."
-            )
+        self._check_numeric_column(column, "제곱근 변환")
 
         # 결측치 확인
-        if self.df[column].isnull().any():
-            raise CustomAPIException(
-                status_code=400,
-                error_code="TRANSFORM_005",
-                message=f"컬럼 '{column}'에 결측치가 있어 제곱근 변환이 불가능합니다. 먼저 결측치를 처리해주세요."
-            )
+        self._check_missing_values(column, "제곱근 변환")
 
         # 음수 값 확인
         negative_count = (self.df[column] < 0).sum()
