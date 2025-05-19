@@ -119,7 +119,7 @@ export default function OverviewSectionPage() {
           <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
             <SectionHeader title="API 섹션" tabLink={`/project-detail/${pipelineId}/api`} isLoading={isApiLoading} isError={isApiError} onRetry={() => refetchAll()} />
             {/* <h3 className="mb-4 text-lg font-medium">API 상태</h3> */}
-            <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} />
+            <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} apiKey={projectDetailApi.endpoint.apiKey} />
           </div>
         )}
       </div>

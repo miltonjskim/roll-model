@@ -59,11 +59,9 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
     setIsLiked(newLiked);
     try {
       await likeThisPipeline(project.id, newLiked);
-      alert('좋아요 성공.');
     } catch (e) {
       setIsLiked(preLiked);
       console.error('아..사실 싫어요', e);
-      alert('좋아요 실패.');
     }
   };
 
@@ -222,28 +220,6 @@ export const ProjectCardForOpenSource = ({ project }: ProjectCardProps) => {
                   onClick={handleProjectClick}
                 >
                   상세
-                </button>
-              )}
-              {project.status === 'PREPROCESSED' && (
-                <button
-                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.stopPropagation(); // 이벤트 버블링 중단
-                    handleAfterSchoolClick(project.id);
-                  }}
-                >
-                  재학습
-                </button>
-              )}
-              {project.status === 'FAILED' && (
-                <button
-                  className="bg-[theme(primary-black)] hover:bg-[theme(color-gray-01)] text-md h-10 w-20 cursor-pointer rounded-md text-white duration-600 ease-out"
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.stopPropagation(); // 이벤트 버블링 중단
-                    handleAfterSchoolClick(project.id);
-                  }}
-                >
-                  재학습
                 </button>
               )}
 

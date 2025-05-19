@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/model/:path*',
-        destination: 'http://54.180.212.247:31228/v1/models/:path*',
+        destination: 'http://54.180.212.247:30080/model/:path*',
       },
     ];
   },
