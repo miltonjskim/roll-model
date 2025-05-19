@@ -17,11 +17,11 @@ export type UploadDatasetRequest = {
 };
 
 // 원본 데이터셋 업로드 응답값의 원본 데이터셋 정보 내 데이터 타입
-type CellValue = string | number | boolean | null;
+export type CellValue = string | number | boolean | null;
 
 // 원본 데이터셋 업로드 응답값의 원본 데이터셋 정보 타입
 export interface OriginalDatasetType {
-  columns: string[];
+  columns?: string[];
   data: Array<Record<string, CellValue>>;
 }
 
@@ -39,9 +39,9 @@ export interface UploadDatasetResult {
   summary: {
     totalRows: number; // 총 행 수
     totalColumns: number; // 총 열 수
-    filename: string; // 파일 이름
-    encoding: string; // 인코딩 방식
-    delimiter: string; // 구분자
+    filename?: string; // 파일 이름
+    encoding?: string; // 인코딩 방식
+    delimiter?: string; // 구분자
     customDelimiter?: string; // 커스텀 구분자를 사용했는지
   };
 
@@ -59,6 +59,8 @@ export interface UploadDatasetResult {
 
   // 원본 데이터셋 정보
   originalDatasets: OriginalDatasetType;
+
+  // result?:
 }
 
 export interface CompleteDatasetResponse {

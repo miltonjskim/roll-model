@@ -119,5 +119,6 @@ export interface Step {
 // 재학습 시 이전 데이터 전처리 단계의 파라미터
 export interface PreviousPreprocessingParameter {
   column: string;
-  method: string;
+  method?: string;
+  detection?: string;
 }
