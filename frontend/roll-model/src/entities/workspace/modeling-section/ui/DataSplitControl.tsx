@@ -57,13 +57,13 @@ const DataSplitControl = ({ dataSplit, onDataSplitChange }: DataSplitControlProp
         {/* 드래그 가능한 분할 막대 */}
         <div ref={containerRef} className="relative mt-4 mb-6 h-10 w-full overflow-hidden rounded-md">
           {/* 학습 데이터 섹션 */}
-          <div className="absolute top-0 left-0 flex h-full items-center justify-center bg-[var(--color-primary)]" style={{ width: `${dataSplit}%` }}>
+          <div className="absolute top-0 left-0 flex h-full items-center justify-center bg-[var(--color-blue-02)]" style={{ width: `${dataSplit}%` }}>
             <span className="z-10 text-sm font-medium text-[var(--color-primary-foreground)]">{dataSplit}%</span>
           </div>
 
           {/* 검증 데이터 섹션 */}
           <div
-            className="absolute flex h-full items-center justify-center bg-[var(--color-yellow-01)]"
+            className="bg-[theme(color-orange-02)] absolute flex h-full items-center justify-center"
             style={{
               left: `${dataSplit}%`,
               width: `${Math.floor((100 - dataSplit) * 0.7)}%`,
@@ -74,7 +74,7 @@ const DataSplitControl = ({ dataSplit, onDataSplitChange }: DataSplitControlProp
 
           {/* 테스트 데이터 섹션 */}
           <div
-            className="absolute right-0 flex h-full items-center justify-center bg-[var(--color-blue-01)]"
+            className="bg-[theme(primary-white)]/10 absolute right-0 flex h-full items-center justify-center"
             style={{
               width: `${100 - dataSplit - Math.floor((100 - dataSplit) * 0.7)}%`,
             }}
@@ -98,15 +98,15 @@ const DataSplitControl = ({ dataSplit, onDataSplitChange }: DataSplitControlProp
         {/* 라벨 섹션 */}
         <div className="flex justify-between">
           <div className="flex items-center">
-            <div className="mr-1 h-4 w-4 rounded-full bg-[var(--color-primary)]"></div>
+            <div className="mr-1 h-4 w-4 rounded-full bg-[var(--color-blue-02)]"></div>
             <span className="text-xs">학습데이터</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-1 h-4 w-4 rounded-full bg-[var(--color-yellow-01)]"></div>
+            <div className="bg-[theme(color-orange-02)] mr-1 h-4 w-4 rounded-full"></div>
             <span className="text-xs">검증데이터</span>
           </div>
           <div className="flex items-center">
-            <div className="mr-1 h-4 w-4 rounded-full bg-[var(--color-blue-01)]"></div>
+            <div className="bg-[theme(primary-white)]/10 mr-1 h-4 w-4 rounded-full"></div>
             <span className="text-xs">테스트데이터</span>
           </div>
         </div>

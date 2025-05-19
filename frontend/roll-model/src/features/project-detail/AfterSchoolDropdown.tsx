@@ -15,7 +15,7 @@ interface AfterSchoolDropdownProps {
 
 export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { handleAfterSchoolClick, moveToPreprocessing } = useAfterSchool();
+  const { handleAfterSchoolClick, moveToPreprocessing, testAfterSchoolClick } = useAfterSchool();
 
   return (
     <div className="relative">
@@ -51,6 +51,16 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
               }}
             >
               ✕
+            </button>
+            <button
+              className="absolute top-1 left-1 cursor-pointer text-white hover:text-gray-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsVisible(false);
+                testAfterSchoolClick(project.id);
+              }}
+            >
+              oxo
             </button>
 
             <h3 className="text-[theme(primary-black)] mb-4 text-lg font-medium">재학습 옵션 선택</h3>

@@ -34,7 +34,12 @@ export default function PerformanceMetricsCard({ performanceMetrics, category }:
           <div className="flex flex-col">
             <div className="h-[1.5rem] text-start text-sm font-medium text-gray-600">{performanceMetrics[0]?.metricName || '-'}</div>
             <div className="text-start text-xl font-bold text-blue-700 lg:text-2xl">{formatMetricValue(performanceMetrics[0]?.metricValue)}</div>
-            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[0]?.metricDesc || ''}</div>
+            {/* <div className="mt-1 ml-1 text-start text-sm text-gray-500">{performanceMetrics[0]?.metricDesc || ''}</div> */}
+            <div className="mt-1 ml-1 text-start text-sm text-gray-500">
+              {performanceMetrics[0]?.metricName === 'R² (결정 계수)'
+                ? '정확도 점수 : (-100%~100%) 값이 높을수록 예측이 정확합니다. 0% 미만은 모델이 개선이 필요함을 의미합니다.'
+                : performanceMetrics[0]?.metricDesc || ''}
+            </div>
           </div>
           <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[0]?.metricKey && getMetricEmoji(performanceMetrics[0].metricKey, category)}</div>
         </div>
@@ -46,7 +51,13 @@ export default function PerformanceMetricsCard({ performanceMetrics, category }:
             <div className="text-start text-xl font-bold text-yellow-700 lg:text-2xl">
               {performanceMetrics[1]?.metricValue !== undefined ? formatNumber(parseFloat(performanceMetrics[1].metricValue)) : '-'}
             </div>
-            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[1]?.metricDesc || ''}</div>
+            {/* <div className="mt-1 ml-1 text-start text-sm text-gray-500">{performanceMetrics[1]?.metricDesc || ''}</div> */}
+
+            <div className="mt-1 ml-1 text-start text-sm text-gray-500">
+              {performanceMetrics[1]?.metricName === 'MAE (평균 절대 오차)'
+                ? '평균 오차 크기 : 예측이 실제값에서 평균적으로 얼마나 벗어났는지 보여줍니다. 작을수록 좋습니다.'
+                : performanceMetrics[1]?.metricDesc || ''}
+            </div>
           </div>
           <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[1]?.metricKey && getMetricEmoji(performanceMetrics[1].metricKey, category)}</div>
         </div>
@@ -58,7 +69,13 @@ export default function PerformanceMetricsCard({ performanceMetrics, category }:
             <div className="text-start text-xl font-bold text-green-700 lg:text-2xl">
               {performanceMetrics[2]?.metricValue !== undefined ? formatNumber(parseFloat(performanceMetrics[2].metricValue)) : '-'}
             </div>
-            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[2]?.metricDesc || ''}</div>
+            {/* <div className="mt-1 ml-1 text-start text-sm text-gray-500">{performanceMetrics[2]?.metricDesc || ''}</div> */}
+            {/* MSE (평균 제곱 오차) */}
+            <div className="mt-1 ml-1 text-start text-sm text-gray-500">
+              {performanceMetrics[2]?.metricName === 'MSE (평균 제곱 오차)'
+                ? '오차의 심각도 : 큰 오차에 더 많은 불이익을 주는 점수입니다. 작을수록 좋습니다.'
+                : performanceMetrics[2]?.metricDesc || ''}
+            </div>
           </div>
           <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[2]?.metricKey && getMetricEmoji(performanceMetrics[2].metricKey, category)}</div>
         </div>
@@ -70,7 +87,12 @@ export default function PerformanceMetricsCard({ performanceMetrics, category }:
             <div className="text-start text-xl font-bold text-rose-700 lg:text-2xl">
               {performanceMetrics[3]?.metricValue !== undefined ? formatNumber(parseFloat(performanceMetrics[3].metricValue)) : '-'}
             </div>
-            <div className="mt-1 text-xs text-gray-500">{performanceMetrics[3]?.metricDesc || ''}</div>
+            {/* <div className="mt-1 ml-1 text-start text-sm text-gray-500">{performanceMetrics[3]?.metricDesc || ''}</div> */}
+            <div className="mt-1 ml-1 text-start text-sm text-gray-500">
+              {performanceMetrics[3]?.metricName === 'RMSE (평균 제곱근 오차)'
+                ? '실제 단위로 본 오차 : 원래 데이터와 같은 단위로 표현된 오차입니다. 작을수록 좋아요'
+                : performanceMetrics[3]?.metricDesc || ''}
+            </div>
           </div>
           <div className="font-tossface mt-1 mr-1 text-2xl lg:text-3xl">{performanceMetrics[3]?.metricKey && getMetricEmoji(performanceMetrics[3].metricKey, category)}</div>
         </div>
