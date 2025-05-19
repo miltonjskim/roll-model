@@ -4,11 +4,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import enum
 import json
-
-from typing import Annotated, Union
 from bson import ObjectId
-from pydantic import AfterValidator
-from sklearn.linear_model import ElasticNet
 
 class RedisJSONEncoder(json.JSONEncoder):
     """ObjectId와 datetime을 처리하기 위한 JSON 인코더"""
@@ -82,6 +78,8 @@ class PreprocessingStepType(str, enum.Enum):
     TARGET_ENCODING = "TARGET_ENCODING"
     LABEL_ENCODING = "LABEL_ENCODING"
     CLASS_BALANCING = "CLASS_BALANCING"
+    COLUMN_DROP = "COLUMN_DROP"
+    COLUMN_KEEP = "COLUMN_KEEP"
 
 # Pydantic models
 class PreprocessingStep(BaseModel):

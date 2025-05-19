@@ -4,6 +4,7 @@ from bson import ObjectId
 
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
+from ...models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
 from schemas.mongo.dataset import DatasetModel, DatasetColumn
 from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineStatus, PyObjectId
 
@@ -412,6 +413,7 @@ class PipelineService:
                 logger.info(f"최신 스텝 타입: {type(latest_step)}")
                 
                 columns = list(dataset_sample[0].keys()) if dataset_sample else []
+                
                 result = {
                     "latestStep": latest_step.model_dump(mode='json'),
                     "totalSteps": len(latest_history.preprocessing_steps),
@@ -420,6 +422,7 @@ class PipelineService:
                         "data": dataset_sample
                     }
                 }
+                result["latestStep"]["type"] = client_preprocess_step_label_mapper(result["latestStep"]["type"])
                 logger.info("반환 데이터 구성 완료")
                 logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
                 return result
@@ -468,21 +471,19 @@ class PipelineService:
         try:
             # 파이프라인에 히스토리가 있는지 확인
             if not pipeline.history:
-                logger.warning(f"Pipeline has no history")
-                return None
-                
-            latest_history = pipeline.history[-1]
-            
-            # 전처리 스텝이 있는지 확인
-            if latest_history.preprocessing_steps:
-                # 가장 최근 전처리된 데이터 사용
-                latest_step = latest_history.preprocessing_steps[-1]
-                object_name = latest_step.preprocessed_dataset_object_name
-                data_type = "preprocessed"
-            else:
                 # 원본 데이터 사용
                 object_name = pipeline.original_dataset_object_name
-                data_type = "original"
+            else:
+                latest_history = pipeline.history[-1]
+            
+                # 전처리 스텝이 있는지 확인
+                if latest_history.preprocessing_steps:
+                    # 가장 최근 전처리된 데이터 사용
+                    latest_step = latest_history.preprocessing_steps[-1]
+                    object_name = latest_step.preprocessed_dataset_object_name
+                else:
+                    # 원본 데이터 사용
+                    object_name = pipeline.original_dataset_object_name
             
             if not object_name:
                 logger.error(f"No dataset object name found")
@@ -535,11 +536,11 @@ class PipelineService:
             if latest_history.preprocessing_steps:
                 # 가장 최근 전처리된 데이터 사용
                 latest_step = latest_history.preprocessing_steps[-1]
-                dataset_id = latest_step.preprocessed_dataset_id
+                dataset_object_name = latest_step.preprocessed_dataset_object_name
             else:
                 # 원본 데이터 사용
-                dataset_id = pipeline.original_dataset_id
-            print(dataset_id)
+                dataset_object_name = pipeline.original_dataset_object_name
+            print(dataset_object_name)
             datasets = get_dataset_collection()
             dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
             data_types_dict = dataset["metadata"]["data_types"]

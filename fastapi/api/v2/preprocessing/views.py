@@ -12,7 +12,7 @@ from core.api_response import ApiResponse
 from core.security import verify_token, verify_pipeline_ownership
 from core.storage import get_minio_client, MinioClient
 from db.mysql_config import get_mysql_db
-from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, OutlierDetectionRequest, OutlierImputationRequest, OutlierRemoveRequest, PreprocessPipelineRequest, TargetEncodingRequest, \
+from models.preprocessing.preprocessing_request_models import ClassBalancingRequest, ColumnDropRequest, ColumnKeepRequest, OutlierDetectionRequest, OutlierImputationRequest, OutlierRemoveRequest, PreprocessPipelineRequest, TargetEncodingRequest, \
     LabelEncodingRequest, OneHotEncodingRequest, SqrtTransformRequest, LogTransformRequest, MinMaxScalingRequest, \
     ZScoreRequest, MissingValueRemoveRequest, MissingValueImputationRequest
 from schemas.mongo.pipeline import PreprocessingStepType, PipelineModel
@@ -261,6 +261,40 @@ async def balance_class(
         preprocessing_type=PreprocessingStepType.CLASS_BALANCING,
         handler_class=ClassBalancingHandler,  # 새로운 핸들러 클래스 필요
         handler_method="balance_class"
+    )
+
+@router.post('/column/drop')
+async def drop_columns(
+    request: ColumnDropRequest,
+    pipeline_id: str = Path(..., description="파이프라인 ID"),
+    member_id: int = Depends(verify_pipeline_ownership),
+    preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
+):
+    """컬럼 제거 API"""
+    return await preprocessing_handler.process(
+        pipeline_id=pipeline_id,
+        request=request,
+        member_id=member_id,
+        preprocessing_type=PreprocessingStepType.COLUMN_DROP,
+        handler_class=PreprocessingHandler,  # 새로운 핸들러 클래스 필요
+        handler_method="remove_columns"
+    )
+
+@router.post('/column/keep')
+async def keep_columns(
+    request: ColumnKeepRequest,
+    pipeline_id: str = Path(..., description="파이프라인 ID"),
+    member_id: int = Depends(verify_pipeline_ownership),
+    preprocessing_handler: PreprocessingHandler = Depends(get_preprocessing_handler)
+):
+    """컬럼 유지 API"""
+    return await preprocessing_handler.process(
+        pipeline_id=pipeline_id,
+        request=request,
+        member_id=member_id,
+        preprocessing_type=PreprocessingStepType.COLUMN_KEEP,
+        handler_class=PreprocessingHandler,  # 새로운 핸들러 클래스 필요
+        handler_method="keep_columns"
     )
 
 @router.post('/delete', response_class=ApiResponse)
