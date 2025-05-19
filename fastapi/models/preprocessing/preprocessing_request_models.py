@@ -68,6 +68,14 @@ class ClassBalancingRequest(BasePreprocessingRequest):
     sampling_ratio: int = Field(200, description="샘플링 비율 (%)", alias="samplingRatio")
     method: str = Field(..., description="불균형 처리 방법 ('OVER', 'UNDER')")
 
+class ColumnDropRequest(BasePreprocessingRequest):
+    """컬럼 제거 요청 모델"""
+    columns: List[str] | str = Field(..., description="제거할 컬럼 이름 리스트")
+
+class ColumnKeepRequest(BasePreprocessingRequest):
+    """컬럼 유지 요청 모델"""
+    columns: List[str] | str = Field(..., description="유지할 컬럼 이름 리스트")
+
 # 모든 요청 타입의 Union
 PreprocessingStep = Union[
     MissingValueRemoveRequest,
@@ -82,7 +90,9 @@ PreprocessingStep = Union[
     OneHotEncodingRequest,
     LabelEncodingRequest,
     TargetEncodingRequest,
-    ClassBalancingRequest
+    ClassBalancingRequest,
+    ColumnDropRequest,
+    ColumnKeepRequest,
 ]
 
 class PreprocessPipelineRequest(BaseModel):
@@ -122,6 +132,10 @@ class PreprocessPipelineRequest(BaseModel):
                 parsed_steps.append(TargetEncodingRequest(**step_dict))
             elif step_type == "CLASS_BALANCING":
                 parsed_steps.append(ClassBalancingRequest(**step_dict))
+            elif step_type == "COLUMN_DROP":
+                parsed_steps.append(ColumnDropRequest(**step_dict))
+            elif step_type == "COLUMN_KEEP":
+                parsed_steps.append(ColumnKeepRequest(**step_dict))
             else:
                 raise ValueError(f"알 수 없는 전처리 단계 유형: {step_type}")
                 
