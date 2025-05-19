@@ -97,6 +97,7 @@ export const useModeling = () => {
       alert('모델 학습이 시작되었습니다!'); // alert제거해
       await resetAtoms();
       setTimeout(() => {
+        localStorage.removeItem('pipelineId');
         router.push('/dashboard'); // 우선 대시보드 보내기
       }, 50);
     } catch (error) {
