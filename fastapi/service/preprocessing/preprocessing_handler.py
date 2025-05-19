@@ -227,7 +227,6 @@ class PreprocessingHandler:
     def create_response(pipeline_id, result, df):
         """결과 응답 생성"""
         # 각 전처리 방법별로 다른 응답 형식이 필요할 수 있음
-        logger.info(f"result: {result}")
         # 7. 데이터셋 요약 정보 생성
         page_size = 30
         start_point = result.get("startPoint", 0) if result is not None else 0

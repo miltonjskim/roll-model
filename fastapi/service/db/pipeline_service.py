@@ -468,21 +468,19 @@ class PipelineService:
         try:
             # 파이프라인에 히스토리가 있는지 확인
             if not pipeline.history:
-                logger.warning(f"Pipeline has no history")
-                return None
-                
-            latest_history = pipeline.history[-1]
-            
-            # 전처리 스텝이 있는지 확인
-            if latest_history.preprocessing_steps:
-                # 가장 최근 전처리된 데이터 사용
-                latest_step = latest_history.preprocessing_steps[-1]
-                object_name = latest_step.preprocessed_dataset_object_name
-                data_type = "preprocessed"
-            else:
                 # 원본 데이터 사용
                 object_name = pipeline.original_dataset_object_name
-                data_type = "original"
+            else:
+                latest_history = pipeline.history[-1]
+            
+                # 전처리 스텝이 있는지 확인
+                if latest_history.preprocessing_steps:
+                    # 가장 최근 전처리된 데이터 사용
+                    latest_step = latest_history.preprocessing_steps[-1]
+                    object_name = latest_step.preprocessed_dataset_object_name
+                else:
+                    # 원본 데이터 사용
+                    object_name = pipeline.original_dataset_object_name
             
             if not object_name:
                 logger.error(f"No dataset object name found")
@@ -535,11 +533,11 @@ class PipelineService:
             if latest_history.preprocessing_steps:
                 # 가장 최근 전처리된 데이터 사용
                 latest_step = latest_history.preprocessing_steps[-1]
-                dataset_id = latest_step.preprocessed_dataset_id
+                dataset_object_name = latest_step.preprocessed_dataset_object_name
             else:
                 # 원본 데이터 사용
-                dataset_id = pipeline.original_dataset_id
-            print(dataset_id)
+                dataset_object_name = pipeline.original_dataset_object_name
+            print(dataset_object_name)
             datasets = get_dataset_collection()
             dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
             data_types_dict = dataset["metadata"]["data_types"]
