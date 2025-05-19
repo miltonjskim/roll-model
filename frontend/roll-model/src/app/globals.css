@@ -409,10 +409,10 @@ body {
 
 .shepherd-element.shepherd-step-2::before {
   background-image: url('/guide/auto-cat-study.png');
-  top: -53px;
-  left: 240px;
-  width: 58px !important;
-  height: 58px !important;
+  top: -52px;
+  left: 320px;
+  width: 56px !important;
+  height: 56px !important;
 }
 
 .parent-wrapper {
