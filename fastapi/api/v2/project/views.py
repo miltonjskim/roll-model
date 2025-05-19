@@ -358,17 +358,17 @@ async def reload_preprocess_pipeline(
             .filter(Pipeline.pipeline_id == pipeline_id)\
             .filter(Pipeline.deleted_yn == False)\
             .first()
-        project = db.query(Project)\
-            .filter(Project.project_id == pipeline.project_id)\
-            .filter(Project.deleted_yn == False)\
-            .first()
-                
         if not pipeline:
             return ApiResponse(
                 status_code =404,
                 message="프로젝트에 파이프라인이 존재하지 않습니다.",
                 data=None
             )
+                
+        project = db.query(Project)\
+            .filter(Project.project_id == pipeline.project_id)\
+            .filter(Project.deleted_yn == False)\
+            .first()
         
         # MongoDB에서 파이프라인 상세 정보 조회
         pipeline_id = pipeline.pipeline_id
@@ -413,6 +413,7 @@ async def reload_preprocess_pipeline(
         )
         columns = await pipeline_service.get_latest_dataset_columns(pipeline_details)
         response_data["columns"] = columns
+        response_data["projectTitle"] = project.title
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
