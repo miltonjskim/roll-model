@@ -101,7 +101,7 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
         className={clsx(
           'rounded-md border border-[var(--color-gray-04)] p-2',
           cardStyle === 'small'
-            ? 'flex max-h-[80%] flex-col items-center gap-3 overflow-y-auto'
+            ? 'flex max-h-[42vh] flex-col items-center gap-3 overflow-y-auto'
             : steps.filter(Boolean).length === 0
               ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto' // 👉 메시지 왼쪽 정렬
               : 'flex flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto', // 👉 카드 오른쪽부터 쌓임
