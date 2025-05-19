@@ -291,7 +291,7 @@ async def delete_preprocessing(
             add_to_history=True,
             minio_client=minio_client
         )
-        
+        logger.info(f"전처리 스텝 삭제 결과: {result}")
         if result is None:
             raise HTTPException(
                 status_code=404, 

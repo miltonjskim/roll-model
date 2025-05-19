@@ -284,47 +284,38 @@ class PipelineService:
         return await _create_pipeline_in_db(pipeline)
 
     async def revert_to_preprocessing_step(self,
-                                           pipeline_id: str,
-                                           minio_client: MinioClient,
-                                           step_index: Optional[int] = None,
-                                           project_id: int = None,
-                                           member_id: int = None,
-                                           add_to_history: bool = True
-                                       ) -> Optional[Dict[str, Any]]:
+                                     pipeline_id: str,
+                                     minio_client: MinioClient,
+                                     step_index: Optional[int] = None,
+                                     project_id: int = None,
+                                     member_id: int = None,
+                                     add_to_history: bool = True
+                                 ) -> Optional[Dict[str, Any]]:
         """
         특정 전처리 스텝까지 되돌립니다.
-
-        Args:
-            pipeline_id: 파이프라인 ID
-            step_index: 되돌아갈 스텝의 인덱스 (None이면 마지막 스텝 제거)
-            project_id: 프로젝트 ID (선택적)
-            member_id: 멤버 ID (선택적)
-            add_to_history: 변경사항을 히스토리에 기록할지 여부
-
-        Returns:
-            변경 후 현재 최신 스텝 정보 또는 None
-            :param add_to_history:
-            :param member_id:
-            :param project_id:
-            :param step_index:
-            :param pipeline_id:
-            :param minio_client:
         """
+        logger.info(f"====== 전처리 스텝 되돌리기 시작: pipeline_id={pipeline_id}, step_index={step_index} ======")
         try:
             # 현재 파이프라인 데이터 가져오기
+            logger.debug(f"파이프라인 데이터 조회 중: {pipeline_id}")
             pipeline = await self.get_pipeline(pipeline_id, project_id, member_id)
 
             if not pipeline:
                 logger.error(f"Pipeline {pipeline_id} not found")
                 return None
 
+            logger.debug(f"파이프라인 데이터 조회 완료: {pipeline_id}")
+            logger.debug(f"파이프라인 히스토리 개수: {len(pipeline.history) if pipeline.history else 0}")
+            
             # 파이프라인에 히스토리가 없으면 처리할 수 없음
             if not pipeline.history:
                 logger.error(f"Pipeline {pipeline_id} has no history")
                 return None
 
             current_history = pipeline.history[-1]
-
+            logger.debug(f"현재 히스토리 상태: {current_history.status}")
+            logger.debug(f"현재 전처리 스텝 개수: {len(current_history.preprocessing_steps) if current_history.preprocessing_steps else 0}")
+            
             # 전처리 스텝이 없으면 처리할 수 없음
             if not current_history.preprocessing_steps:
                 logger.info(f"전처리 스텝이 없습니다.")
@@ -333,73 +324,123 @@ class PipelineService:
             # step_index가 None이면 마지막 스텝 제거 (현재 길이 - 1)
             if step_index is None:
                 step_index = len(current_history.preprocessing_steps) - 2
+                logger.info(f"step_index가 None이므로 마지막 스텝 제거. 설정된 인덱스: {step_index}")
 
             # 스텝 인덱스 유효성 검사
             if step_index < -1 or step_index >= len(current_history.preprocessing_steps):
-                logger.error(f"유효하지 않은 스텝입니다. : {step_index}")
+                logger.error(f"유효하지 않은 스텝입니다: {step_index}, 유효 범위: -1 ~ {len(current_history.preprocessing_steps) - 1}")
                 return None
 
             # step_index가 -1이면 모든 스텝 제거
             if step_index == -1:
+                logger.info("모든 전처리 스텝 제거")
                 new_steps = []
             else:
+                logger.info(f"인덱스 {step_index}까지의 스텝만 유지 (총 {step_index + 1}개)")
                 new_steps = current_history.preprocessing_steps[:step_index + 1]
-
+                
+            # 디버깅을 위한 스텝 정보 출력
+            logger.debug(f"새 스텝 리스트 길이: {len(new_steps)}")
+            for i, step in enumerate(new_steps):
+                logger.debug(f"스텝 {i} 타입: {type(step)}, 속성: {dir(step)[:10]}...")
+            
             # 변경사항을 히스토리에 기록
             if add_to_history:
-                # 새로운 히스토리 항목 생성
-                new_history_item = PipelineHistoryItem(
-                    status=current_history.status,
-                    preprocessing_steps=new_steps.copy()
-                )
-                pipeline.history.append(new_history_item)
+                logger.info("새 히스토리 항목 생성")
+                # 스텝 복사 과정 로깅
+                logger.debug(f"복사 전 스텝 타입 정보:")
+                for i, step in enumerate(new_steps):
+                    logger.debug(f"스텝 {i} 타입: {type(step)}")
+                
+                try:
+                    # 새로운 히스토리 항목 생성
+                    new_steps_copy = new_steps.copy()  # 이 부분에서 오류 가능성
+                    logger.debug(f"스텝 복사 성공: {len(new_steps_copy)}개")
+                    
+                    # 복사된 스텝의 타입 확인
+                    for i, step in enumerate(new_steps_copy):
+                        logger.debug(f"복사된 스텝 {i} 타입: {type(step)}")
+                    
+                    new_history_item = PipelineHistoryItem(
+                        status=current_history.status,
+                        preprocessing_steps=new_steps_copy
+                    )
+                    pipeline.history.append(new_history_item)
+                    logger.debug("새 히스토리 항목 추가 성공")
+                except Exception as copy_error:
+                    logger.error(f"스텝 복사 또는 히스토리 항목 생성 중 오류: {copy_error}")
+                    # 오류 세부 정보 출력
+                    import traceback
+                    logger.error(f"스택 트레이스: {traceback.format_exc()}")
+                    raise  # 오류를 다시 던져서 상위 예외 처리로 전달
             else:
-                # 현재 히스토리 항목을 직접 수정
+                logger.info("현재 히스토리 항목 직접 수정")
                 current_history.preprocessing_steps = new_steps
 
             # 수정 시간 업데이트
             pipeline.modified_at = datetime.now()
+            logger.info(f"파이프라인 수정 시간 업데이트: {pipeline.modified_at}")
 
             # DB 업데이트
+            logger.info("DB 업데이트 중...")
             updated_pipeline = await _update_pipeline_in_db(pipeline)
 
             if not updated_pipeline:
                 logger.error(f"Failed to update pipeline {pipeline_id}")
                 return None
+                
+            logger.info("DB 업데이트 성공")
 
             # 업데이트된 파이프라인의 최신 스텝 반환
             latest_history = updated_pipeline.history[-1]
+            logger.info(f"업데이트된 파이프라인의 최신 스텝 개수: {len(latest_history.preprocessing_steps) if latest_history.preprocessing_steps else 0}")
+            
+            logger.info("최신 데이터셋 샘플 조회 중...")
             dataset_sample = await self.get_latest_dataset_from_pipeline(
                 updated_pipeline,
                 minio_client,
                 n_rows=30,
                 return_full=False
             )
+            logger.info(f"데이터셋 샘플 조회 완료: {len(dataset_sample) if dataset_sample else 0}개 행")
 
             columns = dataset_sample[0].keys() if dataset_sample else []
+            logger.debug(f"데이터셋 컬럼: {list(columns)}")
 
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
+                logger.info(f"최신 스텝 타입: {type(latest_step)}")
                 
-                return {
-                    "latestStep": latest_step.model_dump(),
+                columns = list(dataset_sample[0].keys()) if dataset_sample else []
+                result = {
+                    "latestStep": latest_step.model_dump(mode='json'),
                     "totalSteps": len(latest_history.preprocessing_steps),
                     "originalDatasets": {
-                        "columns":columns,
+                        "columns": columns,
                         "data": dataset_sample
                     }
                 }
+                logger.info("반환 데이터 구성 완료")
+                logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
+                return result
             else:
-                return {
+                logger.info("최신 히스토리에 전처리 스텝이 없음")
+                result = {
                     "latestStep": None,
                     "totalSteps": 0,
                     "originalDatasets": {
-                        "columns":columns,
+                        "columns": columns,
                         "data": dataset_sample
                     }
                 }
+                logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
+                return result
         except Exception as e:
-            logger.error(f"Error reverting preprocessing step: {e}")
+            logger.error(f"전처리 스텝 되돌리기 중 오류: {e}")
+            # 상세 오류 정보 출력
+            import traceback
+            logger.error(f"스택 트레이스: {traceback.format_exc()}")
+            logger.error(f"====== 전처리 스텝 되돌리기 실패: pipeline_id={pipeline_id} ======")
             return None
 
     async def get_latest_dataset_from_pipeline(
