@@ -192,7 +192,7 @@ public class ProjectService {
                                 .dataCount(dataCount)
                                 .likeCount(pipeline.getLikeCount())
                                 .downloadCount(pipeline.getDownloadCount())
-                                .publicYn(Boolean.TRUE.equals(project.getPublicYn()))
+                                .publicYn(pipeline.getPublicYn())
                                 .createdAt(project.getRegisteredAt() != null
                                         ? project.getRegisteredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                         : null)
