@@ -29,6 +29,8 @@ import pandas as pd
 import re
 import math
 
+from ....models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
+from service.column_type_inferer import ColumnTypeInferrer
 from utils.execution_time_checker import execution_time
 
 from core.exception import CustomAPIException
@@ -358,15 +360,22 @@ async def reload_preprocess_pipeline(
             .filter(Pipeline.pipeline_id == pipeline_id)\
             .filter(Pipeline.deleted_yn == False)\
             .first()
-        project = db.query(Project)\
-            .filter(Project.project_id == pipeline.project_id)\
-            .filter(Project.deleted_yn == False)\
-            .first()
-                
         if not pipeline:
             return ApiResponse(
                 status_code =404,
                 message="프로젝트에 파이프라인이 존재하지 않습니다.",
+                data=None
+            )
+                
+        project = db.query(Project)\
+            .filter(Project.project_id == pipeline.project_id)\
+            .filter(Project.deleted_yn == False)\
+            .first()
+        
+        if not project:
+            return ApiResponse(
+                status_code =404,
+                message="프로젝트를 찾을 수 없습니다.",
                 data=None
             )
         
@@ -411,8 +420,13 @@ async def reload_preprocess_pipeline(
             category=project.category, 
             include_all_history=False
         )
-        columns = await pipeline_service.get_latest_dataset_columns(pipeline_details)
+        column_type_inferer = ColumnTypeInferrer(sample_size=100)
+        columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
+        response_data["projectTitle"] = project.title
+        if response_data["preprocessingSteps"] is not None:
+            for step in response_data["preprocessingSteps"]:
+                step["type"] = client_preprocess_step_label_mapper(step["type"])
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
@@ -455,15 +469,21 @@ async def reload_modeling_pipeline(
             .filter(Pipeline.pipeline_id == pipeline_id)\
             .filter(Pipeline.deleted_yn == False)\
             .first()
+        if not pipeline:
+            return ApiResponse(
+                status_code =404,
+                message="프로젝트에 파이프라인이 존재하지 않습니다.",
+                data=None
+            )
         project = db.query(Project)\
             .filter(Project.project_id == pipeline.project_id)\
             .filter(Project.deleted_yn == False)\
             .first()
                 
-        if not pipeline:
+        if not project:
             return ApiResponse(
                 status_code =404,
-                message="프로젝트에 파이프라인이 존재하지 않습니다.",
+                message="프로젝트를 찾을 수 없습니다.",
                 data=None
             )
         
@@ -660,8 +680,10 @@ async def fork_pipeline_preprocess(
             category=target_project.category, 
             include_all_history=False
         )
-        columns = await pipeline_service.get_latest_dataset_columns(source_pipeline_details)
+        column_type_inferer = ColumnTypeInferrer(sample_size=100)
+        columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
+        response_data["projectTitle"] = target_project.title
 
         return ApiResponse(
             status_code=200,
