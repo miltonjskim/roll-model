@@ -28,10 +28,10 @@ export default function VersionSectionPage() {
   }
 
   return (
-    <div className="py-6">
-      <h1 className="mb-6 text-2xl font-bold">버전 정보</h1>
+    <div className="">
       <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex min-h-[600px] flex-col gap-8 lg:flex-row">
+        <div className="flex min-h-[600px] flex-col">
+          <h2 className={`mb-3 text-start text-lg font-semibold`}>버전 정보</h2>
           {/* 버전 그래프 */}
           <div className="w-full lg:w-full">
             {pipelines.length > 0 && (
