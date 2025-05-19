@@ -11,6 +11,7 @@ import FeatureImportanceChart from '@/entities/project-detail/ui/model-section/F
 import ModelInfoCard from '@/entities/project-detail/ui/model-section/ModelInfoCard';
 import PerformanceMetricsCard from '@/entities/project-detail/ui/model-section/PerformanceMetricsCard';
 import ProjectDetailCard, { CardProps } from '@/widgets/project/project-detail/ProjectDetailCard';
+import ProjectDetailLoading from '@/app/project-detail/[id]/loading';
 
 export default function ModelSectionPage() {
   const { id } = useParams();
@@ -19,11 +20,7 @@ export default function ModelSectionPage() {
   const { projectDetailModel, isLoading, isError, isClassification, isRegression } = useProjectDetailModel(pipelineId);
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <ProjectDetailLoading />;
   }
 
   if (isError || !projectDetailModel) {
