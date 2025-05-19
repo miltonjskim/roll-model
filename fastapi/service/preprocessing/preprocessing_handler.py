@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from pandas import DataFrame
+import pandas as pd
 import logging
 from core.exception import CustomAPIException
 from core.storage import get_minio_client
@@ -19,7 +20,7 @@ class PreprocessingHandler:
     """전처리 작업을 위한 공통 핸들러 클래스"""
 
     def __init__(self, pipeline_service, minio_client):
-        self.pipeline_service = pipeline_service
+        self.pipeline_service:PipelineService = pipeline_service
         self.minio_client = minio_client
         self.bucket_name = "datasets"
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -260,6 +261,143 @@ class PreprocessingHandler:
             }
         }
         return jsonable_encoder(replace_nan_values(response, round_decimals=2))
+
+    # 전처리 파이프라인 메서드
+    async def process_pipeline(self, pipeline_id, preprocessing_tasks, member_id):
+        """
+        여러 전처리 작업을 파이프라인으로 순차 실행하는 메서드
+
+        Parameters:
+        -----------
+        pipeline_id : str
+            파이프라인 ID
+        preprocessing_tasks : list
+            전처리 작업 목록. 각 항목은 다음 구조를 가짐:
+            {
+                'type': PreprocessingStepType,
+                'handler_class': class,
+                'handler_method': str,
+                'request': BaseModel,
+                'handler_args': dict (optional)
+            }
+        member_id : int
+            멤버 ID
+
+        Returns:
+        --------
+        dict
+            최종 API 응답
+        """
+        # 1. 파이프라인 정보 조회
+        pipeline = await self.pipeline_service.get_pipeline(pipeline_id)
+        
+        if pipeline is None:
+            raise CustomAPIException(status_code=404, message="파이프라인을 찾을 수 없습니다")
+
+        # 2. 데이터셋 ObjectId 찾기
+        dataset_object_name = self._get_dataset_object_name(pipeline)
+
+        # 3. MinIO에서 초기 데이터 가져오기
+        minio_output, encoding = await self._get_data_from_minio(dataset_object_name)
+        encoding = encoding or "utf-8"
+
+        # 4. 메모리 내에서 단계별 전처리 작업 수행
+        current_df = pd.read_csv(io.BytesIO(minio_output), encoding=encoding)
+        all_results = []
+        history_steps = []
+        
+        # 현재 파이프라인 히스토리의 마지막 단계 순서 가져오기
+        last_order = 0
+
+        if pipeline.history and len(pipeline.history) > 0 and pipeline.history[-1].preprocessing_steps:
+            last_order = len(pipeline.history[-1].preprocessing_steps)
+
+        # 각 전처리 작업 순차 실행
+        preprocessing_type = None
+        for i, task in enumerate(preprocessing_tasks):
+            try:
+                # 전처리 핸들러 초기화 (데이터프레임 직접 전달)
+                handler_class = task['handler_class']
+                handler_method = task['handler_method']
+                request = task['request']
+                preprocessing_type = task['type']
+                handler_args = task.get('handler_args', {})
+                # 핸들러 인스턴스 생성
+                handler = handler_class(df=current_df)
+                
+                # 요청 매개변수 추출
+                method_args = {k: getattr(request, k) for k in request.__fields__.keys() if hasattr(request, k)}
+                if handler_args:
+                    method_args.update(handler_args)
+                
+                # 핸들러 메서드 호출
+                handler_method_func = getattr(handler, handler_method)
+                result = handler_method_func(**method_args)
+                
+                # 처리된 데이터프레임 가져오기
+                current_df = handler.df
+                
+                # 결과 저장
+                all_results.append({
+                    "type": preprocessing_type,
+                    "result": result
+                })
+                
+                # 히스토리 단계 준비
+                step_order = last_order + i + 1
+                history_steps.append({
+                    "type": preprocessing_type,
+                    "parameters": method_args,
+                    "order": step_order,
+                    "active": True,
+                    "result": result,
+                    # etag와 object_name은 최종 단계에서만 설정
+                })
+                
+            except Exception as e:
+                self.logger.error(f"전처리 작업 실패 (단계 {i+1}: {preprocessing_type}): {str(e)}")
+                raise CustomAPIException(
+                    status_code=500, 
+                    message=f"전처리 작업 실패 (단계 {i+1}): {str(e)}"
+                )
+                
+        # 5. 최종 처리된 데이터 MinIO에 저장
+        if current_df is None or current_df.empty:
+            raise CustomAPIException(status_code=500, message="처리된 데이터가 없습니다")
+            
+        object_name, etag = await self._save_to_minio(pipeline_id, current_df, encoding)
+        
+        # 히스토리 단계에 etag와 object_name 설정 (마지막 단계에만)
+        if history_steps:
+            history_steps[-1]["preprocessed_dataset_etag"] = etag
+            history_steps[-1]["preprocessed_dataset_object_name"] = object_name
+            
+        # 6. 파이프라인 히스토리 업데이트
+        await self._update_pipeline_history_batch(pipeline, history_steps)
+        
+        # 7. 응답 생성 (마지막 전처리 결과 기준)
+        final_result = all_results[-1]["result"] if all_results else None
+        response = PreprocessingHandler.create_response(pipeline_id, final_result, current_df)
+        
+        return response
+        
+    async def _update_pipeline_history_batch(self, pipeline, history_steps):
+        """여러 전처리 단계를 한 번에 파이프라인 히스토리에 추가"""
+        if not pipeline.history:
+            # 히스토리가 없는 경우
+            preprocessingSteps = [
+                PreprocessingStep(**step) for step in history_steps
+            ]
+            history_item = PipelineHistoryItem(preprocessing_steps=preprocessingSteps)
+        else:
+            # 기존 히스토리가 있는 경우
+            new_steps = pipeline.history[-1].preprocessing_steps.copy()
+            for step in history_steps:
+                new_steps.append(PreprocessingStep(**step))
+            history_item = PipelineHistoryItem(preprocessing_steps=new_steps)
+
+        await self.pipeline_service.add_pipeline_history(pipeline, history_item)
+        self.logger.info(f"파이프라인 히스토리 배치 업데이트 성공: {len(history_steps)} 단계")
 
 # 공통 의존성 함수
 def get_preprocessing_handler(
