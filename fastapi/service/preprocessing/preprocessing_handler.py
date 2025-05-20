@@ -353,10 +353,10 @@ class PreprocessingHandler:
                 })
                 
             except Exception as e:
-                self.logger.error(f"전처리 작업 실패 (단계 {i+1}: {preprocessing_type})")
+                self.logger.error(f"전처리 작업 실패 (단계 {i+1}:{preprocessing_type}):{str(e)}")
                 raise CustomAPIException(
                     status_code=500, 
-                    message=f"전처리 작업 실패 (단계 {i+1})"
+                    message=f"전처리 작업 실패 단계:{i+1}:{preprocessing_type}:{str(e)}"
                 )
                 
         # 5. 최종 처리된 데이터 MinIO에 저장
