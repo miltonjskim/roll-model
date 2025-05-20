@@ -106,11 +106,11 @@ const ConfigDataPage = () => {
 
       if (uploadSuccess && aiResponse) {
         router.push('/workspace/data-preprocess');
+        return;
       }
     } catch (err) {
       showErrorToast('프로젝트 생성에 실패했습니다.');
       console.error('프로젝트 생성 실패:', err);
-    } finally {
       setIsLoading(false);
       setLoadingMessage(null);
     }
@@ -148,10 +148,9 @@ const ConfigDataPage = () => {
     } catch (err) {
       showErrorToast((err as Error).message);
       console.error(err);
-      return false;
-    } finally {
       setIsLoading(false);
       setLoadingMessage(null);
+      return false;
     }
   };
 
@@ -174,10 +173,9 @@ const ConfigDataPage = () => {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
       console.error(apiError);
-      return false;
-    } finally {
       setIsLoading(false);
       setLoadingMessage(null);
+      return false;
     }
   };
 

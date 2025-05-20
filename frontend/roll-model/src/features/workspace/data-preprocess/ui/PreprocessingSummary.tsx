@@ -54,7 +54,7 @@ const PreprocessingSummary = () => {
           ) : (
             <ul className="mt-4 space-y-4">
               {[...summary.missingColumnNames]
-                .sort((a, b) => summary.missingDetails[b].percentage - summary.missingDetails[a].percentage)
+                .sort((a, b) => summary.missingDetails[b].percentage - summary.missingDetails[a]?.percentage)
                 .map((col) => {
                   const detail = summary.missingDetails[col];
                   const shownIndices = detail.rowIndices.slice(0, 30);
