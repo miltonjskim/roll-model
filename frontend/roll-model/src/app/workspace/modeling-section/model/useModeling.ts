@@ -4,25 +4,29 @@ import { useEffect, useState } from 'react';
 import { Model, ModelCategory, ParameterValues, ParameterValue } from '@/entities/workspace/modeling-section/model/types';
 import { CLASSIFICATION_MODELS, REGRESSION_MODELS } from '@/shared/api/mocks/modeling/modelingData';
 import { startModelTraining } from '@/shared/api/modelingApi';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { projectCategoryAtom } from '@/entities/workspace/model/projectAtoms';
 import { useRouter } from 'next/navigation';
+import { useResetWorkspaceAtoms } from '@/entities/workspace/hooks/useResetWorkspaceAtoms';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 
 export const useModeling = () => {
   const router = useRouter();
-  const projectDetail = useAtomValue(pipelineIdAtom); // 파이프라인아이디
+  const pipelineId = useAtomValue(pipelineIdAtom); // 파이프라인아이디
   const initialCategory = useAtomValue(projectCategoryAtom); // 카테고리 (분류 또는 회귀)
   const [modelCategory] = useState<ModelCategory>(initialCategory);
   const models = modelCategory === 'CLASSIFICATION' ? CLASSIFICATION_MODELS : REGRESSION_MODELS; // 카테고리에 맞는 모델리스트
   const dataColumns = useAtomValue(dataColumnsAtom); // 변수리스트
   const TARGET_VARIABLES = dataColumns.map((column) => column.name); // 변수이름리스트
+  const resetAtoms = useResetWorkspaceAtoms();
 
   const [selectedModelId, setSelectedModelId] = useState(''); // 선택모델
   const [targetVariable, setTargetVariable] = useState(''); // 선택 목표변수
   const [parameterValues, setParameterValues] = useState<ParameterValues>({}); // 선택파라미터
   const [dataSplit, setDataSplit] = useState(70); // 선택 분할비율
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
+  const [loadingMessage, setLoadingMessage] = useAtom(globalLoadingMessageAtom);
 
   const selectedModel = models.find((model) => model.id === selectedModelId); // 모델리스트로부터 선택모델정보 불러옴
 
@@ -64,6 +68,7 @@ export const useModeling = () => {
 
     try {
       setIsLoading(true);
+      setLoadingMessage('모델 학습을 요청하고 있습니다.');
 
       // 데이터 분할 비율 계산 (소수점 한 자리로 제한)
       const trainRatio = parseFloat((dataSplit / 100).toFixed(1));
@@ -85,27 +90,32 @@ export const useModeling = () => {
       };
 
       console.log('학습 시작 요청 데이터:', requestData); // 요청데이터 확인
-      const response = await startModelTraining(projectDetail, requestData); // 요청 ㄱ
+      const response = await startModelTraining(pipelineId, requestData); // 요청 ㄱ
       console.log('학습 시작 응답:', response); // 응답데이터 확인
 
       localStorage.setItem(`modelTrainingStatus`, 'LEARNING'); // 학습중 상태로 전환 (고양이)
       alert('모델 학습이 시작되었습니다!'); // alert제거해
-      router.push('/dashboard'); // 우선 대시보드 보내기
+      await resetAtoms();
+      setTimeout(() => {
+        localStorage.removeItem('pipelineId');
+        router.push('/dashboard'); // 우선 대시보드 보내기
+      }, 50);
     } catch (error) {
       console.error('학습 시작 오류:', error);
       alert('모델 학습 시작 중 오류가 발생했습니다. 다시 시도해주세요.');
       router.push('/dashboard');
     } finally {
       setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
   // 뭔가 필요한 정보가 하나라도 없다면 대시보드 보냄 (새로고침해서 상태 초기화 되었을때도 보냄)
   useEffect(() => {
-    if (!dataColumns || !dataColumns.length || !projectDetail || !initialCategory) {
+    if (!dataColumns || !dataColumns.length || !pipelineId || !initialCategory) {
       router.push('/dashboard');
     }
-  }, [dataColumns, projectDetail, initialCategory, router]);
+  }, [dataColumns, pipelineId, initialCategory, router]);
 
   return {
     modelCategory,
@@ -115,6 +125,7 @@ export const useModeling = () => {
     parameterValues,
     dataSplit,
     isLoading,
+    loadingMessage,
     selectedModel,
     TARGET_VARIABLES,
 

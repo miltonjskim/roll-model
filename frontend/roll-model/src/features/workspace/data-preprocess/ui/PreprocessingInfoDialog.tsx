@@ -115,13 +115,64 @@ const PreprocessingInfoDialog = () => {
               <p>특히, 데이터 타입이 string인 경우엔 정규화가 꼭 필요합니다.</p>
               <ul className="list-disc space-y-1 pl-5">
                 <li>
-                  <b>Z-점수 정규화</b>: 평균 0, 표준편차 1로 맞춰요.
+                  <ul>
+                    <b>Z-점수 정규화</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 키, 몸무게, 온도, 주가 등 <b>연속형 숫자 데이터</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 데이터가 정규 분포와 비슷하고, <b>이상치에 덜 민감한 경우</b>
+                    </li>
+                    <li> - 예시: 신용 평가 모델에서 소득, 채무 등의 변수</li>
+                    <li> - 평균 0, 표준편차 1로 맞춰요.</li>
+                  </ul>
                 </li>
                 <li>
-                  <b>Min-Max 정규화</b>: 0과 1 사이 값으로 맞춰요.
+                  <ul>
+                    <b>Min-Max 정규화</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 연령, 점수, 등급 등 <b>범위가 제한된 숫자 데이터</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 데이터의 상대적 크기가 중요하고, <b>모든 값을 0~1 사이로 보고 싶을 때</b>
+                    </li>
+                    <li> - 예시: 이미지 픽셀 값, 추천 시스템의 평점 데이터</li>
+                    <li> - 0과 1 사이 값으로 맞춰요.</li>
+                  </ul>
                 </li>
+
                 <li>
-                  <b>로그/제곱근 변환</b>: 값이 너무 크거나 쏠릴 때 분포를 부드럽게 조정해요.
+                  <ul>
+                    <b>로그 변환</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 매출, 인구, 면적 등 <b>큰 수와 작은 수 차이가 극단적인 데이터</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 데이터의 분포가 <b>한 쪽으로 치우쳐 있을 때 (오른쪽 꼬리가 긴 경우)</b>
+                    </li>
+                    <li> - 예시: 집값, 연봉, 제품 판매량</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <ul>
+                    <b>제곱근 변환</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 빈도수, 개수 등 <b>양의 값만 가지는 데이터</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 로그보다 덜 강력한 변환이 필요할 때, <b>분산이 평균에 비례하는 데이터</b>
+                    </li>
+                    <li> - 예시: 고객 방문 횟수, 웹 사이트 클릭 수</li>
+                  </ul>
                 </li>
               </ul>
             </AccordionContent>
@@ -139,13 +190,48 @@ const PreprocessingInfoDialog = () => {
               <p>문자(텍스트) 데이터를 숫자로 바꿔서 모델이 처리할 수 있도록 해요.</p>
               <ul className="list-disc space-y-1 pl-5">
                 <li>
-                  <b>원핫 인코딩</b>: 하나의 값을 여러 개의 0과 1로 표현해요.
+                  <ul>
+                    <b>원핫 인코딩</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 성별, 지역, 색상 등 <b>범주형 데이터 (카테고리)</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 범주 간 <b>순서가 없고,</b> 범주 수가 많지 않을 때
+                    </li>
+                    <li> - 예시: 혈액형(A, B, O, AB), 결제 방식(카드, 현금, 포인트)</li>
+                  </ul>
                 </li>
+
                 <li>
-                  <b>레이블 인코딩</b>: 범주형 값을 순서대로 숫자로 바꿔요.
+                  <ul>
+                    <b>레이블 인코딩</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 등급, 순위 등 <b>순서가 있는 범주형 데이터</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 범주 간에 <b>순서적 의미가 있을 때,</b> 의사결정트리 기반 모델
+                    </li>
+                    <li> - 예시: 학점(A, B, C, D, F), 고객 등급(VIP, Gold, Silver)</li>
+                  </ul>
                 </li>
+
                 <li>
-                  <b>타겟 인코딩</b>: 평균값을 이용해 숫자로 바꿔요. 성능이 좋지만 주의가 필요해요.
+                  <ul>
+                    <b>타겟 인코딩</b>
+                    <li>
+                      {' '}
+                      - 적용 대상: 영향력이 높은 <b>범주형 변수</b>
+                    </li>
+                    <li>
+                      {' '}
+                      - 언제 사용?: 범주 수가 매우 많거나, 범주와 <b>목표값 사이에 관계가 있을 때 </b>
+                    </li>
+                    <li> - 예시: 우편 번호, 제품 카테고리</li>
+                  </ul>
                 </li>
               </ul>
             </AccordionContent>
@@ -167,6 +253,53 @@ const PreprocessingInfoDialog = () => {
                 </li>
                 <li>
                   <b>언더샘플링</b>: 많은 클래스를 줄여서 균형을 맞춰요.
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="handling-string" className="overflow-hidden rounded-md border border-gray-200">
+            <AccordionTrigger className="flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left text-sm font-medium transition hover:bg-gray-100 data-[state=open]:bg-blue-50">
+              <div className="flex items-center">
+                <span className="font-tossface mr-2 text-lg">🧐</span>
+                <span>문자열(String) 데이터는 어떻게 처리해야 할까요?</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground space-y-3 bg-white px-5 py-4 text-sm leading-relaxed">
+              <p className="font-semibold">문자열 데이터는 반드시 인코딩해야 합니다.</p>
+              <p>대부분의 ML(머신러닝) 알고리즘은 숫자만 처리할 수 있기 때문입니다.</p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  <ul>
+                    <b>카테고리성 문자열</b>(예: 성별, 직업, 색상)
+                    <li>
+                      {' '}
+                      - <b>적은 범주 수(~50개):</b> 원핫 인코딩
+                    </li>
+                    <li>
+                      {' '}
+                      - <b>중간 범주 수(~1,000개):</b> 레이블 인코딩(트리 모델용) 또는 타겟 인코딩
+                    </li>
+                    <li>
+                      {' '}
+                      - <b>많은 범주 수(1,000개 이상):</b> 임베딩 기법 또는 범주 그룹화 후 인코딩
+                    </li>
+                  </ul>
+                </li>
+
+                <li>
+                  <ul>
+                    <b>텍스트 데이터</b>(예: 리뷰, 기사, 댓글)
+                    <li> - 텍스트 분석 기법 필요 (TF-IDF, 워드 임베딩 등)</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <ul>
+                    <b>ID나 코드</b>(예: 고객 ID, 제품 코드)
+                    <li> - 대부분 제거하는 것이 좋음 (과적합 위험)</li>
+                    <li> - 분석이 필요하다면 집계 특성으로 변환</li>
+                  </ul>
                 </li>
               </ul>
             </AccordionContent>

@@ -44,7 +44,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const message = error.response?.data?.error?.message || '네트워크 에러가 발생했습니다.';
     console.error('API Error:', message);
-    showErrorToast(message);
+    // showErrorToast(message);
     return Promise.reject(error);
   },
 );
