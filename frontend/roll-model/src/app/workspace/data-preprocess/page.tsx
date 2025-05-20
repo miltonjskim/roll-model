@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessErrorMsgAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { guide } from '@/features/guide/GuideProvider';
@@ -37,6 +37,7 @@ const PreprocessDataPage = () => {
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
   const setProjectCategory = useSetAtom(projectCategoryAtom);
   const [showEmptyDataAlert, setShowEmptyDataAlert] = useState(false);
+  const [preprocesingErrorMsg, setPreprocesingErrorMsg] = useAtom(preprocessErrorMsgAtom);
 
   const reloadData = async (storedPipelineId: string) => {
     setIsLoading(true);
@@ -124,6 +125,7 @@ const PreprocessDataPage = () => {
       setCompletedDataset(response.data.data.data);
       setSteps([]);
       setPreprocessingSteps([]);
+      setPreprocesingErrorMsg('');
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {
@@ -149,6 +151,7 @@ const PreprocessDataPage = () => {
     } catch (error: unknown) {
       const apiArror = error as ApiError;
       showErrorToast(apiArror.message);
+      setPreprocesingErrorMsg(apiArror.message);
       console.error(apiArror);
     } finally {
       setIsLoading(false);
@@ -226,6 +229,21 @@ const PreprocessDataPage = () => {
                   - 최근 단계 삭제
                 </Button>
               </div>
+              <div className="mt-2 flex w-full justify-between text-right">
+                <div>
+                  {preprocesingErrorMsg ? (
+                    <p className="text-sm text-[var(--color-error)]">
+                      <span className="text-[var(--color-gray-01)]">에러 발생: </span>
+                      {preprocesingErrorMsg}
+                    </p>
+                  ) : (
+                    <p />
+                  )}
+                </div>
+
+                <div className="ml-auto">{steps.length > 0 && <p className="text-sm font-medium text-[var(--color-gray-01)]">총 단계: {steps.filter(Boolean).length}단계</p>}</div>
+              </div>
+
               <PreprocessingPipeline steps={steps} cardStyle="large" highlight="blue" />
             </div>
           </div>
