@@ -10,6 +10,7 @@ import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPre
 import { startGuide } from '@/features/guide/useGuide';
 import EmptyDataAlertDialog from '@/features/workspace/data-preprocess/ui/EmptyDataAlertDialog';
 import PreprocessDataSkeleton from '@/features/workspace/data-preprocess/ui/PreprocessDataSkeleton';
+import PreprocessingConfirmDialog from '@/features/workspace/data-preprocess/ui/PreprocessingConfirmDialog';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
@@ -172,6 +173,26 @@ const PreprocessDataPage = () => {
     }
   };
 
+  const requestAllPreprocessingSteps = async () => {
+    try {
+      const payload = {
+        steps: recommendedSteps.map((step) => ({
+          type: step.type,
+          ...step.parameters,
+        })),
+      };
+
+      console.log('전처리 일괄 요청 payload:', payload);
+
+      // const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/batch`, payload);
+
+      // console.log('전처리 일괄 실행 결과:', response.data);
+    } catch (error) {
+      console.error('전처리 일괄 실행 실패:', error);
+      showErrorToast('전처리 실행 중 오류가 발생했습니다.');
+    }
+  };
+
   if (isLoading || !uploadDataset) {
     return <PreprocessDataSkeleton />;
   }
@@ -222,7 +243,10 @@ const PreprocessDataPage = () => {
             <div className="flex min-h-0 flex-[5] flex-col gap-2 md:flex-row">
               {/* AI 추천 단계: 가장 작게 (1 비율) */}
               <div className="bg-[theme(primary-white)] ai-recommended-section ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
-                <h4 className="text-base font-semibold">AI 추천 전처리 단계</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-base font-semibold">AI 추천 전처리 단계</h4>
+                  <PreprocessingConfirmDialog steps={recommendedSteps} requestPreprocessing={requestAllPreprocessingSteps} />
+                </div>
                 <PreprocessingPipeline steps={recommendedSteps} cardStyle="small" highlight="gray" />
               </div>
 
