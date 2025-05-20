@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
 import { Sparkles, Info } from 'lucide-react';
 import clsx from 'clsx';
-import { getStepLabel } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
+import { getStepLabel, methodLabelMap } from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
+import { useState } from 'react';
 
 interface StepDetailModalProps {
   step: Step;
@@ -13,10 +14,76 @@ interface StepDetailModalProps {
 }
 
 const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
-  const renderValue = (value: unknown, key: string): string => {
-    if (Array.isArray(value)) {
-      return `${value.slice(0, 5).join(', ')}${value.length > 5 ? '...' : ''}`;
+  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+
+  const toggleExpanded = (key: string) => {
+    setExpandedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const renderValue = (value: unknown, key: string): React.ReactNode => {
+    if (key === 'method' && typeof value === 'string') {
+      return methodLabelMap[value] ?? value;
     }
+
+    if (Array.isArray(value)) {
+      const isExpanded = expandedKeys[key];
+
+      // Object 배열이면 테이블로 렌더링
+      if (typeof value[0] === 'object' && value[0] !== null) {
+        const objectArray = value as Record<string, unknown>[];
+        const keys = Object.keys(objectArray[0] ?? {});
+        const rowsToShow = isExpanded ? objectArray : objectArray.slice(0, 10);
+
+        return (
+          <div className="max-h-[300px] overflow-x-auto">
+            <table className="min-w-full table-auto border text-left text-xs">
+              <thead className="sticky top-0 bg-white">
+                <tr>
+                  {keys.map((k) => (
+                    <th key={k} className="border px-2 py-1 font-semibold text-gray-700">
+                      {k}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rowsToShow.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50">
+                    {keys.map((k) => (
+                      <td key={k} className="border px-2 py-1 text-gray-800">
+                        {String(row[k])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {objectArray.length > 10 && (
+              <button onClick={() => toggleExpanded(key)} className="mt-2 text-xs text-[var(--color-blue-01)] hover:underline">
+                {isExpanded ? '접기 ▲' : `총 ${objectArray.length}개 중 더 보기 ▼`}
+              </button>
+            )}
+          </div>
+        );
+      }
+
+      // 숫자 등 단순 배열 처리
+      const arrayToShow = isExpanded ? value : value.slice(0, 20);
+      return (
+        <>
+          <span>
+            {arrayToShow.join(', ')}
+            {value.length > 20 && !isExpanded && '...'}
+          </span>
+          {value.length > 20 && (
+            <button onClick={() => toggleExpanded(key)} className="ml-2 text-xs text-[var(--color-blue-01)] hover:underline">
+              {isExpanded ? '접기 ▲' : '펼쳐보기 ▼'}
+            </button>
+          )}
+        </>
+      );
+    }
+
     if (typeof value === 'boolean') return value ? '✅ 예' : '❌ 아니오';
     if (value === null || value === undefined) return '-';
     return String(value);
@@ -63,22 +130,20 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[80vh] w-[600px] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] w-full max-w-6xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles className="h-5 w-5 text-yellow-400" />
-            <span className="text-[1.05rem]">{step.optionName}</span>
+            <span className="text-md">{step.optionName} - </span>
+            <span className="text-lg font-semibold">{getStepLabel(step.type)}</span>
           </DialogTitle>
-          <DialogDescription className="flex items-center gap-1 text-base font-medium text-gray-500">
-            <Info className="h-4 w-4 text-gray-400" />
-            <span className="font-tossface text-sm text-gray-600">{getStepLabel(step.type)}</span>
-          </DialogDescription>
+          <DialogDescription className="flex items-center gap-1 text-base font-medium text-gray-500"></DialogDescription>
         </DialogHeader>
 
         <div className="mt-6 space-y-4 text-sm text-gray-700">
           {Object.entries(step.parameters ?? {}).map(([key, value]) => (
-            <div key={key} className="flex items-start gap-3 rounded-xl bg-gradient-to-br from-gray-50 to-white p-3 shadow-sm transition hover:bg-gray-100">
-              <div className="w-40 shrink-0 text-right font-semibold text-gray-700" dangerouslySetInnerHTML={{ __html: getLabel(key) }} />
+            <div key={key} className="flex items-start gap-3 rounded-xl border border-[var(--color-gray-03)] p-3 transition hover:bg-gray-100">
+              <div className="w-40 shrink-0 font-semibold text-gray-700" dangerouslySetInnerHTML={{ __html: getLabel(key) }} />
               <div
                 className={clsx(
                   'flex-1 break-words whitespace-pre-wrap text-gray-900',
