@@ -99,9 +99,14 @@ export interface OutlierRemovalResult {
 export interface PreviousPreprocessingSteps {
   active: boolean;
   order: number;
-  parameters: PreviousPreprocessingParameter;
+  parameters: Record<string, string | number | number[]>;
   result: unknown;
-  type: typeof PREPROCESS_TYPES;
+  type: string;
+}
+
+// ai 전처리 추천 단계 응답 인터페이스
+export interface RecommendedAiSteps {
+  step: Step[];
 }
 
 // 전처리 단계 정의 인터페이스
@@ -119,5 +124,6 @@ export interface Step {
 // 재학습 시 이전 데이터 전처리 단계의 파라미터
 export interface PreviousPreprocessingParameter {
   column: string;
-  method: string;
+  method?: string;
+  detection?: string;
 }

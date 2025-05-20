@@ -6,6 +6,9 @@ import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import { ProjectCardCompact } from '@/features/workspace/retrain/ui/ProjectCardCompact';
+import StepProgress from '@/features/workspace/ui/StepProgress';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import { useSetAtom } from 'jotai';
 
 const statusSections = [
   { type: 'COMPLETED', label: '성공한 프로젝트', emoji: '✅' },
@@ -14,33 +17,41 @@ const statusSections = [
 ] as const;
 
 const ProjectRetrainSelectionPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const setIsLoading = useSetAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const [myProjectList, setMyProjectList] = useState<Project[]>([]);
 
   useEffect(() => {
     fetchMyProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMyProjects = async () => {
     setIsLoading(true);
+    setLoadingMessage('내 프로젝트 목록을 불러오고 있습니다.');
     try {
       const { data } = await axiosInstance.get('/api/v1/projects/my');
       console.log(data);
 
-      setMyProjectList(data.data.projects);
+      setMyProjectList(data.data.projects ?? []);
     } catch (error) {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
+      setMyProjectList([]);
     } finally {
       setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
   return (
     <div className="flex flex-col justify-center">
-      <div className="select-none">
-        <h1 className="text-xl font-bold">내 프로젝트 목록</h1>
-        <p className="text-sm text-gray-600">재학습 가능한 프로젝트를 확인하세요.</p>
+      <div className="flex items-center justify-between px-12 select-none">
+        <div className="text-left">
+          <h1 className="text-xl font-bold">2. 내 프로젝트 목록</h1>
+          <p className="text-sm text-gray-600">재학습 가능한 프로젝트를 확인하세요.</p>
+        </div>
+        <StepProgress />
       </div>
       <div className="bg-[theme(primary-white)] mt-6 grid grid-cols-1 gap-4 rounded-md p-6 md:grid-cols-3">
         {statusSections.map(({ type, label, emoji }) => {

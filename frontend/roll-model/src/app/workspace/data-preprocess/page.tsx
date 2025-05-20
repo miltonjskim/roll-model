@@ -1,18 +1,22 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { aiRecommendedStepsAtom, completedDatasetAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
-import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { guide } from '@/features/guide/GuideProvider';
+import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPreprocessGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
+import EmptyDataAlertDialog from '@/features/workspace/data-preprocess/ui/EmptyDataAlertDialog';
+import PreprocessDataSkeleton from '@/features/workspace/data-preprocess/ui/PreprocessDataSkeleton';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
+import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { globalLoadingAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
-import { ApiResponse } from '@/shared/model/types/apiResponse';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { ApiError } from 'next/dist/server/api-utils';
 import { useRouter } from 'next/navigation';
@@ -21,30 +25,86 @@ import { useEffect, useRef, useState } from 'react';
 const PreprocessDataPage = () => {
   const router = useRouter();
   const [uploadedData, setUploadedData] = useAtom(uploadedDatasetAtom);
-  const pipelineId = uploadedData?.pipelineId;
-  const projectTitle = useAtomValue(projectTitleAtom);
-  const setIsLoading = useSetAtom(globalLoadingAtom);
+  const [pipelineId, setPipelineId] = useAtom(pipelineIdAtom);
+
+  const [projectTitle, setProjectTitle] = useAtom(projectTitleAtom);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [preprocessingSteps, setPreprocessingSteps] = useAtom(preprocessingStepsAtom);
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
+  const setProjectCategory = useSetAtom(projectCategoryAtom);
+  const [showEmptyDataAlert, setShowEmptyDataAlert] = useState(false);
+
+  const reloadData = async (storedPipelineId: string) => {
+    setIsLoading(true);
+    setLoadingMessage('이전 데이터를 불러오고 있습니다.');
+    try {
+      const response = await axiosInstance(`/api/v2/pipelines/${storedPipelineId}/reload/preprocess`);
+      console.log('response:', response);
+
+      const data = response.data.data;
+
+      if (Array.isArray(data.dataset) && data.dataset.length === 0) {
+        setShowEmptyDataAlert(true);
+        return;
+      }
+
+      setPipelineId(data.pipelineId);
+      setProjectTitle(data.title);
+      setProjectCategory(data.category);
+      setUploadedData({
+        pipelineId: data.pipelineId,
+        summary: data.summary,
+        missingValues: data.summary.missingValues,
+        originalDatasets: {
+          data: data.dataset,
+        },
+      });
+      setPreprocessingSteps(data.preprocessingSteps);
+    } catch (error) {
+      const apiError = error as ApiError;
+      setShowEmptyDataAlert(true);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage(null);
+    }
+  };
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerPreprocessGuideSteps();
+      startGuide();
+    }
+  }, []);
 
   useEffect(() => {
     if (!uploadedData) {
-      showErrorToast(
-        <>
-          데이터셋 정보가 존재하지 않습니다.
-          <br />
-          프로젝트 생성 페이지로 이동합니다.
-        </>,
-      );
-      router.push('/workspace');
-      return;
-    } else {
-      console.log('uploadedData:', uploadedData);
-      // console.log('recommededSteps:', recommendedSteps);
+      const stored = localStorage.getItem('pipelineId');
+      console.log('stored pipelineId:', stored);
+
+      if (stored) {
+        setPipelineId(stored);
+        reloadData(stored);
+      } else {
+        showErrorToast('파이프라인 ID를 찾을 수 없습니다.');
+        router.push('/workspace');
+      }
     }
-  }, [uploadedData, router]);
+  }, [pipelineId, uploadedData]);
+
+  useEffect(() => {
+    if (preprocessingSteps && preprocessingSteps.length > 0) {
+      setSteps(preprocessingSteps);
+    }
+  }, [preprocessingSteps]);
 
   const handleAddStep = (newStep: Step) => {
     setSteps((prev) => [...prev, newStep]);
@@ -59,9 +119,11 @@ const PreprocessDataPage = () => {
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/complete`);
 
-      console.log('response:', response);
+      // console.log('response:', response);
 
       setCompletedDataset(response.data.data.data);
+      setSteps([]);
+      setPreprocessingSteps([]);
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {
@@ -80,7 +142,9 @@ const PreprocessDataPage = () => {
 
       setSteps((prev) => prev.slice(0, -1));
 
-      console.log('단계 삭제 response:', response);
+      // console.log('단계 삭제 response:', response);
+      // console.log('response.data.data.datset', response.data.data.dataset);
+
       setUploadedData(response.data.data.dataset);
     } catch (error: unknown) {
       const apiArror = error as ApiError;
@@ -91,16 +155,23 @@ const PreprocessDataPage = () => {
     }
   };
 
+  if (isLoading) {
+    return <PreprocessDataSkeleton />;
+  }
+
   return (
-    <div className="mx-auto h-[calc(100vh-6rem)] w-full overflow-hidden px-4">
+    <div className="mx-auto w-full overflow-y-auto px-4 pb-4">
       {/* 상단 제목 */}
-      <div className="mb-4">
-        <h1 className="text-lg font-bold">전처리 설정하기</h1>
-        <h2 className="mt-[-0.4rem] text-base">필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
+      <div className="flex items-center justify-between">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">5. 전처리 설정하기</h1>
+          <h2 className="mt-[-0.4rem] text-base">필요한 전처리 기능을 선택하고, 데이터를 다듬어주세요.</h2>
+        </div>
+        <StepProgress />
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="flex h-[calc(100%-4.5rem)] flex-col gap-2 xl:flex-row xl:gap-2">
+      <div className="mt-6 flex h-[calc(100%-4.5rem)] flex-col gap-2 xl:flex-row xl:gap-2">
         {/* 좌측 영역 */}
         <div className="flex max-h-full min-h-0 flex-col xl:max-w-[20rem] xl:min-w-[16rem] xl:basis-[20%]">
           {/* 프로젝트 정보 */}
@@ -113,13 +184,15 @@ const PreprocessDataPage = () => {
           {/* 전처리 기능 */}
           <div className="bg-[theme(primary-white)] flex flex-1 flex-col overflow-hidden rounded-lg p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="preprocessing-options mt-4 mb-6 min-h-0 flex-1 overflow-y-auto">
+            <div className="preprocessing-options preprocessing-options mt-4 mb-6 min-h-0 flex-1 overflow-y-auto">
               <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
             </div>
             <div className="text-center text-xs">
               <span className="text-[var(--color-error-text)]">*</span> 결측 컬럼 상세 정보를 보시려면 아래를 클릭하세요.
             </div>
-            <PreprocessingSummary />
+            <div className="data-summary-area">
+              <PreprocessingSummary />
+            </div>
           </div>
         </div>
 
@@ -129,13 +202,13 @@ const PreprocessDataPage = () => {
             {/* 추천 단계 + 데이터 미리보기 */}
             <div className="flex min-h-0 flex-[5] flex-col gap-2 md:flex-row">
               {/* AI 추천 단계: 가장 작게 (1 비율) */}
-              <div className="bg-[theme(primary-white)] ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
+              <div className="bg-[theme(primary-white)] ai-recommended-section ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
                 <h4 className="text-base font-semibold">AI 추천 전처리 단계</h4>
                 <PreprocessingPipeline steps={recommendedSteps} cardStyle="small" highlight="gray" />
               </div>
 
               {/* 데이터 미리보기: 가장 크게 (3 비율) */}
-              <div className="bg-[theme(primary-white)] min-h-0 flex-[3] overflow-y-auto rounded-md p-4">
+              <div className="bg-[theme(primary-white)] preprocessing-table min-h-0 flex-[3] overflow-y-auto rounded-md p-4">
                 <h4 className="text-[1.07rem] font-semibold">데이터 미리보기</h4>
                 <p className="text-sm text-[var(--color-gray-01)]">변경된 데이터는 하이라이트로 표시됩니다.</p>
                 <PreprocessingTable changedCells={changedCells} />
@@ -143,7 +216,7 @@ const PreprocessDataPage = () => {
             </div>
 
             {/* 적용한 전처리 단계: 중간 크기 (2 비율) */}
-            <div className="bg-[theme(primary-white)] min-h-0 flex-[2] overflow-y-auto rounded-md p-4">
+            <div className="bg-[theme(primary-white)] applied-steps min-h-0 flex-[2] overflow-y-auto rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-left text-base font-semibold">적용한 전처리 단계</h4>
@@ -158,13 +231,14 @@ const PreprocessDataPage = () => {
           </div>
 
           {/* 완료 버튼 */}
-          <div className="mt-2">
+          <div className="complete-button mt-2">
             <Button variant="black" size="lg" className="w-full p-6 text-base" onClick={handleCompletePreprocessing} disabled={steps.length === 0}>
               전처리 결과 확인
             </Button>
           </div>
         </div>
       </div>
+      <EmptyDataAlertDialog open={showEmptyDataAlert} onOpenChange={setShowEmptyDataAlert} />
     </div>
   );
 };

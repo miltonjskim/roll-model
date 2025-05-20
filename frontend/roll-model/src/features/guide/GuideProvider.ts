@@ -9,6 +9,7 @@ export const guide = new Shepherd.Tour({
       enabled: true,
     },
     classes: 'shepherd-theme-default',
+    arrow: false,
   },
   useModalOverlay: true,
 });

@@ -12,7 +12,9 @@ import { ForkPreprocessResponse, ForkTotalResponse } from '@/shared/model/types/
 import { useState } from 'react';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { dataColumnsAtom, pipelineIdAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { dataColumnsAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { uploadDataset } from '@/features/workspace/data-upload/service/uploadDataset';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 
 interface ProjectCardCompactProps {
   project: Project;
@@ -22,31 +24,53 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
   const router = useRouter();
   const setProjectDetail = useSetAtom(projectDetailAtom);
   const setProjectCategory = useSetAtom(projectCategoryAtom);
-  const [isLoading, setIsLoading] = useState(false);
+  const setIsLoading = useSetAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setProjectTitle = useSetAtom(projectTitleAtom);
   const setDataColumns = useSetAtom(dataColumnsAtom);
+  const setUploadDataset = useSetAtom(uploadedDatasetAtom);
+  const setPreprocessingSteps = useSetAtom(preprocessingStepsAtom);
 
   const moveToPreprocessing = async () => {
+    setIsLoading(true);
+    setLoadingMessage('전처리 단계로 재학습하기 위해 파이프라인을 생성중입니다.');
     try {
-      setIsLoading(true);
       const response = await axiosInstance.post<ApiResponse<ForkPreprocessResponse>>(`/api/v2/pipelines/${project.id}/fork/preprocess`);
 
       const data = response.data.data;
-      setPipelineId(data.pipelineId);
-      setProjectTitle(project.title);
+      console.log('data:', data);
 
-      router.push('/workspace/preprocess');
+      const columns = data.columns;
+      const columnNames = columns.map((col) => col.name);
+
+      setPipelineId(data.pipelineId);
+      localStorage.setItem('pipelineId', data.pipelineId);
+      setProjectTitle(project.title);
+      setUploadDataset({
+        pipelineId: data.pipelineId,
+        summary: data.summary,
+        missingValues: data.summary.missingValues,
+        originalDatasets: {
+          columns: columnNames,
+          data: data.dataset,
+        },
+      });
+      setPreprocessingSteps(data.preprocessingSteps);
+
+      router.push('/workspace/data-preprocess');
     } catch (error) {
       showErrorToast((error as ApiError).message);
     } finally {
       setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
   const moveToModeling = async () => {
+    setIsLoading(true);
+    setLoadingMessage('모델링 단계로 재학습하기 위해 파이프라인을 생성중입니다.');
     try {
-      setIsLoading(true);
       const response = await axiosInstance.post<ApiResponse<ForkTotalResponse>>(`/api/v2/pipelines/${project.id}/fork/total`);
 
       const data = response.data.data;
@@ -68,6 +92,7 @@ export const ProjectCardCompact = ({ project }: ProjectCardCompactProps) => {
       showErrorToast((error as ApiError).message);
     } finally {
       setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 

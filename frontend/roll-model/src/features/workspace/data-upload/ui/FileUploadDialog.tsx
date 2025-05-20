@@ -74,7 +74,7 @@ export const FileUploadDialog = () => {
                 {file ? (
                   <>
                     <span className="mt-2 text-[color:var(--primary-black)]">{file.name}</span>
-                    <Button onClick={handleUploadFile} variant="black" className="bg-[theme(primary-white)] mt-2 text-[color:var(--primary-black)]" size="sm">
+                    <Button onClick={handleUploadFile} variant="black" className="bg-[theme(primary-white)] mt-2 text-[color:var(--primary-black)] hover:text-white" size="sm">
                       데이터 확인 및 설정하기
                     </Button>
                   </>
@@ -114,7 +114,7 @@ export const FileUploadDialog = () => {
               >
                 {file ? file.name : '.csv, .parquet 형식의 파일 1개만 업로드 가능합니다.'}
               </div>
-              <Button variant="black" onClick={handleClickFileButton} className="flex-1/4 rounded-md hover:text-[color:var(--primary-white)]">
+              <Button variant="black" onClick={handleClickFileButton} className="flex-1/4 rounded-md hover:text-white">
                 찾아보기
               </Button>
             </div>

@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
-import { aiRecommendedStepsAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom, uploadedFileAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -22,6 +22,16 @@ import { ApiError } from '@/shared/model/types/apiResponse';
 import { createProject } from '@/features/workspace/service/createProject';
 import BackButton from '@/shared/ui/BackButton';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import { registerConfigDataGuideSteps } from '@/features/guide/steps/registerConfigDataGuideSteps';
+import { startGuide } from '@/features/guide/useGuide';
+import { guide } from '@/features/guide/GuideProvider';
+import DataTypeInfoDialog from '@/features/workspace/data-upload/ui/DataTypeInfoDialog';
+import StepProgress from '@/features/workspace/ui/StepProgress';
+import { requestPreprocessingStepsFromAI } from '@/features/workspace/data-upload/service/requestPreprocessingStepsFromAI';
+import { inferType } from '@/entities/workspace/data-config/utils/inferType';
+import { generateColumnPayload } from '@/entities/workspace/data-config/utils/generateColumnPayload';
+import { getDelimiterType } from '@/entities/workspace/data-config/utils/getDelimiterType';
+import DataConfigSkeleton from '@/features/workspace/data-upload/ui/DataConfigSkeleton';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -45,8 +55,10 @@ const ConfigDataPage = () => {
   const projectCategory = useAtomValue(projectCategoryAtom);
   const projectPublic = useAtomValue(projectPublicAtom);
   const setProjectId = useSetAtom(projectIdAtom);
-  const setGlobalLoading = useSetAtom(globalLoadingAtom);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
+  const setPipelineId = useSetAtom(pipelineIdAtom);
+  const setPreprocessingSteps = useSetAtom(preprocessingStepsAtom);
 
   // 헤더 편집 마무리 시 상태 저장 (최종)
   const handleHeaderEditComplete = (idx: number, newValue: string) => {
@@ -72,7 +84,7 @@ const ConfigDataPage = () => {
 
   // 프로젝트 생성 요청 함수
   const handleCreateProject = async () => {
-    setGlobalLoading(true);
+    setIsLoading(true);
     setLoadingMessage('프로젝트를 생성하고 있습니다...');
 
     const payload = {
@@ -82,95 +94,91 @@ const ConfigDataPage = () => {
       type: projectCategory,
       isPublic: projectPublic,
     };
+
     try {
       const response = await createProject(payload);
-
-      const projectId = response.data.id;
-      setProjectId(projectId.toString());
+      const projectId = response.data.id.toString();
+      setProjectId(projectId);
       setLoadingMessage('데이터셋을 업로드하고 분석하고 있어요.');
+      setPreprocessingSteps([]);
 
-      handleUpload(projectId.toString());
+      const [uploadSuccess, aiResponse] = await Promise.all([handleUpload(projectId), fetchRecommendedPreprocessingSteps(projectId)]);
+
+      if (uploadSuccess && aiResponse) {
+        router.push('/workspace/data-preprocess');
+      }
     } catch (err) {
+      showErrorToast('프로젝트 생성에 실패했습니다.');
       console.error('프로젝트 생성 실패:', err);
     } finally {
-      // setGlobalLoading(false);
-      // setLoadingMessage(null);
+      setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
   // 원본 데이터셋 업로드 함수
-  const handleUpload = (projectId: string) => {
-    if (!file) return;
+  const handleUpload = async (projectId: string): Promise<boolean> => {
+    setIsLoading(true);
+    setLoadingMessage('원본 데이터셋을 업로드 및 분석 중입니다.');
 
-    const delimiterMap: Record<string, UploadDatasetRequest['delimiter']> = {
-      ',': 'comma',
-      ';': 'semicolon',
-      '\t': 'tab',
-      '기타 입력': 'other',
-    };
+    if (!file) return false;
 
-    const delimiter = delimiterMap[selectedDelimiterOption] ?? 'other';
+    const { delimiter, customDelimiter: resolvedCustomDelimiter } = getDelimiterType(selectedDelimiterOption, customDelimiter);
+    const columns = generateColumnPayload(header, columnTypes);
 
     const payload = {
       delimiter: delimiter,
-      customDelimiter: selectedDelimiterOption === '기타 입력' ? customDelimiter : undefined,
-      encoding: encoding as UploadDatasetRequest['encoding'], // 캐스팅
+      customDelimiter: resolvedCustomDelimiter,
+      encoding: encoding as UploadDatasetRequest['encoding'],
       hasHeader: useHeaderRow,
-      columns: header.map((col, idx) => ({
-        name: col.length > 0 ? col : `컬럼 ${idx + 1}`,
-        type: columnTypes[idx] as UploadDatasetRequest['columns'][number]['type'], // 캐스팅
-      })),
+      columns: columns,
     };
 
-    mutation.mutate(
-      { projectId, config: payload, file },
-      {
-        onSuccess: (response) => {
-          console.log('onSuccessData:', response.data);
+    try {
+      const response = await mutation.mutateAsync({ projectId, config: payload, file });
+      const data = response.data;
 
-          if (response.data) {
-            const data = response.data;
-            setUploadedDataset(data.result);
-            setAiRecommendedStepsAtom(data.step);
+      console.log('config response:', data);
 
-            router.push('/workspace/data-preprocess');
-          }
-        },
-        onError: (err) => {
-          showErrorToast(err.message);
-          console.error(err);
-        },
-        onSettled: () => {
-          setGlobalLoading(false);
-          setLoadingMessage(null);
-        },
-      },
-    );
+      localStorage.setItem('pipelineId', data.result.pipelineId);
+      setPipelineId(data.result.pipelineId);
+      setUploadedDataset(data.result);
+      setAiRecommendedStepsAtom(data.step);
+      return true;
+    } catch (err) {
+      showErrorToast((err as Error).message);
+      console.error(err);
+      return false;
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage(null);
+    }
   };
 
-  // 컬럼 타입 확인하는 함수
-  const inferType = (value: string): string => {
-    const trimmed = value.trim();
-    const lower = trimmed.toLowerCase();
+  // AI 추천 단계 요청
+  const fetchRecommendedPreprocessingSteps = async (projectId: string) => {
+    // console.log('file:', file);
 
-    if (lower === 'true' || lower === 'false') {
-      return 'boolean';
+    if (!file) return false;
+
+    setIsLoading(true);
+    setLoadingMessage('AI에게 전처리 단계를 추천받고 있어요.');
+    try {
+      const response = await requestPreprocessingStepsFromAI(file, projectId);
+      console.log('ai response.data:', response.data);
+      console.log('ai response,data,step:', response.data.step);
+
+      setAiRecommendedStepsAtom(response.data.step);
+      return true;
+    } catch (error) {
+      const apiError = error as ApiError;
+      showErrorToast(apiError.message);
+      console.error(apiError);
+      return false;
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage(null);
     }
-
-    const num = Number(trimmed);
-    if (!isNaN(num)) {
-      if (Number.isInteger(num)) {
-        return 'integer';
-      } else {
-        return 'double';
-      }
-    }
-
-    if (!isNaN(Date.parse(trimmed))) {
-      return 'datetime';
-    }
-
-    return 'string';
   };
 
   // csv 데이터 파싱
@@ -216,14 +224,32 @@ const ConfigDataPage = () => {
     }
   }, [selectedDelimiterOption, customDelimiter]);
 
+  useEffect(() => {
+    const dismissed = localStorage.getItem('guide.dismissed') === 'true';
+
+    if (!dismissed) {
+      guide.cancel();
+      guide.steps = [];
+      registerConfigDataGuideSteps();
+      startGuide();
+    }
+  }, []);
+
+  if (isLoading) {
+    return <DataConfigSkeleton />;
+  }
+
   return (
     <div className="flex flex-col justify-center">
-      <div>
-        <h1 className="text-lg font-bold">데이터 설정하기</h1>
-        <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+      <div className="flex items-center justify-between px-28">
+        <div className="text-left">
+          <h1 className="text-lg font-bold">4. 데이터 설정하기</h1>
+          <h2 className="text-base">업로드된 데이터를 확인하고 필요한 설정을 진행해 주세요.</h2>
+        </div>
+        <StepProgress />
       </div>
 
-      <div className="mx-auto mt-4 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
+      <div className="mx-auto mt-8 mb-4 flex max-w-[90%] items-stretch justify-center gap-4">
         <div className="flex max-w-[90%] basis-[60rem] flex-col gap-4">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md">
             <div className="p-6 text-left">
@@ -243,11 +269,11 @@ const ConfigDataPage = () => {
               </div>
               <div className="mt-2 mr-4 flex items-center justify-end space-x-2">
                 <Checkbox id="use-header-row" checked={useHeaderRow} onCheckedChange={(checked) => setUseHeaderRow(Boolean(checked))} />
-                <label htmlFor="use-header-row" className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="use-header-row" className="guide-header-toggle text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   첫 줄을 헤더로 사용
                 </label>
               </div>
-              <div className="overflow-x-auto p-4">
+              <div className="guide-header-edit overflow-x-auto p-4">
                 <DataPreviewTable
                   header={header}
                   previewRow={previewRow}
@@ -265,14 +291,17 @@ const ConfigDataPage = () => {
 
           {header.length > 0 && (
             <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-              <div>
-                <h3 className="font-semibold">
-                  <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
-                </h3>
-                <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">
+                    <span className="text-[color:var(--color-error-text)]">*</span>컬럼별 타입 지정
+                  </h3>
+                  <p className="text-sm font-medium text-[color:var(--color-gray-01)]">각 컬럼의 데이터 타입을 지정해 주세요.</p>
+                </div>
+                <DataTypeInfoDialog />
               </div>
 
-              <div className="flex flex-wrap gap-x-12 p-4">
+              <div className="guide-column-type flex flex-wrap gap-x-12 p-4">
                 {header.map((col, idx) => (
                   <div key={idx} className="my-2 flex items-center gap-6 text-sm">
                     <span className="w-32 font-semibold">{col.length === 0 ? `컬럼 ${idx + 1}` : col}</span>
@@ -304,7 +333,7 @@ const ConfigDataPage = () => {
 
         <div className="flex basis-[24rem] flex-col justify-between">
           <div className="bg-[theme(primary-white)] flex-1 rounded-md p-6 text-left">
-            <div>
+            <div className="guide-delimiter-select">
               <h3 className="font-semibold">
                 <span className="text-[color:var(--color-error-text)]">*</span>구분자 선택
               </h3>
@@ -321,7 +350,7 @@ const ConfigDataPage = () => {
             </div>
 
             <div className="mt-6">
-              <div>
+              <div className="guide-delimiter-select">
                 <h3 className="font-semibold">
                   <span className="text-[color:var(--color-error-text)]">*</span>인코딩 선택
                 </h3>
@@ -333,13 +362,14 @@ const ConfigDataPage = () => {
                   다른 인코딩을 선택해 보세요.
                 </p>
               </div>
-
-              <EncodingSelector value={encoding} onChange={setEncoding} />
+              <div className="guide-encoding-select">
+                <EncodingSelector value={encoding} onChange={setEncoding} />
+              </div>
             </div>
           </div>
 
           <div className="pt-4">
-            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-4 h-12 w-full">
+            <BackButton size="lg" className="hover:bg-[theme(color-gray-05)] mb-2 h-12 w-full">
               ← 이전 단계로
             </BackButton>
             <Button variant="black" size="lg" className="h-12 w-full" onClick={handleCreateProject}>
