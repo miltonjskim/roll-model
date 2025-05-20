@@ -18,8 +18,12 @@ interface TemplateProps {
  */
 export const getRequestExample = (language: LanguageType, { endpoint, inputSchema }: TemplateProps): string => {
   // 입력 스키마로부터 예제 데이터 배열 생성
-  const exampleValues = inputSchema.features.map((feature) => feature.example);
-
+  const exampleValues = inputSchema.features.map((feature) => {
+    // 문자열 "True"와 "False"를 boolean 값으로 변환
+    if (feature.example === 'True') return true;
+    if (feature.example === 'False') return false;
+    return feature.example;
+  });
   // API 요청에 필요한 형식으로 데이터 구조화
   const requestData = {
     inputs: [exampleValues],
@@ -40,7 +44,9 @@ headers = {
     "Content-Type": "application/json",
     "apiKey": "${endpoint.apiKey}"
 }
-data = ${JSON.stringify(requestData, null, 2)}
+data = ${JSON.stringify(requestData, null, 2)
+        .replace(/"true"/g, 'True')
+        .replace(/"false"/g, 'False')}
 
 response = requests.post(url, headers=headers, json=data)
 result = response.json()
