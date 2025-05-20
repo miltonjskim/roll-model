@@ -41,14 +41,14 @@ const InputProjectMetaDataPage = () => {
   }, [setTitle, setDescription, setDomain, setType, setIsPublic]);
 
   const handleSubmit = () => {
-    router.push('/workspace/data-selection');
+    router.push('/workspace/data-config');
   };
 
   return (
     <div className="mx-auto max-w-[90%]">
       <div className="mx-auto flex max-w-[70%] items-center justify-between">
         <div className="text-left select-none">
-          <h1 className="text-xl font-bold">2. 프로젝트 메타데이터 입력</h1>
+          <h1 className="text-xl font-bold">3. 프로젝트 메타데이터 입력</h1>
           <h2>프로젝트 정보를 입력해 주세요.</h2>
         </div>
         <StepProgress />

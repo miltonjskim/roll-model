@@ -9,9 +9,9 @@ const StepProgress = () => {
 
   const flatSteps = [
     { step: 1, path: '/', label: '프로젝트 시작', icon: '🚀' },
-    { step: 2, path: '/project-meta', label: '프로젝트 정보 입력', icon: '📝' },
-    { step: 2, path: '/retrain', label: '프로젝트 재학습', icon: '🔁' },
-    { step: 3, path: '/data-selection', label: '데이터 선택', icon: '📂' },
+    { step: 2, path: '/data-selection', label: '데이터 선택', icon: '📂' },
+    { step: 3, path: '/project-meta', label: '프로젝트 정보 입력', icon: '📝' },
+    { step: 3, path: '/retrain', label: '프로젝트 재학습', icon: '🔁' },
     { step: 4, path: '/data-config', label: '데이터 설정', icon: '⚙️' },
     { step: 5, path: '/data-preprocess', label: '전처리', icon: '🧹' },
     { step: 6, path: '/data-preprocess/complete', label: '전처리 완료', icon: '✅' },
