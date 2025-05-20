@@ -6,6 +6,7 @@ import SliderParameter from '@/entities/workspace/modeling-section/ui/SliderPara
 import RadioParameter from '@/entities/workspace/modeling-section/ui/RadioParameter';
 import GammaParameter from '@/entities/workspace/modeling-section/ui/GammaParameter';
 import DataSplitControl from '@/entities/workspace/modeling-section/ui/DataSplitControl';
+import { getParameterEmoji } from '@/shared/api/mocks/modeling/modelingEmoji';
 
 interface ParameterSectionWidgetProps {
   targetVariables: string[];
@@ -36,6 +37,30 @@ const ParameterSectionWidget = ({
     return parameterValues[parameter] === value;
   };
 
+  // 괄호 안의 영문명만 추출하는 함수
+  const extractEnglishName = (fullName: string) => {
+    // 괄호 안의 내용을 찾는 정규식
+    const regex = /\(([^)]+)\)/;
+
+    // 정규식에 매칭되는 결과 찾기
+    const match = fullName.match(regex);
+
+    // 매칭 결과가 있으면 첫 번째 그룹(괄호 안의 내용) 반환, 없으면 원래 이름 반환
+    return match ? match[1] : fullName;
+  };
+  // 괄호 앞의 한글명만 추출하는 함수
+  const extractKoreanName = (fullName: string) => {
+    // 괄호 앞의 내용을 찾는 정규식
+    const regex = /^(.*?)\(/;
+
+    // 정규식에 매칭되는 결과 찾기
+    const match = fullName.match(regex);
+
+    // 매칭 결과가 있으면 첫 번째 그룹(괄호 앞의 내용) 반환하고 양쪽 공백 제거
+    // 없으면 괄호가 없는 문자열이므로 원래 이름 반환
+    return match ? match[1].trim() : fullName;
+  };
+
   return (
     <div>
       <h2 className="mb-4 text-xl font-bold">파라미터 설정하기</h2>
@@ -47,10 +72,12 @@ const ParameterSectionWidget = ({
 
           {/* 파라미터 목록 */}
           {selectedModel.parameters.filter(shouldShowParameter).map((param) => (
-            <div key={param.id} className="mb-4">
-              <h3 className="mb-2">
-                {param.name}
+            <div key={param.id} className="mb-8">
+              <h3 className="relative mb-4 flex items-center justify-center">
+                <span className="bg-[theme(color-gray-03)] mr-2 rounded-full text-2xl select-none">{getParameterEmoji(selectedModel.id, extractEnglishName(param.name))}</span>
+                <span className="text-lg">{extractKoreanName(param.name)}</span>
                 {param.required && <span className="ml-1 text-[var(--color-error)]">*</span>}
+                {/* {param.type === 'slider' && <div className="absolute top-0 right-0 text-lg">{parameterValues[param.id] || param.defaultValue}</div>} */}
               </h3>
 
               {/* 파라미터 타입별 렌더링 */}

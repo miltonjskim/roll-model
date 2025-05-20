@@ -39,7 +39,7 @@ export const ModelEmoji = {
     emoji: ['🌲', '🌳', '🎄', '🎲'],
     parameters: {
       n_estimators: ['🌲', '🔢'], // 결정 트리 개수
-      max_depth: ['📊', '🕳️'], // 최대 깊이
+      max_depth: ['🕳️', '📊'], // 최대 깊이
       max_features: ['🎯', '📋'], // 최대 특성 수
     },
   },

@@ -9,7 +9,7 @@ interface RadioParameterProps {
 
 const RadioParameter = ({ parameter, value, onChange }: RadioParameterProps) => {
   return (
-    <div className="flex flex-wrap items-center gap-6">
+    <div className="flex flex-wrap items-center justify-center gap-6">
       {parameter.options?.map((option) => (
         <div key={option} className="relative mb-2 inline-block cursor-pointer">
           <input

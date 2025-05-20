@@ -4,12 +4,12 @@ import { Parameter, ParameterValue } from '@/entities/workspace/modeling-section
 interface SliderParameterProps {
   parameter: Parameter;
   value: ParameterValue;
-  onChange: (paramId: string, value: ParameterValue ) => void;
+  onChange: (paramId: string, value: ParameterValue) => void;
 }
 
 const SliderParameter = ({ parameter, value, onChange }: SliderParameterProps) => {
   return (
-    <>
+    <div className="relative">
       <input
         type="range"
         min={parameter.min}
@@ -19,8 +19,8 @@ const SliderParameter = ({ parameter, value, onChange }: SliderParameterProps) =
         onChange={(e) => onChange(parameter.id, Number(e.target.value))}
         className="w-full accent-[var(--color-mint-01)]"
       />
-      <div className="text-right text-sm">{value || parameter.defaultValue}</div>
-    </>
+      <div className="absolute -top-7 right-0 text-right text-2xl">{value || parameter.defaultValue}</div>
+    </div>
   );
 };
 
