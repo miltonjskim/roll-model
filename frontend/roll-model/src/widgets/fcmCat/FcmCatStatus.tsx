@@ -1,69 +1,97 @@
 'use client';
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import type { LottieRefCurrentProps } from 'lottie-react';
+
+// Lottie 컴포넌트를 동적 임포트 (SSR 비활성화)
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 // 모델 상태에 대한 타입 정의
 type ModelStatus = 'LEARNING' | 'COMPLETED' | 'FAILED' | 'PREPROCESSED' | string;
 
 export default function FcmCatStatus() {
-  // 현재 모델 상태를 저장하는 상태 변수
-
   const [modelStatus, setModelStatus] = useState<ModelStatus>('');
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
+  const [currentAnimation, setCurrentAnimation] = useState<any>(null);
 
-  // 모델 상태에 따라 이미지 경로 결정
-  const getCatImage = (status: ModelStatus): string => {
-    if (status === 'COMPLETED') return '/completedCat.png';
-    if (status === 'FAILED') return '/failedCat.png';
-    if (status === 'LEARNING') return '/rollingCat.gif';
-    return '/ready.png'; // PREPROCESSED 또는 기타 상태
+  // 모델 상태에 따라 애니메이션 경로 결정
+  const getCatAnimationPath = (status: ModelStatus): string => {
+    if (status === 'COMPLETED') return '/lottie/completedCat.json';
+    if (status === 'FAILED') return '/lottie/failedCat.json';
+    if (status === 'LEARNING') return '/lottie/rollingCat.json';
+    return '/lottie/ready.json'; // PREPROCESSED 또는 기타 상태
   };
-  // 이미지 경로를 상태로 관리하여 강제 리렌더링 보장
-  const [catImageSrc, setCatImageSrc] = useState<string>('/ready.png');
+  // 모델 상태에 따른 애니메이션 크기 설정
+  const getAnimationSize = (status: ModelStatus) => {
+    switch (status) {
+      case 'LEARNING':
+        return { width: 100, height: 100 };
+      case 'COMPLETED':
+        return { width: 70, height: 70 };
+      case 'FAILED':
+        return { width: 120, height: 120 };
+      case 'PREPROCESSED':
+      default:
+        return { width: 120, height: 120 };
+    }
+  };
+
+  // 애니메이션 JSON 파일 로드
+  const loadAnimation = async (path: string) => {
+    try {
+      const response = await fetch(path);
+      const animationData = await response.json();
+      setCurrentAnimation(animationData);
+    } catch (error) {
+      console.error('애니메이션 로드 실패:', error);
+    }
+  };
 
   useEffect(() => {
-    // 상태가 변경될 때마다 이미지 경로 업데이트
-    setCatImageSrc(getCatImage(modelStatus));
+    // 상태가 변경될 때마다 애니메이션 로드
+    const animationPath = getCatAnimationPath(modelStatus);
+    loadAnimation(animationPath);
   }, [modelStatus]);
 
   useEffect(() => {
-    // console.log('Cat: 컴포넌트 마운트, 현재 상태:', modelStatus);
-    const savedStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
-    if (savedStatus) {
-      setModelStatus(savedStatus);
-    }
-
-    // 모델 상태 업데이트(새로고침) 이벤트 리스너
-    const handleStatusUpdate = () => {
-      const currentStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
-      // console.log('Cat: 모델 상태 업데이트 이벤트 감지', currentStatus);
-      if (currentStatus) {
-        setModelStatus(currentStatus);
+    // 클라이언트 사이드에서만 실행되도록 체크
+    if (typeof window !== 'undefined') {
+      // console.log('Cat: 컴포넌트 마운트, 현재 상태:', modelStatus);
+      const savedStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
+      if (savedStatus) {
+        setModelStatus(savedStatus);
       }
-    };
 
-    // storage 이벤트 리스너 - 다른 탭에서 localStorage 변경 시
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'modelTrainingStatus') {
-        console.log('Cat: 스토리지 이벤트 감지', e.newValue);
-        if (e.newValue) {
-          setModelStatus(e.newValue as ModelStatus);
+      // 모델 상태 업데이트(새로고침) 이벤트 리스너
+      const handleStatusUpdate = () => {
+        const currentStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
+        // console.log('Cat: 모델 상태 업데이트 이벤트 감지', currentStatus);
+        if (currentStatus) {
+          setModelStatus(currentStatus);
         }
-      }
-    };
+      };
 
-    // 이벤트 리스너 등록
-    window.addEventListener('modelStatusUpdate', handleStatusUpdate);
-    window.addEventListener('storage', handleStorageChange);
+      // storage 이벤트 리스너 - 다른 탭에서 localStorage 변경 시
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'modelTrainingStatus') {
+          console.log('Cat: 스토리지 이벤트 감지', e.newValue);
+          if (e.newValue) {
+            setModelStatus(e.newValue as ModelStatus);
+          }
+        }
+      };
 
-    // 컴포넌트 언마운트 시 정리
-    return () => {
-      window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []); // modelStatus가 변경될 때마다 타이머 재설정
+      // 이벤트 리스너 등록
+      window.addEventListener('modelStatusUpdate', handleStatusUpdate);
+      window.addEventListener('storage', handleStorageChange);
 
-  // 현재 모델 상태에 따른 이미지 경로
-  const catImage = getCatImage(modelStatus);
+      // 컴포넌트 언마운트 시 정리
+      return () => {
+        window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }
+  }, []);
 
   const handleStartLearning = (type: string) => {
     console.log(`handleStartLearning 호출됨: ${type}`);
@@ -97,7 +125,7 @@ export default function FcmCatStatus() {
 
   const handleReset = () => {
     // localStorage 업데이트
-    if (modelStatus === 'COMPLETED') {
+    if (modelStatus === 'COMPLETED' || modelStatus === 'FAILED') {
       localStorage.setItem('modelTrainingStatus', 'PREPROCESSED');
       // 컴포넌트 상태 업데이트
       setModelStatus('PREPROCESSED');
@@ -120,7 +148,23 @@ export default function FcmCatStatus() {
       <button className="bg-[theme(color-yellow-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('완료')}>
         완료
       </button>
-      <Image src={catImageSrc} alt={`Status Cat (${modelStatus})`} width={80} height={80} className="object-contain" priority unoptimized onClick={handleReset} />
+      {/* Lottie 컴포넌트와 애니메이션이 존재할 때만 렌더링 */}
+      <div onClick={handleReset} className={`${modelStatus === 'COMPLETED' ? 'mt-6 ml-6' : ''}`}>
+        {currentAnimation && Lottie && (
+          <Lottie
+            lottieRef={lottieRef}
+            animationData={currentAnimation}
+            loop={true}
+            // loop={modelStatus === 'LEARNING'} // LEARNING 상태에서만 반복 재생
+            autoplay={true}
+            style={{
+              width: getAnimationSize(modelStatus).width,
+              height: getAnimationSize(modelStatus).height,
+            }}
+            className="cursor-pointer object-contain"
+          />
+        )}
+      </div>
     </div>
   );
 }
