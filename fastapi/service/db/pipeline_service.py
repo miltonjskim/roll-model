@@ -343,22 +343,17 @@ class PipelineService:
                 new_steps = current_history.preprocessing_steps[:step_index + 1]
                 
             # 디버깅을 위한 스텝 정보 출력
-            logger.debug(f"새 스텝 리스트 길이: {len(new_steps)}")
             for i, step in enumerate(new_steps):
-                logger.debug(f"스텝 {i} 타입: {type(step)}, 속성: {dir(step)[:10]}...")
             
             # 변경사항을 히스토리에 기록
             if add_to_history:
-                logger.info("새 히스토리 항목 생성")
                 # 스텝 복사 과정 로깅
-                logger.debug(f"복사 전 스텝 타입 정보:")
                 for i, step in enumerate(new_steps):
                     logger.debug(f"스텝 {i} 타입: {type(step)}")
                 
                 try:
                     # 새로운 히스토리 항목 생성
                     new_steps_copy = new_steps.copy()  # 이 부분에서 오류 가능성
-                    logger.debug(f"스텝 복사 성공: {len(new_steps_copy)}개")
                     
                     # 복사된 스텝의 타입 확인
                     for i, step in enumerate(new_steps_copy):
@@ -385,14 +380,11 @@ class PipelineService:
             logger.info(f"파이프라인 수정 시간 업데이트: {pipeline.modified_at}")
 
             # DB 업데이트
-            logger.info("DB 업데이트 중...")
             updated_pipeline = await _update_pipeline_in_db(pipeline)
 
             if not updated_pipeline:
                 logger.error(f"Failed to update pipeline {pipeline_id}")
                 return None
-                
-            logger.info("DB 업데이트 성공")
 
             # 업데이트된 파이프라인의 최신 스텝 반환
             latest_history = updated_pipeline.history[-1]
@@ -405,10 +397,8 @@ class PipelineService:
                 n_rows=30,
                 return_full=False
             )
-            logger.info(f"데이터셋 샘플 조회 완료: {len(dataset_sample) if dataset_sample else 0}개 행")
-
+            
             columns = dataset_sample[0].keys() if dataset_sample else []
-            logger.debug(f"데이터셋 컬럼: {list(columns)}")
 
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
@@ -444,7 +434,6 @@ class PipelineService:
             logger.error(f"전처리 스텝 되돌리기 중 오류: {e}")
             # 상세 오류 정보 출력
             import traceback
-            logger.error(f"스택 트레이스: {traceback.format_exc()}")
             logger.error(f"====== 전처리 스텝 되돌리기 실패: pipeline_id={pipeline_id} ======")
             return None
 

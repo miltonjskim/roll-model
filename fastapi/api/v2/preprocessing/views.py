@@ -326,7 +326,6 @@ async def delete_preprocessing(
             add_to_history=True,
             minio_client=minio_client
         )
-        logger.info(f"전처리 스텝 삭제 결과: {result}")
         if result is None:
             raise HTTPException(
                 status_code=404, 
@@ -412,7 +411,6 @@ async def complete_preprocessing(
         
         logger.info(f"총 {len(df.columns)}개 컬럼 중 {len(valid_columns)}개 컬럼 유지")
         logger.info(f"제거된 컬럼: {len(df.columns) - len(valid_columns)}개")
-        logger.info(f"Filtered dataframe shape: {df_filtered.shape}")
 
         config = {
             "delimiter": "comma",
@@ -421,7 +419,6 @@ async def complete_preprocessing(
             "hasHeader": True,
             "columns": inferred_columns  # 정리된 컬럼 정보
         }
-        logger.info(f"Config: {config}")
         project = db.query(Project).filter(Project.project_id == pipelineModel.project_id).first()
 
         # 수정된 데이터프레임을 다시 CSV로 변환하여 buffer에 저장
@@ -500,8 +497,7 @@ async def complete_preprocessing(
                 "dataset": dataset_analysis["data_sample"]["data"][:30]
             }
         }
-
-        return response
+        return jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response), round_decimals=2))
 
     except Exception as e:
         logger.error(f"전처리 완료 처리 중 오류 발생: {str(e)}")

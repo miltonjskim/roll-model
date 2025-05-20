@@ -86,6 +86,7 @@ class PreprocessingHandler:
 
         object_name, etag = await self._save_to_minio(pipeline_id, df, encoding)
 
+        result = jsonable_encoder(replace_nan_values(result, round_decimals=2))
         # 6. 파이프라인 히스토리 업데이트
         await self._update_pipeline_history(pipeline, preprocessing_type, request, result, etag, object_name)
 
@@ -126,8 +127,8 @@ class PreprocessingHandler:
             self.logger.info(f"MinIO 데이터 조회 성공: {len(minio_output)} bytes")
             return minio_output, encoding
         except Exception as e:
-            self.logger.error(f"MinIO 데이터 조회 실패: {str(e)}")
-            raise CustomAPIException(status_code=500, message=f"데이터 조회 실패: {str(e)}")
+            self.logger.error(f"MinIO 데이터 조회 실패")
+            raise CustomAPIException(status_code=500, message=f"데이터 조회 실패")
 
     async def _save_to_minio(self, pipeline_id, df, encoding):
         """처리된 데이터를 MinIO에 저장"""
@@ -147,11 +148,10 @@ class PreprocessingHandler:
                 content_type="text/csv",
                 encoding=encoding
             )
-            self.logger.info(f"MinIO 저장 성공: {object_name}, etag: {etag}")
             return object_name, etag
         except Exception as e:
-            self.logger.error(f"MinIO 저장 실패: {str(e)}")
-            raise CustomAPIException(status_code=500, message=f"데이터 저장 실패: {str(e)}")
+            self.logger.error(f"MinIO 저장 실패")
+            raise CustomAPIException(status_code=500, message=f"데이터 저장 실패")
 
     async def _update_pipeline_history(self, pipeline, preprocessing_type, request, result, etag, object_name):
         """파이프라인 히스토리 업데이트"""
@@ -244,7 +244,6 @@ class PreprocessingHandler:
         
         # dict로 변환
         dataset = aligned_df.to_dict(orient="records")
-        # logger.info(f"aligned_df: {dataset}")
         # 기본 응답 구조
         response = {
             "data": {
@@ -354,10 +353,10 @@ class PreprocessingHandler:
                 })
                 
             except Exception as e:
-                self.logger.error(f"전처리 작업 실패 (단계 {i+1}: {preprocessing_type}): {str(e)}")
+                self.logger.error(f"전처리 작업 실패 (단계 {i+1}: {preprocessing_type})")
                 raise CustomAPIException(
                     status_code=500, 
-                    message=f"전처리 작업 실패 (단계 {i+1}): {str(e)}"
+                    message=f"전처리 작업 실패 (단계 {i+1})"
                 )
                 
         # 5. 최종 처리된 데이터 MinIO에 저장
