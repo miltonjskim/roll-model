@@ -62,6 +62,19 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
             >
               oxo
             </button>
+            <button
+              className="absolute top-6 left-1 cursor-pointer text-white hover:text-gray-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsVisible(false);
+                // 로컬 스토리지 업데이트
+                localStorage.setItem('modelTrainingStatus', 'LEARNING');
+                // 커스텀 이벤트 발생 (다른 컴포넌트에 알림)
+                window.dispatchEvent(new Event('modelStatusUpdate'));
+              }}
+            >
+              o2o
+            </button>
 
             <h3 className="text-[theme(primary-black)] mb-4 text-lg font-medium">재학습 옵션 선택</h3>
 

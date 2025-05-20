@@ -96,6 +96,10 @@ export const useModeling = () => {
       localStorage.setItem(`modelTrainingStatus`, 'LEARNING'); // 학습중 상태로 전환 (고양이)
       alert('모델 학습이 시작되었습니다!'); // alert제거해
       await resetAtoms();
+      // 로컬 스토리지 업데이트
+      localStorage.setItem('modelTrainingStatus', 'LEARNING');
+      // 커스텀 이벤트 발생 (다른 컴포넌트에 알림)
+      window.dispatchEvent(new Event('modelStatusUpdate'));
       setTimeout(() => {
         localStorage.removeItem('pipelineId');
         router.push('/dashboard'); // 우선 대시보드 보내기
