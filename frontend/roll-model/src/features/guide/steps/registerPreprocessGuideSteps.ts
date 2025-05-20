@@ -46,7 +46,7 @@ export const registerPreprocessGuideSteps = () => {
     classes: 'shepherd-step-2',
     attachTo: {
       element: '.data-summary-area',
-      on: 'right',
+      on: 'top',
     },
     highlightClass: 'shepherd-highlight',
     buttons: [{ text: '다음', classes: 'shepherd-button black', action: guide.next }],
