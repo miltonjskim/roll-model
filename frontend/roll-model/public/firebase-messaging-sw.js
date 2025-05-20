@@ -20,14 +20,9 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-
   // Firebase 콘솔에서 보낸 메시지(notification 포함)인지 확인
   const hasFirebaseNotification = payload.notification !== undefined;
-  // 상태 값이 있으면 IndexedDB에 저장
-  // if (payload.data?.state) {
 
-  //   saveStateToIndexedDB(payload.data.state);
-  // }
   // 실제 메시지 형식에 맞게 제목과 내용 추출
   const notificationTitle =
     payload.notification?.title ||
@@ -58,73 +53,6 @@ messaging.onBackgroundMessage((payload) => {
   // 실제 시스템 알림 표시
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
-
-// IndexedDB에 상태 저장 함수
-// function saveStateToIndexedDB(state) {
-//   console.log('[SW] saveStateToIndexedDB 호출됨, 저장할 상태:', state);
-  
-//   const request = indexedDB.open('RollModelDB', 1);
-  
-//   request.onerror = function(event) {
-//     console.error('[SW] IndexedDB 열기 오류:', event.target.error);
-//   };
-  
-//   request.onblocked = function(event) {
-//     console.warn('[SW] IndexedDB 열기가 차단됨:', event);
-//   };
-
-//   request.onupgradeneeded = function(event) {
-//     console.log('[SW] IndexedDB 업그레이드 중');
-//     const db = event.target.result;
-//     if (!db.objectStoreNames.contains('modelStatus')) {
-//       db.createObjectStore('modelStatus', { keyPath: 'id' });
-//       console.log('[SW] modelStatus 저장소 생성됨');
-//     }
-//   };
-
-//   request.onsuccess = function(event) {
-//     console.log('[SW] IndexedDB 열기 성공');
-//     const db = event.target.result;
-    
-//     // 트랜잭션 생성
-//     try {
-//       const transaction = db.transaction(['modelStatus'], 'readwrite');
-      
-//       transaction.oncomplete = function() {
-//         console.log('[SW] 트랜잭션 완료, 상태 저장 성공');
-//       };
-      
-//       transaction.onerror = function(event) {
-//         console.error('[SW] 트랜잭션 오류:', event.target.error);
-//       };
-      
-//       transaction.onabort = function(event) {
-//         console.warn('[SW] 트랜잭션 중단:', event);
-//       };
-      
-//       const store = transaction.objectStore('modelStatus');
-//       const dataToStore = { 
-//         id: 'currentStatus', 
-//         state: state, 
-//         timestamp: Date.now() 
-//       };
-      
-//       console.log('[SW] 저장할 데이터:', dataToStore);
-      
-//       const putRequest = store.put(dataToStore);
-      
-//       putRequest.onsuccess = function(event) {
-//         console.log('[SW] put 요청 성공:', event.target.result);
-//       };
-      
-//       putRequest.onerror = function(event) {
-//         console.error('[SW] put 요청 오류:', event.target.error);
-//       };
-//     } catch (error) {
-//       console.error('[SW] 트랜잭션 생성 중 예외 발생:', error);
-//     }
-//   };
-// }
 
 // 알림 클릭 이벤트 핸들러
 self.addEventListener('notificationclick', (event) => {
