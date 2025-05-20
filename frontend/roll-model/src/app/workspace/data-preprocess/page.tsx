@@ -24,7 +24,6 @@ import { useEffect, useRef, useState } from 'react';
 
 const PreprocessDataPage = () => {
   const router = useRouter();
-  const [hasMounted, setHasMounted] = useState(false);
   const [uploadedData, setUploadedData] = useAtom(uploadedDatasetAtom);
   const [pipelineId, setPipelineId] = useAtom(pipelineIdAtom);
 
@@ -156,12 +155,9 @@ const PreprocessDataPage = () => {
     }
   };
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) return null;
-  if (isLoading) return <PreprocessDataSkeleton />;
+  if (isLoading) {
+    return <PreprocessDataSkeleton />;
+  }
 
   return (
     <div className="mx-auto w-full overflow-y-auto px-4 pb-4">
