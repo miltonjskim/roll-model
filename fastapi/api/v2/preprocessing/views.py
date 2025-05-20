@@ -21,6 +21,7 @@ from service.column_type_inferer import process_columns_with_inference
 from service.dataset_service import calculate_and_update_statistics, store_dataset_to_mongodb, analyze_dataset, replace_nan_values, upload_dataset_and_save_metadata
 from service.db.pipeline_service import PipelineService, get_pipeline_service
 from service.preprocessing.class_balancing_handler import ClassBalancingHandler
+from service.preprocessing.column_handler import ColumnHandler
 from service.preprocessing.encoding_handler import EncodingHandler
 from service.preprocessing.missing_value_handler import MissingValueHandler
 from typing import Annotated, Any, Dict, List, Optional
@@ -276,7 +277,7 @@ async def drop_columns(
         request=request,
         member_id=member_id,
         preprocessing_type=PreprocessingStepType.COLUMN_DROP,
-        handler_class=PreprocessingHandler,  # 새로운 핸들러 클래스 필요
+        handler_class=ColumnHandler,  # 새로운 핸들러 클래스 필요
         handler_method="remove_columns"
     )
 
@@ -293,7 +294,7 @@ async def keep_columns(
         request=request,
         member_id=member_id,
         preprocessing_type=PreprocessingStepType.COLUMN_KEEP,
-        handler_class=PreprocessingHandler,  # 새로운 핸들러 클래스 필요
+        handler_class=ColumnHandler,  # 새로운 핸들러 클래스 필요
         handler_method="keep_columns"
     )
 

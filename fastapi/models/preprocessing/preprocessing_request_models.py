@@ -97,11 +97,11 @@ PreprocessingStep = Union[
 
 class PreprocessPipelineRequest(BaseModel):
     """전처리 파이프라인 요청 모델"""
-    preprocessing_steps: List[Dict[str, Any]] = Field(..., description="전처리 단계 리스트")
+    steps: List[Dict[str, Any]] = Field(..., description="전처리 단계 리스트")
     
     def get_parsed_steps(self) -> List[PreprocessingStep]:
         parsed_steps = []
-        for step_dict in self.preprocessing_steps:
+        for step_dict in self.steps:
             step_type = step_dict.get("type")
             if not step_type:
                 raise ValueError("각 전처리 단계에는 'type' 필드가 필요합니다")
