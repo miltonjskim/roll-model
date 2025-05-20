@@ -13,6 +13,7 @@ import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/Prepro
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
 import PreprocessingTable from '@/features/workspace/data-preprocess/ui/PreprocessingTable';
+import { uploadDataset } from '@/features/workspace/data-upload/service/uploadDataset';
 import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
@@ -26,7 +27,6 @@ const PreprocessDataPage = () => {
   const router = useRouter();
   const [uploadedData, setUploadedData] = useAtom(uploadedDatasetAtom);
   const [pipelineId, setPipelineId] = useAtom(pipelineIdAtom);
-
   const [projectTitle, setProjectTitle] = useAtom(projectTitleAtom);
   const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
@@ -158,7 +158,7 @@ const PreprocessDataPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !uploadDataset) {
     return <PreprocessDataSkeleton />;
   }
 
@@ -174,9 +174,9 @@ const PreprocessDataPage = () => {
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="mt-6 flex h-[calc(100%-4.5rem)] flex-col gap-2 xl:flex-row xl:gap-2">
+      <div className="mt-6 flex h-[calc(100%-4.5rem)] min-h-0 flex-col gap-2 xl:flex-row xl:gap-2">
         {/* 좌측 영역 */}
-        <div className="flex max-h-full min-h-0 flex-col xl:max-w-[20rem] xl:min-w-[16rem] xl:basis-[20%]">
+        <div className="flex max-h-[calc(100vh-15rem)] min-h-0 flex-col overflow-hidden xl:max-w-[20rem] xl:min-w-[16rem] xl:basis-[20%]">
           {/* 프로젝트 정보 */}
           <div className="bg-[theme(primary-white)] mb-2 rounded-lg p-4">
             <h3 className="text-md font-semibold">
@@ -187,8 +187,10 @@ const PreprocessDataPage = () => {
           {/* 전처리 기능 */}
           <div className="bg-[theme(primary-white)] flex flex-1 flex-col overflow-hidden rounded-lg p-4">
             <h4 className="text-[1.07rem] font-semibold">전처리 기능 선택</h4>
-            <div className="preprocessing-options preprocessing-options mt-4 mb-6 min-h-0 flex-1 overflow-y-auto">
-              <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
+            <div className="preprocessing-options mt-4 mb-6 flex-1 overflow-hidden">
+              <div className="h-full overflow-y-auto">
+                <PreprocessingOptions pipelineId={pipelineId} onChangeCells={handleChangeCells} onAddStep={handleAddStep} />
+              </div>
             </div>
             <div className="text-center text-xs">
               <span className="text-[var(--color-error-text)]">*</span> 결측 컬럼 상세 정보를 보시려면 아래를 클릭하세요.
@@ -241,7 +243,7 @@ const PreprocessDataPage = () => {
                   )}
                 </div>
 
-                <div className="ml-auto">{steps.length > 0 && <p className="text-sm font-medium text-[var(--color-gray-01)]">총 단계: {steps.filter(Boolean).length}단계</p>}</div>
+                <div className="ml-auto">{steps && steps.length > 0 && <p className="text-sm font-medium text-[var(--color-gray-01)]">총 단계: {steps.filter(Boolean).length}단계</p>}</div>
               </div>
 
               <PreprocessingPipeline steps={steps} cardStyle="large" highlight="blue" />

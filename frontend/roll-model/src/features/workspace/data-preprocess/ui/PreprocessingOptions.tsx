@@ -365,81 +365,66 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   };
 
   return (
-    <div className="flex flex-col space-y-2 overflow-y-auto">
+    <div className="flex h-full flex-col space-y-2 overflow-hidden">
       <PreprocessingInfoDialog />
       <div className="mb-2 text-center text-sm">
         <span className="text-[var(--color-error-text)]">*</span> 문자형 데이터는 인코딩이 꼭 필요합니다!
       </div>
-      {preprocessingCategories.map((cat) => {
-        const isOpen = expanded.includes(cat.id);
-        return (
-          <div key={cat.id} className="rounded-md border border-[var(--color-gray-02)] transition-shadow duration-200">
-            <div
-              className={`flex cursor-pointer items-start justify-between rounded-t-md p-3 transition-colors duration-200 ${isOpen ? 'bg-[theme(color-gray-04)]' : 'hover:bg-[theme(color-gray-04)]'}`}
-              onClick={() => toggle(cat.id)}
-            >
-              <div className="flex items-start">
-                <span className="font-tossface mr-2">{cat.icon}</span>
-                <span className="text-[0.95rem] font-medium">{cat.name}</span>
+
+      <div className="flex-1 overflow-y-auto space-y-2">
+        {preprocessingCategories.map((cat) => {
+          const isOpen = expanded.includes(cat.id);
+          return (
+            <div key={cat.id} className="rounded-md border border-[var(--color-gray-02)] transition-shadow duration-200">
+              <div
+                className={`flex cursor-pointer items-start justify-between rounded-t-md p-3 transition-colors duration-200 ${isOpen ? 'bg-[theme(color-gray-04)]' : 'hover:bg-[theme(color-gray-04)]'}`}
+                onClick={() => toggle(cat.id)}
+              >
+                <div className="flex items-start">
+                  <span className="font-tossface mr-2">{cat.icon}</span>
+                  <span className="text-[0.95rem] font-medium">{cat.name}</span>
+                </div>
+                {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </div>
-              {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </div>
 
-            {isOpen && (
-              <div className="flex items-start">
-                <p className="mx-4 my-2 text-xs text-[var(--color-gray-01)]">{cat.description}</p>
-              </div>
-            )}
+              {isOpen && (
+                <div className="flex items-start">
+                  <p className="mx-4 my-2 text-xs text-[var(--color-gray-01)]">{cat.description}</p>
+                </div>
+              )}
 
-            <div className={`overflow-y-auto transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'max-h-0 opacity-0'} border-t border-[var(--color-gray-04)]`}>
-              {cat.options.map((opt) => {
-                const isSelected = selected[cat.id] === opt.id;
-                const needsTargetColumn = opt.apiEndpoint.includes('/target');
-                const needsOffset = opt.apiEndpoint.includes('/log');
-                const needsSampling = cat.id === 'CLASS_BALANCING';
+              <div className={`overflow-y-auto transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'max-h-0 opacity-0'} border-t border-[var(--color-gray-04)]`}>
+                {cat.options.map((opt) => {
+                  const isSelected = selected[cat.id] === opt.id;
+                  const needsTargetColumn = opt.apiEndpoint.includes('/target');
+                  const needsOffset = opt.apiEndpoint.includes('/log');
+                  const needsSampling = cat.id === 'CLASS_BALANCING';
 
-                const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
+                  const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
 
-                return (
-                  <div
-                    key={opt.id}
-                    className={`group flex flex-col gap-3 border-b border-gray-200 p-4 transition-colors duration-200 ${isSelected ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
-                  >
-                    {/* 항목 상단: 이름과 설명 */}
-                    <button onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))} className="text-left">
-                      <p className="text-sm font-semibold">{opt.name}</p>
-                      <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
-                    </button>
+                  return (
+                    <div
+                      key={opt.id}
+                      className={`group flex flex-col gap-3 border-b border-gray-200 p-4 transition-colors duration-200 ${isSelected ? 'bg-blue-50' : 'hover:bg-[theme(color-gray-05)]'}`}
+                    >
+                      {/* 항목 상단: 이름과 설명 */}
+                      <button onClick={() => setSelected((prev) => ({ ...prev, [cat.id]: opt.id }))} className="text-left">
+                        <p className="text-sm font-semibold">{opt.name}</p>
+                        <p className="text-xs text-[var(--color-gray-01)]">{opt.description}</p>
+                      </button>
 
-                    {/* 조건부 렌더링: 폼 */}
-                    {isSelected && (
-                      <div className="space-y-3">
-                        {/** 컬럼 선택 */}
-                        <div>
-                          <label className="block text-left text-xs font-medium">적용 컬럼</label>
-                          <Select value={opt.requireColumn ? selectedColumn || '' : (selectedColumn ?? '__ALL__')} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="전처리할 컬럼을 선택하세요." className="text-left text-sm" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {!opt.requireColumn && <SelectItem value="__ALL__">전체 컬럼</SelectItem>}
-                              {columnNames.map((col) => (
-                                <SelectItem key={col} value={col}>
-                                  {col}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {needsTargetColumn && (
+                      {/* 조건부 렌더링: 폼 */}
+                      {isSelected && (
+                        <div className="space-y-3">
+                          {/** 컬럼 선택 */}
                           <div>
-                            <label className="block text-left text-xs font-medium">타겟 컬럼</label>
-                            <Select value={targetColumn} onValueChange={setTargetColumn}>
+                            <label className="block text-left text-xs font-medium">적용 컬럼</label>
+                            <Select value={opt.requireColumn ? selectedColumn || '' : (selectedColumn ?? '__ALL__')} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
                               <SelectTrigger className="w-full">
-                                <SelectValue placeholder="선택하세요" className="text-left text-sm" />
+                                <SelectValue placeholder="전처리할 컬럼을 선택하세요." className="text-left text-sm" />
                               </SelectTrigger>
                               <SelectContent>
+                                {!opt.requireColumn && <SelectItem value="__ALL__">전체 컬럼</SelectItem>}
                                 {columnNames.map((col) => (
                                   <SelectItem key={col} value={col}>
                                     {col}
@@ -448,34 +433,52 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
                               </SelectContent>
                             </Select>
                           </div>
-                        )}
 
-                        {needsOffset && (
-                          <div>
-                            <label className="block text-xs font-medium">Offset</label>
-                            <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} className="w-full" />
-                          </div>
-                        )}
+                          {needsTargetColumn && (
+                            <div>
+                              <label className="block text-left text-xs font-medium">타겟 컬럼</label>
+                              <Select value={targetColumn} onValueChange={setTargetColumn}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="선택하세요" className="text-left text-sm" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {columnNames.map((col) => (
+                                    <SelectItem key={col} value={col}>
+                                      {col}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
 
-                        {needsSampling && (
-                          <div>
-                            <label className="block text-xs font-medium">Sampling Ratio (%)</label>
-                            <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} className="w-full" />
-                          </div>
-                        )}
+                          {needsOffset && (
+                            <div>
+                              <label className="block text-xs font-medium">Offset</label>
+                              <Input type="number" value={offset} onChange={(e) => setOffset(Number(e.target.value))} className="w-full" />
+                            </div>
+                          )}
 
-                        <Button variant="black" size="sm" onClick={() => handleApply(cat.id, opt)} disabled={!isValid || loading} className="mt-2 w-full">
-                          적용
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                          {needsSampling && (
+                            <div>
+                              <label className="block text-xs font-medium">Sampling Ratio (%)</label>
+                              <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} className="w-full" />
+                            </div>
+                          )}
+
+                          <Button variant="black" size="sm" onClick={() => handleApply(cat.id, opt)} disabled={!isValid || loading} className="mt-2 w-full">
+                            적용
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
