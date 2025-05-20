@@ -105,6 +105,7 @@ const SelectDataPage = () => {
   const handleSelectSample = (dataset: SampleDataset) => {
     const sampleId = dataset.id;
     setSelectedSampleDataId(sampleId);
+    router.push('/workspace/project-meta')
     // handleCreateProject(sampleId);
   };
 

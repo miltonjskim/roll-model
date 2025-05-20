@@ -23,7 +23,7 @@ export const FileUploadDialog = () => {
   };
 
   const handleUploadFile = () => {
-    router.push('/workspace/data-config');
+    router.push('/workspace/project-meta');
   };
 
   const handleClickFileButton = () => {

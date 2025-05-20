@@ -143,7 +143,6 @@ const ConfigDataPage = () => {
       localStorage.setItem('pipelineId', data.result.pipelineId);
       setPipelineId(data.result.pipelineId);
       setUploadedDataset(data.result);
-      setAiRecommendedStepsAtom(data.step);
       return true;
     } catch (err) {
       showErrorToast((err as Error).message);
