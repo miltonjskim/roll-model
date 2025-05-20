@@ -511,7 +511,7 @@ async def complete_preprocessing(
 
 
 
-@router.post("/pipelines/{pipeline_id}/preprocessing/batch", response_model=PreprocessingResponse)
+@router.post("/pipelines/{pipeline_id}/preprocessing/batch")
 async def perform_batch_preprocessing(
     pipeline_id: str,
     request: PreprocessPipelineRequest,
