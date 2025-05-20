@@ -66,8 +66,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
       { id: 'mean', name: '평균값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEAN', requireColumn: true },
       { id: 'median', name: '중앙값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEDIAN', requireColumn: true },
       { id: 'mode', name: '최빈값으로 대체', description: '이상치를 해당 컬럼의 임계값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MODE', requireColumn: true },
-      { id: 'remove-rows', name: '행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE', requireColumn: true },
-      { id: 'remove-cols', name: '열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE', requireColumn: true },
+      { id: 'remove-rows', name: '이상치가 있는 행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE', requireColumn: true },
+      { id: 'remove-cols', name: '이상치가 있는 열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE', requireColumn: true },
     ],
   },
   {
