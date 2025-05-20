@@ -1,4 +1,4 @@
-import { ApiStatus } from '@/entities/project-detail/model/ApiTypes';
+import { ApiStatus, InputFeature } from '@/entities/project-detail/model/ApiTypes';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { CssDetailHovering } from '@/widgets/project/project-detail/ProjectDetailCard';
 import axios from 'axios';
@@ -47,8 +47,12 @@ export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey
       // const apiEndpoint = `/api/model/${modelId}${endpoint.endsWith(':predict') ? '' : ':predict'}`;
       const apiEndpoint = `/api/model/${modelId}`;
       // const apiEndpoint = endpoint;
-
-      const exampleValues = inputSchema.features.map((feature: Feature) => feature.example);
+      const exampleValues = inputSchema.features.map((feature: InputFeature) => {
+        // 문자열 "True"와 "False"를 boolean 값으로 변환
+        if (feature.example === 'True') return true;
+        if (feature.example === 'False') return false;
+        return feature.example;
+      });
 
       // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 테스트 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       // 요청 본문 생성 (테스트할때 여기주석하고)

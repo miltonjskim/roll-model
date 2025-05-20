@@ -29,7 +29,7 @@ export interface InputFeature {
   name: string;
   type: 'number' | 'string' | 'enum' | 'boolean';
   required: boolean;
-  example: 'number' | 'string' | 'boolean';
+  example: number | string | boolean | "True" | "False";
   options?: string[]; // enum 타입일 경우에만 사용
 }
 
