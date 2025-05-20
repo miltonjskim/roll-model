@@ -269,8 +269,6 @@ class OutlierHandler:
                 "minThreshold": float(min_threshold),
                 "maxThreshold": float(max_threshold),
                 "outlierIndices": outlier_indices,
-                "originalRows": original_rows.to_dict("records"),
-                "imputedRows": imputed_rows.to_dict("records"),
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 "startPoint": outlier_indices[0] if outlier_indices else 0,
             }
@@ -350,8 +348,6 @@ class OutlierHandler:
                 "outlierCount": total_outlier_count,
                 "imputedCount": total_outlier_count,
                 "outlierIndices": sorted_outlier_indices,
-                "originalRows": original_rows_records,
-                "imputedRows": imputed_rows_records,
                 "details": all_results,  # 각 컬럼별 상세 결과
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 "startPoint": sorted_outlier_indices[0] if sorted_outlier_indices else 0,

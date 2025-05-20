@@ -246,8 +246,6 @@ class MissingValueHandler:
                 "imputedCount": missing_count,
                 "fillValue": float(fill_value) if isinstance(fill_value, (int, float)) else str(fill_value),
                 "missingIndices": missing_indices,
-                "originalRows": original_rows.to_dict('records'),
-                "imputedRows": imputed_rows.to_dict('records'),
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 "startPoint": missing_indices[0] if missing_indices else 0 
             }
@@ -368,8 +366,6 @@ class MissingValueHandler:
                 "missingCount": total_missing_count,
                 "imputedCount": total_missing_count,
                 "missingIndices": sorted_missing_indices,
-                "originalRows": original_rows_records,
-                "imputedRows": imputed_rows_records,
                 "details": all_results,  # 각 컬럼별 상세 결과
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 "startPoint": sorted_missing_indices[0] if sorted_missing_indices else 0
