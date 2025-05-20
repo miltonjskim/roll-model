@@ -71,5 +71,4 @@ async def delete_dataset(
     except Exception as e:
         # 트랜잭션 롤백
         db.rollback()
-        logger.error(f"데이터셋 삭제 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"데이터셋 삭제 중 오류 발생: {str(e)}")

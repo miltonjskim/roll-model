@@ -341,9 +341,6 @@ class PipelineService:
             else:
                 logger.info(f"인덱스 {step_index}까지의 스텝만 유지 (총 {step_index + 1}개)")
                 new_steps = current_history.preprocessing_steps[:step_index + 1]
-                
-            # 디버깅을 위한 스텝 정보 출력
-            for i, step in enumerate(new_steps):
             
             # 변경사항을 히스토리에 기록
             if add_to_history:
