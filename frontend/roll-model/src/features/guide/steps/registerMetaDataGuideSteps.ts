@@ -48,7 +48,7 @@ export const registerMetaDataGuideSteps = () => {
   guide.addStep({
     id: 'project-description',
     title: '<span class="font-tossface">🎯</span> 예측 목적',
-    text: `이 프로젝트의 <b>목표 변수</b>를 입력해주세요.<br/>예: 매출, 이탈률, 질병 유무 등`,
+    text: `이 프로젝트의 <b>목표 변수</b>를 입력해주세요.<br/>보통 데이터의 마지막 열 이름 입니다.<br/>예: 매출, 이탈률, 질병 유무 등`,
     classes: 'shepherd-step-2',
     attachTo: {
       element: '.guide-project-description',

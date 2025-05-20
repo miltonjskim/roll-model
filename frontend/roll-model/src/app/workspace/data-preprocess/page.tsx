@@ -1,14 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { aiRecommendedStepsAtom, completedDatasetAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
-import { projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
+import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { guide } from '@/features/guide/GuideProvider';
 import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPreprocessGuideSteps';
 import { startGuide } from '@/features/guide/useGuide';
-import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/PreprocessingInfoDialog';
+import EmptyDataAlertDialog from '@/features/workspace/data-preprocess/ui/EmptyDataAlertDialog';
+import PreprocessDataSkeleton from '@/features/workspace/data-preprocess/ui/PreprocessDataSkeleton';
 import PreprocessingOptions from '@/features/workspace/data-preprocess/ui/PreprocessingOptions';
 import PreprocessingPipeline from '@/features/workspace/data-preprocess/ui/PreprocessingPipeline';
 import PreprocessingSummary from '@/features/workspace/data-preprocess/ui/PreprocessingSummary';
@@ -16,8 +16,7 @@ import PreprocessingTable from '@/features/workspace/data-preprocess/ui/Preproce
 import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
-import { globalLoadingAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
-import { ApiResponse } from '@/shared/model/types/apiResponse';
+import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { ApiError } from 'next/dist/server/api-utils';
 import { useRouter } from 'next/navigation';
@@ -26,14 +25,54 @@ import { useEffect, useRef, useState } from 'react';
 const PreprocessDataPage = () => {
   const router = useRouter();
   const [uploadedData, setUploadedData] = useAtom(uploadedDatasetAtom);
-  const pipelineId = uploadedData?.pipelineId;
-  const projectTitle = useAtomValue(projectTitleAtom);
-  const setIsLoading = useSetAtom(globalLoadingAtom);
+  const [pipelineId, setPipelineId] = useAtom(pipelineIdAtom);
+
+  const [projectTitle, setProjectTitle] = useAtom(projectTitleAtom);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
+  const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const [changedCells, setChangedCells] = useState<Record<string, boolean>>({});
   const setCompletedDataset = useSetAtom(completedDatasetAtom);
   const [steps, setSteps] = useState<Step[]>([]);
-  const preprocessingSteps = useAtomValue(preprocessingStepsAtom);
+  const [preprocessingSteps, setPreprocessingSteps] = useAtom(preprocessingStepsAtom);
   const recommendedSteps = useAtomValue(aiRecommendedStepsAtom);
+  const setProjectCategory = useSetAtom(projectCategoryAtom);
+  const [showEmptyDataAlert, setShowEmptyDataAlert] = useState(false);
+
+  const reloadData = async (storedPipelineId: string) => {
+    setIsLoading(true);
+    setLoadingMessage('이전 데이터를 불러오고 있습니다.');
+    try {
+      const response = await axiosInstance(`/api/v2/pipelines/${storedPipelineId}/reload/preprocess`);
+      console.log('response:', response);
+
+      const data = response.data.data;
+
+      if (Array.isArray(data.dataset) && data.dataset.length === 0) {
+        setShowEmptyDataAlert(true);
+        return;
+      }
+
+      setPipelineId(data.pipelineId);
+      setProjectTitle(data.title);
+      setProjectCategory(data.category);
+      setUploadedData({
+        pipelineId: data.pipelineId,
+        summary: data.summary,
+        missingValues: data.summary.missingValues,
+        originalDatasets: {
+          data: data.dataset,
+        },
+      });
+      setPreprocessingSteps(data.preprocessingSteps);
+    } catch (error) {
+      const apiError = error as ApiError;
+      setShowEmptyDataAlert(true);
+      console.error(apiError);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage(null);
+    }
+  };
 
   useEffect(() => {
     const dismissed = localStorage.getItem('guide.dismissed') === 'true';
@@ -48,20 +87,18 @@ const PreprocessDataPage = () => {
 
   useEffect(() => {
     if (!uploadedData) {
-      showErrorToast(
-        <>
-          데이터셋 정보가 존재하지 않습니다.
-          <br />
-          프로젝트 생성 페이지로 이동합니다.
-        </>,
-      );
-      router.push('/workspace');
-      return;
-    } else {
-      // console.log('uploadedData:', uploadedData);
-      // console.log('recommededSteps:', recommendedSteps);
+      const stored = localStorage.getItem('pipelineId');
+      console.log('stored pipelineId:', stored);
+
+      if (stored) {
+        setPipelineId(stored);
+        reloadData(stored);
+      } else {
+        showErrorToast('파이프라인 ID를 찾을 수 없습니다.');
+        router.push('/workspace');
+      }
     }
-  }, [uploadedData, router]);
+  }, [pipelineId, uploadedData]);
 
   useEffect(() => {
     if (preprocessingSteps && preprocessingSteps.length > 0) {
@@ -85,6 +122,8 @@ const PreprocessDataPage = () => {
       // console.log('response:', response);
 
       setCompletedDataset(response.data.data.data);
+      setSteps([]);
+      setPreprocessingSteps([]);
 
       router.push('/workspace/data-preprocess/complete');
     } catch (error: unknown) {
@@ -115,6 +154,10 @@ const PreprocessDataPage = () => {
       setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return <PreprocessDataSkeleton />;
+  }
 
   return (
     <div className="mx-auto w-full overflow-y-auto px-4 pb-4">
@@ -195,6 +238,7 @@ const PreprocessDataPage = () => {
           </div>
         </div>
       </div>
+      <EmptyDataAlertDialog open={showEmptyDataAlert} onOpenChange={setShowEmptyDataAlert} />
     </div>
   );
 };
