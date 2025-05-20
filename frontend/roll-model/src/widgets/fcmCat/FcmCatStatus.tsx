@@ -11,6 +11,7 @@ type ModelStatus = 'LEARNING' | 'COMPLETED' | 'FAILED' | 'PREPROCESSED' | string
 
 export default function FcmCatStatus() {
   const [modelStatus, setModelStatus] = useState<ModelStatus>('');
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
   const lottieRef = useRef<LottieRefCurrentProps>(null);
   const [currentAnimation, setCurrentAnimation] = useState<any>(null);
 
@@ -63,15 +64,21 @@ export default function FcmCatStatus() {
       }
 
       // 모델 상태 업데이트(새로고침) 이벤트 리스너
-      const handleStatusUpdate = () => {
+      const handleStatusUpdate = (event?: CustomEvent) => {
+        // 1. 이벤트 객체에 detail이 있는 경우 (CustomEvent)
+        if (event && 'detail' in event && event.detail?.state) {
+          setModelStatus(event.detail.state as ModelStatus);
+          return;
+        }
+
+        // 2. 기존 방식 (localStorage에서 읽기)
         const currentStatus = localStorage.getItem('modelTrainingStatus') as ModelStatus;
-        // console.log('Cat: 모델 상태 업데이트 이벤트 감지', currentStatus);
         if (currentStatus) {
           setModelStatus(currentStatus);
         }
       };
 
-      // storage 이벤트 리스너 - 다른 탭에서 localStorage 변경 시
+      // storage 이벤트 리스너는 그대로 유지
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'modelTrainingStatus') {
           console.log('Cat: 스토리지 이벤트 감지', e.newValue);
@@ -81,13 +88,13 @@ export default function FcmCatStatus() {
         }
       };
 
-      // 이벤트 리스너 등록
-      window.addEventListener('modelStatusUpdate', handleStatusUpdate);
+      // 이벤트 리스너 등록 (as any를 사용해 타입 이슈 해결)
+      window.addEventListener('modelStatusUpdate', handleStatusUpdate as any);
       window.addEventListener('storage', handleStorageChange);
 
       // 컴포넌트 언마운트 시 정리
       return () => {
-        window.removeEventListener('modelStatusUpdate', handleStatusUpdate);
+        window.removeEventListener('modelStatusUpdate', handleStatusUpdate as any);
         window.removeEventListener('storage', handleStorageChange);
       };
     }
@@ -136,17 +143,24 @@ export default function FcmCatStatus() {
 
   return (
     <div className="fixed bottom-40 left-4 z-50 h-20 w-30">
-      <button className="bg-[theme(color-mint-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('기본')}>
-        기본
-      </button>
-      <button className="bg-[theme(color-rose-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('학습중')}>
-        학습중
-      </button>
-      <button className="bg-[theme(color-green-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('실패')}>
-        실패
-      </button>
-      <button className="bg-[theme(color-yellow-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('완료')}>
-        완료
+      {isButtonVisible && (
+        <div>
+          <button className="bg-[theme(color-mint-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('기본')}>
+            기본
+          </button>
+          <button className="bg-[theme(color-rose-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('학습중')}>
+            학습중
+          </button>
+          <button className="bg-[theme(color-green-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('실패')}>
+            실패
+          </button>
+          <button className="bg-[theme(color-yellow-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('완료')}>
+            완료
+          </button>
+        </div>
+      )}
+      <button onClick={() => setIsButtonVisible(!isButtonVisible)} className="opacity-[10%] hover:opacity-[30%]">
+        📦
       </button>
       {/* Lottie 컴포넌트와 애니메이션이 존재할 때만 렌더링 */}
       <div onClick={handleReset} className={`${modelStatus === 'COMPLETED' ? 'mt-6 ml-6' : ''}`}>
