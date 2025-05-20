@@ -5,7 +5,7 @@ import StepDetailModal from '@/features/workspace/data-preprocess/ui/StepDetailM
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 
-const methodLabelMap: Record<string, string> = {
+export const methodLabelMap: Record<string, string> = {
   MEAN: '평균값 대체',
   MEDIAN: '중앙값 대체',
   MODE: '최빈값 대체',
