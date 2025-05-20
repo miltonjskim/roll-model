@@ -105,7 +105,7 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
       minThreshold: '<span class="font-tossface">🔻</span> 하한 임계값',
       fillValue: '<span class="font-tossface">🧩</span> 결측치 대체 값',
       outlierIndices: '<span class="font-tossface">📌</span> 변경된 행의 인덱스 목록',
-      outlierCount: '<span class="font-tossface">☄️</span> 원래 이상치 개수',
+      outlierCount: '<span class="font-tossface">☄️</span> 이상치 개수',
       imputedCount: '<span class="font-tossface">🧮</span> 대체된 값 개수',
       imputedRows: '<span class="font-tossface">🧾</span> 대체된 행',
       missingCount: '<span class="font-tossface">❓</span> 결측치 개수',
@@ -127,6 +127,9 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
       originalDistribution: '<span class="font-tossface">📈</span> 기존 분포',
       newDistribution: '<span class="font-tossface">📉</span> 처리 후 클래스별 샘플 수',
       sampleVariation: '<span class="font-tossface">📊</span> 추가되거나 제거된 샘플 수',
+      removedColumns: '<span class="font-tossface">🗑️</span> 제거된 컬럼 목록',
+      remainingColumns: '<span class="font-tossface">🗂️</span> 남아있는 컬럼 목록',
+      keptColumns: '<span class="font-tossface">🗂️</span> 남아있는 컬럼 목록',
     };
 
     return labelMap[key] ?? key;
