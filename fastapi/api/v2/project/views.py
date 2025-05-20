@@ -421,7 +421,7 @@ async def reload_preprocess_pipeline(
         columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
         response_data["projectTitle"] = project.title
-        if response_data["preprocessingSteps"] is not None:
+        if "preprocessingSteps" in response_data and response_data["preprocessingSteps"] is not None:
             for step in response_data["preprocessingSteps"]:
                 step["type"] = client_preprocess_step_label_mapper(step["type"])
         return ApiResponse(
@@ -681,7 +681,7 @@ async def fork_pipeline_preprocess(
         columns = column_type_inferer.infer_types(pd.DataFrame(data_dict))
         response_data["columns"] = columns
         response_data["projectTitle"] = target_project.title
-        if response_data["preprocessingSteps"] is not None:
+        if "preprocessingSteps" in response_data and response_data["preprocessingSteps"] is not None:
             for step in response_data["preprocessingSteps"]:
                 step["type"] = client_preprocess_step_label_mapper(step["type"])
                 

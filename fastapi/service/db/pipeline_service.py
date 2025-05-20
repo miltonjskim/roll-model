@@ -4,6 +4,7 @@ from datetime import datetime
 from bson import ObjectId
 
 from core.api_response import ApiResponse
+from core.exception import CustomAPIException
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
@@ -13,6 +14,8 @@ from schemas.mongo.pipeline import PipelineModel, PipelineHistoryItem, PipelineS
 import logging
 import pandas as pd
 import io
+
+from utils.get_dataset_summary import get_dataset_summary
 
 logger = logging.getLogger()
 async def _update_pipeline_in_db(pipeline: PipelineModel) -> Optional[PipelineModel]:
@@ -369,7 +372,6 @@ class PipelineService:
                     logger.error(f"스택 트레이스: {traceback.format_exc()}")
                     raise  # 오류를 다시 던져서 상위 예외 처리로 전달
             else:
-                logger.info("현재 히스토리 항목 직접 수정")
                 current_history.preprocessing_steps = new_steps
 
             # 수정 시간 업데이트
@@ -388,42 +390,51 @@ class PipelineService:
             logger.info(f"업데이트된 파이프라인의 최신 스텝 개수: {len(latest_history.preprocessing_steps) if latest_history.preprocessing_steps else 0}")
             
             logger.info("최신 데이터셋 샘플 조회 중...")
-            dataset_sample = await self.get_latest_dataset_from_pipeline(
+            dataset = await self.get_latest_dataset_from_pipeline(
                 updated_pipeline,
                 minio_client,
-                n_rows=30,
-                return_full=False
+                return_full=True
             )
-            
-            columns = dataset_sample[0].keys() if dataset_sample else []
+            if dataset is None:
+                raise CustomAPIException(
+                    status_code=400,
+                    message="데이터셋을 찾을 수 없습니다."
+                )
+            summary = get_dataset_summary(pd.DataFrame(dataset))
 
             if latest_history.preprocessing_steps:
                 latest_step = latest_history.preprocessing_steps[-1]
                 logger.info(f"최신 스텝 타입: {type(latest_step)}")
                 
-                columns = list(dataset_sample[0].keys()) if dataset_sample else []
-                
+                columns = list(dataset[0].keys()) if dataset else []
+                if latest_step.result is not None:
+                    start_point = latest_step.result["startPoint"]
+                else:
+                    start_point = 0
                 result = {
                     "latestStep": latest_step.model_dump(mode='json'),
                     "totalSteps": len(latest_history.preprocessing_steps),
                     "originalDatasets": {
                         "columns": columns,
-                        "data": dataset_sample
-                    }
+                        "data": dataset[start_point:start_point+30]
+                    },
+                    "summary": summary
                 }
-                result["latestStep"]["type"] = client_preprocess_step_label_mapper(result["latestStep"]["type"])
-                logger.info("반환 데이터 구성 완료")
+                if result["totalSteps"] > 0:
+                    result["latestStep"]["type"] = client_preprocess_step_label_mapper(result["latestStep"]["type"])
                 logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
                 return result
             else:
                 logger.info("최신 히스토리에 전처리 스텝이 없음")
+                columns = list(dataset[0].keys()) if dataset else []
                 result = {
                     "latestStep": None,
                     "totalSteps": 0,
                     "originalDatasets": {
                         "columns": columns,
-                        "data": dataset_sample
-                    }
+                        "data": dataset[:30]
+                    },
+                    "summary": summary
                 }
                 logger.info(f"====== 전처리 스텝 되돌리기 완료: pipeline_id={pipeline_id} ======")
                 return result

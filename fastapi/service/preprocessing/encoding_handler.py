@@ -98,12 +98,6 @@ class EncodingHandler:
             범주 개수가 너무 많은 경우
         """
         unique_count = self.df[column].nunique()
-        if unique_count > max_categories:
-            raise CustomAPIException(
-                status_code=400,
-                error_code="ENCODING_008",
-                message=f"컬럼 '{column}'의 고유 범주 개수({unique_count})가 너무 많습니다. 원-핫 인코딩은 범주 개수가 {max_categories}개 이하인 컬럼에만 적용 가능합니다. 레이블 인코딩을 사용하세요."
-            )
             
     def _get_categorical_columns(self):
         """

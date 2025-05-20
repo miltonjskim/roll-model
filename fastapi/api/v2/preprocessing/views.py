@@ -331,7 +331,7 @@ async def delete_preprocessing(
                 status_code=404, 
                 detail="파이프라인을 찾을 수 없거나 처리할 수 없습니다."
             )
-        
+
         return ApiResponse(
             status_code=200,
             message="삭제 성공",
