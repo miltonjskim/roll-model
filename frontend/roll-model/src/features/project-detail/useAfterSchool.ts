@@ -59,6 +59,24 @@ export const useAfterSchool = () => {
       showErrorToast((error as ApiError).message);
     }
   };
+  const testAfterSchoolClick = async (pipelineId: string) => {
+    try {
+      console.log('워크스페이스모델링테스트');
 
-  return { handleAfterSchoolClick, moveToPreprocessing };
+      const testCategory = 'CLASSIFICATION';
+      const testColumns = [
+        { name: 'age', type: 'numeric', description: '나이' },
+        { name: 'income', type: 'numeric', description: '수입' },
+        { name: 'gender', type: 'categorical', description: '성별' },
+      ];
+      setProjectCategoryAtom(testCategory);
+      setPipelineIdAtom(pipelineId);
+      setDataColumnsAtom(testColumns);
+      router.push('/workspace/modeling-section');
+    } catch (error) {
+      console.error('처리 중 오류가 발생했습니다:', error);
+    }
+  };
+
+  return { handleAfterSchoolClick, moveToPreprocessing, testAfterSchoolClick };
 };

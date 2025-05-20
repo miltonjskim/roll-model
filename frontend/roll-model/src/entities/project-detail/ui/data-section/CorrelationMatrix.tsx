@@ -146,6 +146,24 @@ export const CorrelationMatrix = ({ correlationMatrix }: CorrelationMatrixProps)
         </table>
       </div>
 
+      {/* // 상관관계 설명 위에 색상 범례 추가 */}
+      <div className="mt-4 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center">
+            <div className="h-4 w-12 rounded" style={{ background: 'linear-gradient(to right, #ffc7cd, #ffaab2)' }}></div>
+            <span className="ml-1 text-xs">음의 상관관계</span>
+          </div>
+          <div className="mx-2 h-4 w-[1px] bg-gray-300"></div>
+          <div className="h-4 w-12 rounded border border-gray-200 bg-[var(--primary-white)]"></div>
+          <span className="ml-1 text-xs">무상관</span>
+          <div className="mx-2 h-4 w-[1px] bg-gray-300"></div>
+          <div className="flex items-center">
+            <div className="h-4 w-12 rounded" style={{ background: 'linear-gradient(to right, #b7c9fc, #96b4fa)' }}></div>
+            <span className="ml-1 text-xs">양의 상관관계</span>
+          </div>
+        </div>
+      </div>
+
       {/* 상관관계 설명 */}
       {getCorrelationDescription()}
 

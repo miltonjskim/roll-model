@@ -63,7 +63,7 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
           <div className="mt-4 flex justify-center">
             <button
               onClick={() => setShowAll(!showAll)}
-              className="bg-[theme(color-blue-03)] text-[theme(color-blue-01)] hover:bg-[theme(color-blue-02)] rounded-md px-4 py-2 text-sm font-medium transition-colors"
+              className="border-[theme(color-gray-04)] text-[theme(primary-black)] text-md hover:text-[theme(primary-white)] hover:bg-[theme(primary-black)] mt-2 h-[3rem] w-full cursor-pointer rounded-md border border-1 font-semibold shadow-sm transition-all duration-300 ease-in-out select-none"
             >
               {showAll ? '간략히 보기' : `더보기 (${sortedData.length - 8}개 추가)`}
             </button>
@@ -72,20 +72,38 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
       </div>
 
       <section className="bg-[theme(color-card-background)] rounded-lg border p-6 shadow-sm">
-        {/* 차트 */}
-        <div className="mt-4">
-          <ResponsiveContainer width="100%" height={Math.max(300, displayData.length * 40)}>
-            <BarChart data={displayData} layout="vertical" margin={{ top: 10, right: 100, left: -80 + tempLength * 6, bottom: 10 }} barSize={24}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e8eaec" />
-              <XAxis type="number" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]} tickFormatter={(value) => `${value}%`} tickCount={5} stroke="#7d818a" fontSize={11} />
-              <YAxis type="category" dataKey="featureName" width={tempLength * 6 + 20} tick={{ fontSize: 12, fill: '#181d2b', fontWeight: 500 }} stroke="#e8eaec" />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(114, 150, 245, 0.1)' }} />
-              <Bar dataKey="value" name="중요도" fill="#181d2b" radius={[0, 4, 4, 0]} animationDuration={1500} animationEasing="ease-out">
-                <LabelList dataKey="importanceValue" position="right" style={{ fill: '#181d2b', fontWeight: 600, fontSize: 12 }} formatter={(value: string) => `${value}`} offset={8} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {featureImportance.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <svg className="mb-4 h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+            <h3 className="mb-2 text-lg font-medium text-gray-700">특성 중요도 데이터가 없습니다</h3>
+            <p className="text-center text-sm text-gray-500">
+              현재 모델 유형에서는 특성 중요도를 제공하지 않거나 계산할 수 없습니다. <br />
+              특성 중요도는 일부 모델(예: 결정 트리, 랜덤 포레스트, 부스팅 모델 등)에서만 제공됩니다.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4">
+            {/* 차트 */}
+            <ResponsiveContainer width="100%" height={Math.max(300, displayData.length * 40)}>
+              <BarChart data={displayData} layout="vertical" margin={{ top: 10, right: 100, left: -80 + tempLength * 6, bottom: 10 }} barSize={24}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e8eaec" />
+                <XAxis type="number" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]} tickFormatter={(value) => `${value}%`} tickCount={5} stroke="#7d818a" fontSize={11} />
+                <YAxis type="category" dataKey="featureName" width={tempLength * 6 + 20} tick={{ fontSize: 12, fill: '#181d2b', fontWeight: 500 }} stroke="#e8eaec" />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(114, 150, 245, 0.1)' }} />
+                <Bar dataKey="value" name="중요도" fill="#181d2b" radius={[0, 4, 4, 0]} animationDuration={1500} animationEasing="ease-out">
+                  <LabelList dataKey="importanceValue" position="right" style={{ fill: '#181d2b', fontWeight: 600, fontSize: 12 }} formatter={(value: string) => `${value}`} offset={8} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* 아래설명(필요없음) */}
         {sortedData.length > 0 && (

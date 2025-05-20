@@ -65,9 +65,9 @@ export default function ModelingPage() {
           {isLoading ? '학습 시작 중...' : '학습 시작하기'}
         </button>
       </div>
-      <div>
+      {/* <div>
         <FcmGetToken />
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -27,10 +27,9 @@ export default function ApiDownloadCard({ pipelineId }: ApiDownloadCardProps) {
   return (
     <>
       <div className="mb-4 flex flex-row items-center justify-between gap-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:gap-4">
-        <div className="max-w-xl">
-          <h2 className="mb-2 text-xl font-semibold text-gray-800">모델 파일 다운로드</h2>
-          <p className="text-gray-600">학습된 AI 모델을 로컬 환경에서 바로 활용해보세요.</p>
-          <p>최적화된 파일을 통해 API 없이도 직접 예측을 실행하고, 자체 시스템에 통합할 수 있습니다.</p>
+        <div className="w-full">
+          <h2 className="mb-4 text-start text-xl font-semibold text-gray-800">모델 파일 다운로드</h2>
+          <p className="text-start text-gray-600">학습된 AI 모델을 로컬 환경에서 바로 활용해보세요. 최적화된 파일을 통해 API 없이도 직접 예측을 실행하고, 자체 시스템에 통합할 수 있습니다.</p>
         </div>
         <button
           className="bg-[theme(primary-black)] h-20 w-44 flex-shrink-0 cursor-pointer rounded-lg text-white transition-transform duration-300 ease-out select-none hover:scale-105 hover:shadow-lg"
