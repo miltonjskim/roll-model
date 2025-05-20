@@ -31,6 +31,7 @@ import { requestPreprocessingStepsFromAI } from '@/features/workspace/data-uploa
 import { inferType } from '@/entities/workspace/data-config/utils/inferType';
 import { generateColumnPayload } from '@/entities/workspace/data-config/utils/generateColumnPayload';
 import { getDelimiterType } from '@/entities/workspace/data-config/utils/getDelimiterType';
+import DataConfigSkeleton from '@/features/workspace/data-upload/ui/DataConfigSkeleton';
 
 const ConfigDataPage = () => {
   const router = useRouter();
@@ -54,7 +55,7 @@ const ConfigDataPage = () => {
   const projectCategory = useAtomValue(projectCategoryAtom);
   const projectPublic = useAtomValue(projectPublicAtom);
   const setProjectId = useSetAtom(projectIdAtom);
-  const setGlobalLoading = useSetAtom(globalLoadingAtom);
+  const [isLoading, setIsLoading] = useAtom(globalLoadingAtom);
   const setLoadingMessage = useSetAtom(globalLoadingMessageAtom);
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setPreprocessingSteps = useSetAtom(preprocessingStepsAtom);
@@ -83,7 +84,7 @@ const ConfigDataPage = () => {
 
   // 프로젝트 생성 요청 함수
   const handleCreateProject = async () => {
-    setGlobalLoading(true);
+    setIsLoading(true);
     setLoadingMessage('프로젝트를 생성하고 있습니다...');
 
     const payload = {
@@ -110,13 +111,16 @@ const ConfigDataPage = () => {
       showErrorToast('프로젝트 생성에 실패했습니다.');
       console.error('프로젝트 생성 실패:', err);
     } finally {
-      setGlobalLoading(false);
+      setIsLoading(false);
       setLoadingMessage(null);
     }
   };
 
   // 원본 데이터셋 업로드 함수
   const handleUpload = async (projectId: string): Promise<boolean> => {
+    setIsLoading(true);
+    setLoadingMessage('원본 데이터셋을 업로드 및 분석 중입니다.');
+
     if (!file) return false;
 
     const { delimiter, customDelimiter: resolvedCustomDelimiter } = getDelimiterType(selectedDelimiterOption, customDelimiter);
@@ -145,6 +149,9 @@ const ConfigDataPage = () => {
       showErrorToast((err as Error).message);
       console.error(err);
       return false;
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
@@ -154,7 +161,7 @@ const ConfigDataPage = () => {
 
     if (!file) return false;
 
-    setGlobalLoading(true);
+    setIsLoading(true);
     setLoadingMessage('AI에게 전처리 단계를 추천받고 있어요.');
     try {
       const response = await requestPreprocessingStepsFromAI(file, projectId);
@@ -169,7 +176,7 @@ const ConfigDataPage = () => {
       console.error(apiError);
       return false;
     } finally {
-      setGlobalLoading(false);
+      setIsLoading(false);
       setLoadingMessage(null);
     }
   };
@@ -227,6 +234,10 @@ const ConfigDataPage = () => {
       startGuide();
     }
   }, []);
+
+  if (isLoading) {
+    return <DataConfigSkeleton />;
+  }
 
   return (
     <div className="flex flex-col justify-center">
