@@ -70,7 +70,10 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
       <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
         {/* 헤더/왼쪽 */}
         <div className="flex items-center space-x-2">
-          <h2 className="truncate text-lg font-semibold">{projectDetail.title}</h2>
+          <h2 className="truncate text-lg font-semibold">
+            <span className="text-[theme(color-rose-01)]">{!pipeline.deletedYn && pipeline.publicYn ? '' : '[삭제/비공개] '}</span>
+            {projectDetail.title}
+          </h2>
           {projectDetail.category === 'CLASSIFICATION' ? (
             <div className="bg-[theme(color-green-02)] rounded-sm px-1 py-0.5 text-xs font-semibold whitespace-nowrap text-gray-600">분류</div>
           ) : (
@@ -78,7 +81,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
           )}
         </div>
       </div>
-      {!pipeline.deletedYn && pipeline.publicYn ? (
+      {pipeline.ownerYn || (!pipeline.deletedYn && pipeline.publicYn) ? (
         <center className="flex items-center justify-between p-4 select-none">
           {/* 센터 왼쪽 */}
           <section className="w-[7.5rem]">
@@ -123,8 +126,21 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
               </div>
               <div className="h-12 w-20 rounded-md border border-[var(--color-gray-03)] p-1 text-sm text-[var(--primary-black)]">
                 <div className="w-full text-start text-xs">학습시간</div>
-                <div className={`text-md w-full overflow-hidden text-end font-semibold ${pipeline.runningDuration ? 'text-[var(--primary-black)]' : 'text-[var(--color-gray-02)]'}`}>
-                  {pipeline.runningDuration || '학습대기중'}
+
+                <div
+                  className={`text-md w-full overflow-hidden text-end font-semibold ${
+                    pipeline.runningDuration
+                      ? pipeline.runningDuration >= 1.0
+                        ? 'text-[var(--color-rose-01)]' // 1.0 이상일 때는 rose 색상
+                        : 'text-[var(--primary-black)]' // 1.0 미만일 때는 검정색
+                      : 'text-[var(--color-gray-02)]' // runningDuration이 없을 때는 회색
+                  }`}
+                >
+                  {pipeline.runningDuration
+                    ? pipeline.runningDuration >= 1.0
+                      ? `${pipeline.runningDuration.toFixed(2)}s` // 1.0 이상일 때는 초(s) 단위, 소수점 2자리
+                      : `${(pipeline.runningDuration * 1000).toFixed(2)}ms` // 1.0 미만일 때는 밀리초(ms) 단위
+                    : '학습대기중'}
                 </div>
               </div>
               {projectDetail.category === 'CLASSIFICATION' ? (

@@ -47,10 +47,10 @@ export default function ApiEndpointCard({ endpoint }: ApiEndpointCardProps) {
         </div>
 
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <div className="flex-grow overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">{endpoint.url}</div>
+          <div className="flex-grow overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-start text-sm">{endpoint.url}</div>
           <button
             onClick={() => copyToClipboard(endpoint.url, 'URL')}
-            className="bg-[theme(primary-black)] flex items-center justify-center rounded-lg px-4 py-2 font-medium text-white transition-all hover:opacity-90"
+            className="bg-[theme(primary-black)] flex cursor-pointer items-center justify-center rounded-lg px-4 py-2 font-medium text-white transition-all hover:opacity-90"
           >
             <IoMdCopy className="mr-2 h-5 w-5" />
             URL 복사
@@ -73,14 +73,14 @@ export default function ApiEndpointCard({ endpoint }: ApiEndpointCardProps) {
               onTouchStart={() => setShowApiKey(true)}
               onTouchEnd={() => setShowApiKey(false)}
               onTouchCancel={() => setShowApiKey(false)}
-              className="flex items-center justify-center font-medium text-[var(--primary-black)]"
+              className="flex cursor-pointer items-center justify-center font-medium text-[var(--primary-black)]"
             >
               {showApiKey ? <FaEye className="h-4 w-4" /> : <FaEyeSlash className="h-4 w-4" />}
             </button>
           </div>
           <button
             onClick={() => copyToClipboard(endpoint.apiKey, 'API Key')}
-            className="bg-[theme(primary-black)] flex items-center justify-center rounded-lg px-4 py-2 font-medium text-white transition-all hover:opacity-90"
+            className="bg-[theme(primary-black)] flex cursor-pointer items-center justify-center rounded-lg px-4 py-2 font-medium text-white transition-all hover:opacity-90"
           >
             <IoMdCopy className="mr-2 h-5 w-5" />
             KEY 복사

@@ -15,10 +15,10 @@ export const StatsCard = ({ title, value, icon, isSelected = false, onClick }: S
       onClick={onClick}
     >
       <div>
-        <h3 className={`${isSelected ? 'text-[theme(color-blue-01)]' : 'text-gray-500'}`}>{title}</h3>
+        <h3 className={`${isSelected ? 'text-[theme(color-blue-01)]' : 'text-gray-500'} truncate`}>{title}</h3>
         <p className={`text-2xl font-bold ${isSelected ? 'text-[theme(color-blue-01)]' : ''}`}>{value}</p>
       </div>
-      <div className="font-tossface text-3xl">{icon}</div>
+      <div className="font-tossface text-3xl md:hidden lg:block lg:text-3xl">{icon}</div>
     </div>
   );
 };

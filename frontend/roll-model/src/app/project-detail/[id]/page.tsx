@@ -72,8 +72,8 @@ export default function OverviewSectionPage() {
         {isDataLoading || !projectDetailData ? (
           <SkeletonCard />
         ) : (
-          <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
-            <SectionHeader title="데이터 섹션" tabLink={`/project-detail/${pipelineId}/data`} isLoading={isDataLoading} isError={isDataError} onRetry={() => refetchAll()} />
+          <div className="bg-[theme(primary-white)] rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
+            <SectionHeader title="데이터 섹션" tabLink={`/project-detail/${pipelineId}/data-section`} isLoading={isDataLoading} isError={isDataError} onRetry={() => refetchAll()} />
             {/* <h3 className="mb-4 text-lg font-medium">데이터 파이프라인</h3> */}
             <PreprocessingPipelineCard steps={projectDetailData.preprocessingSteps} />
           </div>
@@ -85,8 +85,8 @@ export default function OverviewSectionPage() {
         {isModelLoading || !projectDetailModel || !algorithmName || !koreanModelName ? (
           <SkeletonCard />
         ) : (
-          <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
-            <SectionHeader title="모델 섹션" tabLink={`/project-detail/${pipelineId}/model`} isLoading={isModelLoading} isError={isModelError} onRetry={() => refetchAll()} />
+          <div className="bg-[theme(primary-white)] rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
+            <SectionHeader title="모델 섹션" tabLink={`/project-detail/${pipelineId}/modeling-section`} isLoading={isModelLoading} isError={isModelError} onRetry={() => refetchAll()} />
             {/* <h3 className="mb-4 text-lg font-medium">모델 정보</h3> */}
             <ModelInfoCard
               category={projectDetail.category}
@@ -104,7 +104,7 @@ export default function OverviewSectionPage() {
         {isModelLoading || !projectDetailModel ? (
           <SkeletonCard />
         ) : (
-          <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
+          <div className="">
             {/* <h3 className="mb-4 text-lg font-medium">특성 중요도</h3> */}
             <FeatureImportanceChart featureImportance={projectDetailModel.featureImportance} />
           </div>
@@ -116,8 +116,8 @@ export default function OverviewSectionPage() {
         {isApiLoading || isApiStatusLoading || !projectDetailApi ? (
           <SkeletonCard />
         ) : (
-          <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
-            <SectionHeader title="API 섹션" tabLink={`/project-detail/${pipelineId}/api`} isLoading={isApiLoading} isError={isApiError} onRetry={() => refetchAll()} />
+          <div className="bg-[theme(primary-white)] rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
+            <SectionHeader title="API 섹션" tabLink={`/project-detail/${pipelineId}/api-section`} isLoading={isApiLoading} isError={isApiError} onRetry={() => refetchAll()} />
             {/* <h3 className="mb-4 text-lg font-medium">API 상태</h3> */}
             <ApiStatusCard apiStatus={projectDetailApi.apiStatus} endpoint={projectDetailApi.endpoint.url} inputSchema={projectDetailApi.inputSchema} apiKey={projectDetailApi.endpoint.apiKey} />
           </div>
@@ -129,7 +129,7 @@ export default function OverviewSectionPage() {
         {isApiLoading || !projectDetailApi ? (
           <SkeletonCard />
         ) : (
-          <div className="rounded-lg border border-[var(--color-gray-03)] p-4 shadow-sm">
+          <div className="">
             {/* <h3 className="mb-4 text-lg font-medium">API 엔드포인트</h3> */}
             <ApiEndpointCard endpoint={projectDetailApi.endpoint} />
           </div>
@@ -143,7 +143,7 @@ export default function OverviewSectionPage() {
 function SectionHeader({ title, tabLink, isLoading, isError, onRetry }: { title: string; tabLink: string; isLoading: boolean; isError: boolean; onRetry: () => void }) {
   return (
     <div className="mb-4 flex h-16 items-center justify-between gap-2">
-      <div className="bg-[theme(primary-white)] flex w-full items-center justify-between rounded-lg p-4 shadow-sm">
+      <div className="bg-[theme(color-card-background)] flex w-full items-center justify-between rounded-lg p-4 shadow-sm">
         <h2 className="text-xl font-semibold">{title}</h2>
       </div>
       <div className="flex h-full items-center space-x-2">

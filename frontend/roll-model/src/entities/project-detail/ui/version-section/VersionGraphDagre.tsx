@@ -21,14 +21,14 @@ const VersionNode = ({ data, selected }: any) => {
   // 노드 상태에 따른 색상 결정
   let backgroundColor = 'var(--primary-black)'; // 기본 검정색
 
-  if (isDeleted || !isPublic) {
-    backgroundColor = 'var(--color-gray-02)'; // 삭제되었거나 비공개 버전은 회색
+  if (selected) {
+    backgroundColor = 'var(--color-blue-02)'; // 선택된 버전은 파란색 (현재 상호작용 중)
   } else if (isLatest) {
-    backgroundColor = 'var(--color-green-02)'; // 최신 버전은 녹색
-  } else if (selected) {
-    backgroundColor = 'var(--color-blue-02)'; // 선택된 버전은 파란색
+    backgroundColor = 'var(--color-green-02)'; // 최신 버전은 녹색 (최신 정보 강조)
   } else if (isOwned) {
-    backgroundColor = 'var(--color-rose-02)'; // 3.x 버전은 보라색
+    backgroundColor = 'var(--color-rose-02)'; // 내 버전은 보라색
+  } else if (isDeleted || !isPublic) {
+    backgroundColor = 'var(--color-gray-02)'; // 삭제되었거나 비공개 버전은 회색
   }
 
   // version이 1.0인 경우 source handle을 오른쪽에 배치
@@ -96,8 +96,12 @@ const VersionGraphDagre = ({ pipelines, selectedVersion, onSelectVersion, select
   );
 
   // 시간 순서로 정렬된 버전 목록 생성 함수
+  // const getTimeOrderedVersions = useCallback(() => {
+  //   return [...pipelines].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  // }, [pipelines]);
+  // 0519 updatedAt 순서대로 대신 응답받은 순서 그대로 y축위치를 정하도록 함
   const getTimeOrderedVersions = useCallback(() => {
-    return [...pipelines].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return [...pipelines]; // 정렬 없이 원본 배열 복사본 반환
   }, [pipelines]);
 
   // Y 위치 맵 생성 함수
