@@ -104,7 +104,7 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
         className={clsx(
           'rounded-md border border-[var(--color-gray-04)] p-2',
           cardStyle === 'small'
-            ? 'flex max-h-[42vh] flex-col items-center gap-3 overflow-y-auto'
+            ? 'flex max-h-[34vh] flex-col items-center gap-3 overflow-y-auto'
             : steps.filter(Boolean).length === 0
               ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto'
               : 'flex flex-row-reverse flex-nowrap justify-end gap-3 overflow-x-auto',
