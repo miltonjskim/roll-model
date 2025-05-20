@@ -356,7 +356,7 @@ class PreprocessingHandler:
                 self.logger.error(f"전처리 작업 실패 (단계 {i+1}:{preprocessing_type}):{str(e)}")
                 raise CustomAPIException(
                     status_code=500, 
-                    error_code="BATCH_1"
+                    error_code="BATCH_1",
                     message=f"전처리 작업 실패 단계:{i+1}:{preprocessing_type}:{str(e)}"
                 )
                 
