@@ -1,7 +1,9 @@
+import stat
 from typing import Dict, Any, List, Optional, Coroutine
 from datetime import datetime
 from bson import ObjectId
 
+from core.api_response import ApiResponse
 from core.storage import MinioClient
 from db.mongo_config import get_pipeline_collection, get_dataset_collection
 from models.preprocessing.client_preprocess_step_label import client_preprocess_step_label_mapper
@@ -528,19 +530,25 @@ class PipelineService:
         """
         try:
             # 파이프라인에 히스토리가 있는지 확인
+            dataset_id = None
+            if not pipeline:
+                return ApiResponse(
+                    status_code=400,
+                    message="파이프라인이 없습니다.",
+                )
             if not pipeline.history:
-                logger.warning(f"Pipeline has no history")
-                return None
-
-            latest_history = pipeline.history[-1]
-            if latest_history.preprocessing_steps:
-                # 가장 최근 전처리된 데이터 사용
-                latest_step = latest_history.preprocessing_steps[-1]
-                dataset_object_name = latest_step.preprocessed_dataset_object_name
-            else:
                 # 원본 데이터 사용
-                dataset_object_name = pipeline.original_dataset_object_name
-            print(dataset_object_name)
+                dataset_id = pipeline.original_dataset_id
+            else:
+                latest_history = pipeline.history[-1]
+                if latest_history.preprocessing_steps:
+                    # 가장 최근 전처리된 데이터 사용
+                    latest_step = latest_history.preprocessing_steps[-1]
+                    dataset_id = latest_step.preprocessed_dataset_id
+                else:
+                    # 원본 데이터 사용
+                    dataset_id = pipeline.original_dataset_id
+                
             datasets = get_dataset_collection()
             dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
             data_types_dict = dataset["metadata"]["data_types"]
