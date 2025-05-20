@@ -5,12 +5,15 @@ import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { ImputedRow, Step } from '@/entities/workspace/data-preprocess/model/types';
 import { useAtom, useSetAtom } from 'jotai';
-import { uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { preprocessErrorMsgAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
 import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/PreprocessingInfoDialog';
+import { showErrorToast } from '@/shared/lib/toast/toast';
+import { ApiError } from '@/shared/model/types/apiResponse';
+import { AxiosError } from 'axios';
 
 interface PreprocessingOption {
   id: string;
@@ -117,6 +120,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   const [targetColumn, setTargetColumn] = useState('');
   const [offset, setOffset] = useState(1.0);
   const [samplingRatio, setSamplingRatio] = useState(200);
+  const setPreprocessingErrorMsg = useSetAtom(preprocessErrorMsgAtom);
 
   const columnNames = uploadedDataset?.originalDatasets.columns || [];
 
@@ -127,6 +131,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   const handleApply = async (categoryId: string, option: PreprocessingOption) => {
     setLoading(true);
     setLoadingmessage('요청하신 전처리 옵션을 진행하고 있습니다.');
+    setPreprocessingErrorMsg('');
     try {
       const baseUrl = `/api/v2/pipelines/${pipelineId}/preprocessing`;
       const url = `${baseUrl}${option.apiEndpoint}`;
@@ -347,7 +352,11 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
       setOffset(1.0);
       setSamplingRatio(200);
     } catch (error) {
-      console.error('전처리 요청 실패:', error);
+      const axiosError = error as AxiosError<{ error: { message: string } }>;
+      console.error('전처리 요청 실패:', axiosError);
+
+      showErrorToast(axiosError.response?.data?.error?.message);
+      setPreprocessingErrorMsg(axiosError.response?.data?.error?.message ? axiosError.response?.data?.error?.message : '');
     } finally {
       setLoading(false);
       setLoadingmessage(null);

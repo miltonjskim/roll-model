@@ -39,11 +39,12 @@ export const getStepLabel = (type: string) => {
 const getStepSubLabel = (step: Step): string => {
   const { column, method, detection, targetColumn, offset, samplingRatio, fillValue, maxThreshold, minThreshold } = step.parameters || {};
 
-  const colText = column ? `컬럼: ${column}` : '';
+  const colText = column === 'all_numeric' ? '전체 컬럼' : column ? `컬럼: ${column}` : '';
+
   const methodText = typeof method === 'string' ? ` → ${methodLabelMap[method] || method}` : '';
   const detectionText = typeof detection === 'string' ? ` → ${methodLabelMap[detection] || detection}` : '';
 
-  switch (step.type) {
+  switch (step.type.toUpperCase()) {
     case 'MISSING_VALUES':
       return `${colText}${methodText}`;
 
@@ -59,7 +60,7 @@ const getStepSubLabel = (step: Step): string => {
       return `${colText}${offset !== undefined ? ` (오프셋: ${offset})` : ''}`;
 
     case 'ENCODING':
-      return `${colText}${targetColumn ? ` / 타겟: ${targetColumn}` : ''}`;
+      return `${colText}${targetColumn ? ` / 타겟 컬럼: ${targetColumn}` : ''}`;
 
     case 'CLASS_BALANCING':
       return `${colText}${methodText}${samplingRatio ? ` (비율: ${samplingRatio}%)` : ''}`;
@@ -106,11 +107,11 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
             ? 'flex max-h-[42vh] flex-col items-center gap-3 overflow-y-auto'
             : steps.filter(Boolean).length === 0
               ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto'
-              : 'flex flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto',
+              : 'flex flex-row-reverse flex-nowrap justify-end gap-3 overflow-x-auto',
         )}
       >
         {/* 단계 수 표시 */}
-        {steps.length > 0 && <p className="mb-2 w-full text-right text-xs text-gray-400">총 단계: {steps.filter(Boolean).length}단계</p>}
+        {cardStyle === 'small' && steps.length > 0 && <p className="mb-2 w-full text-right text-xs text-gray-400">총 단계: {steps.filter(Boolean).length}단계</p>}
 
         {/* 단계 없음 메시지 */}
         {steps.length === 0 ? (

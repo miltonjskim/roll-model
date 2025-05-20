@@ -85,6 +85,10 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
     }
 
     if (typeof value === 'boolean') return value ? '✅ 예' : '❌ 아니오';
+    if (key === 'column' && value === 'all_numeric') {
+      return '전체 컬럼';
+    }
+
     if (value === null || value === undefined) return '-';
     return String(value);
   };
@@ -101,6 +105,7 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
       minThreshold: '<span class="font-tossface">🔻</span> 하한 임계값',
       fillValue: '<span class="font-tossface">🧩</span> 결측치 대체 값',
       outlierIndices: '<span class="font-tossface">📌</span> 변경된 행의 인덱스 목록',
+      outlierCount: '<span class="font-tossface">☄️</span> 원래 이상치 개수',
       imputedCount: '<span class="font-tossface">🧮</span> 대체된 값 개수',
       imputedRows: '<span class="font-tossface">🧾</span> 대체된 행',
       missingCount: '<span class="font-tossface">❓</span> 결측치 개수',
@@ -147,8 +152,8 @@ const StepDetailModal = ({ step, trigger }: StepDetailModalProps) => {
               <div
                 className={clsx(
                   'flex-1 break-words whitespace-pre-wrap text-gray-900',
-                  (key === 'maxThreshold' || key === 'minThreshold') && 'font-semibold text-red-600',
-                  key === 'column' && 'font-bold text-blue-700',
+                  (key === 'maxThreshold' || key === 'minThreshold') && 'font-semibold text-[var(--color-red-01)]',
+                  key === 'column' && 'font-bold text-[var(--color-blue-01)]',
                 )}
               >
                 {renderValue(value, key)}

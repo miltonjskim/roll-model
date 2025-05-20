@@ -10,3 +10,4 @@ export const pipelineIdAtom = atom<string>('');
 export const preprocessingStepsAtom = atom<PreviousPreprocessingSteps[] | null>(null);
 export const dataColumnsAtom = atom<Record<string, string>[]>([]);
 export const aiRecommendedStepsAtom = atom<Step[]>([]);
+export const preprocessErrorMsgAtom = atom('');
