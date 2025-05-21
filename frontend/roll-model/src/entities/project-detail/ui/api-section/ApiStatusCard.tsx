@@ -18,7 +18,7 @@ interface Feature {
   options: string[] | null;
 }
 
-export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey }: ApiStatusCardProps) {
+export default function ApiStatusCard({ apiStatus, endpoint, inputSchema, apiKey = 'abc' }: ApiStatusCardProps) {
   const [apiActiveStatus, setApiActiveStatus] = useState<{
     isActive: boolean;
     performance: number;
