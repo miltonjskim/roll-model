@@ -31,9 +31,9 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold">행</TableHead>
+            <TableHead className="sticky top-0 z-10 bg-blue-50 text-center text-sm font-semibold">행</TableHead>
             {columns.map((col) => (
-              <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold" key={col}>
+              <TableHead className="sticky top-0 z-10 bg-blue-50 text-center text-sm font-semibold" key={col}>
                 {col}
               </TableHead>
             ))}
