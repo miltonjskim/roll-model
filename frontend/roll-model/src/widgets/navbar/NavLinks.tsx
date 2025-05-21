@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import Link from 'next/link';
 
 const links = [
-  { label: 'Guide', href: '/guide' },
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Open Source', href: '/open-source' },
   { label: 'Workspace', href: '/workspace' },
