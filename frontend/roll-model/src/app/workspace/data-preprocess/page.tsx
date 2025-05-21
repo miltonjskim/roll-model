@@ -48,7 +48,7 @@ const PreprocessDataPage = () => {
     setLoadingMessage('이전 데이터를 불러오고 있습니다.');
     try {
       const response = await axiosInstance(`/api/v2/pipelines/${storedPipelineId}/reload/preprocess`);
-      console.log('response:', response);
+      // console.log('response:', response);
 
       const data = response.data.data;
 
@@ -96,7 +96,7 @@ const PreprocessDataPage = () => {
   useEffect(() => {
     if (!uploadedData) {
       const stored = localStorage.getItem('pipelineId');
-      console.log('stored pipelineId:', stored);
+      // console.log('stored pipelineId:', stored);
 
       if (stored) {
         setPipelineId(stored);
@@ -124,6 +124,7 @@ const PreprocessDataPage = () => {
 
   const handleCompletePreprocessing = async () => {
     setIsLoading(true);
+    setLoadingMessage('데이터 전처리 완료를 진행하고 있습니다.');
     try {
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/complete`);
 
@@ -141,6 +142,7 @@ const PreprocessDataPage = () => {
       console.error(apiError);
     } finally {
       setIsLoading(false);
+      setLoadingMessage(null);
     }
   };
 
@@ -151,7 +153,7 @@ const PreprocessDataPage = () => {
 
       setSteps((prev) => prev.slice(0, -1));
 
-      console.log('단계 삭제 response:', response);
+      // console.log('단계 삭제 response:', response);
       // console.log('response.data.data.datset', response.data.data.dataset);
 
       const data = response.data.data;
@@ -185,11 +187,31 @@ const PreprocessDataPage = () => {
         steps: processedSteps,
       };
 
-      console.log('전처리 일괄 요청 payload:', payload);
-
       const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/batch`, payload);
 
-      console.log('전처리 일괄 실행 결과:', response.data);
+      // console.log('전처리 일괄 실행 결과:', response.data);
+      const data = response.data.data.data;
+      // console.log('data:', data);
+      const firstData = data.dataset[0];
+      // console.log('firstData:', firstData);
+
+      const columns = Object.keys(firstData);
+      // console.log('columns:', columns);
+
+      setUploadedData({
+        pipelineId: data.pipelineId,
+        summary: {
+          totalColumns: data.summary.total_columns,
+          totalRows: data.summary.total_rows,
+        },
+        missingValues: data.summary.missingValues,
+        originalDatasets: {
+          data: data.dataset,
+          columns: columns,
+        },
+      });
+      setSteps(recommendedSteps);
+
       return null;
     } catch (error) {
       const axiosError = error as AxiosError<unknown>;
@@ -257,7 +279,7 @@ const PreprocessDataPage = () => {
               <div className="bg-[theme(primary-white)] ai-recommended-section ai-recommended-section min-h-0 flex-[1] overflow-y-auto rounded-md p-4 pb-0 md:w-1/4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-base font-semibold">AI 추천 전처리 단계</h4>
-                  <PreprocessingConfirmDialog steps={recommendedSteps} requestPreprocessing={requestAllPreprocessingSteps} />
+                  {/* <PreprocessingConfirmDialog steps={recommendedSteps} requestPreprocessing={requestAllPreprocessingSteps} /> */}
                 </div>
                 <PreprocessingPipeline steps={recommendedSteps} cardStyle="small" highlight="gray" />
               </div>
