@@ -18,8 +18,8 @@ export default function FcmCatStatus() {
   // 모델 상태에 따라 애니메이션 경로 결정
   const getCatAnimationPath = (status: ModelStatus): string => {
     if (status === 'COMPLETED') return '/lottie/completedCat.json';
-    if (status === 'FAILED') return '/lottie/failedCat.json';
-    if (status === 'LEARNING') return '/lottie/rollingCat.json';
+    if (status === 'FAILED') return '/lottie/temp04.json';
+    if (status === 'LEARNING') return '/lottie/temp05.json';
     return '/lottie/ready.json'; // PREPROCESSED 또는 기타 상태
   };
   // 모델 상태에 따른 애니메이션 크기 설정
