@@ -170,9 +170,10 @@ export const PreprocessingPipelineCard = ({ steps }: PreprocessingPipelineCardPr
                 {selectedStepIndices.has(index) && step.type !== 'ORIGINAL_DATA' && step.type !== 'PREPROCESSING_COMPLETE' && Object.keys(step.parameters).length > 0 && (
                   <div className="absolute mt-2 w-32 cursor-pointer rounded-md bg-gray-100 p-2 text-xs text-gray-600" onClick={() => toggleStep(index)}>
                     {Object.entries(step.parameters).map(([key, value]) => (
-                      <div key={key} className="flex justify-between truncate">
-                        <span className="font-medium capitalize">{key}:</span>
-                        <span className="ml-1 truncate">{String(value)}</span>
+                      <div key={key} className="flex justify-center truncate">
+                        {key !== 'column' && <span className="font-medium capitalize">{key}:</span>}
+                        {value === null && <span className="ml-1 truncate text-xs">All</span>}
+                        {key !== 'column' && <span className="ml-1 truncate text-xs">{String(value)}</span>}
                       </div>
                     ))}
                   </div>

@@ -27,7 +27,9 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
       id: pipeline.pipelineId,
       version: pipeline.version,
     });
-    router.push(`/project-detail/${pipeline.pipelineId}`);
+    if (pipeline.ownerYn || (!pipeline.deletedYn && pipeline.publicYn)) {
+      router.push(`/project-detail/${pipeline.pipelineId}`);
+    }
   };
 
   // 도메인 정보
@@ -65,7 +67,7 @@ export const VersionDetailCard = ({ pipeline }: VersionDetailCardProps) => {
   };
 
   return (
-    <div className="border-[theme(primary-black)] mt-12 w-[24rem] cursor-pointer rounded-xl border border-2 bg-white shadow-sm transition-shadow hover:shadow-md" onClick={handleProjectClick}>
+    <div className="border-[theme(primary-black)] mt-12 cursor-pointer rounded-xl border border-2 bg-white shadow-sm transition-shadow hover:shadow-md" onClick={handleProjectClick}>
       {/* 헤더 */}
       <div className="bg-[theme(primary-black)] flex cursor-default items-center justify-between rounded-t-xl px-3 py-2 text-white select-none">
         {/* 헤더/왼쪽 */}

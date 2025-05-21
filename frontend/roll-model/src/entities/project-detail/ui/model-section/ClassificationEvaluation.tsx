@@ -173,7 +173,7 @@ export default function ClassificationEvaluation({ confusionMatrix }: Classifica
               {/* 왼 아래 1 */}
               <div className="mt-8 flex justify-between gap-6">
                 {/* 읽는법 */}
-                <div className="bg-[theme(color-card-background)] w-[12rem] flex-shrink-0 rounded-md p-3 shadow-sm">
+                <div className="bg-[theme(color-card-background)] w-[14rem] flex-shrink-0 truncate rounded-md p-3 shadow-sm">
                   <h4 className="text-[theme(primary-black)] text-start text-sm font-semibold">혼동 행렬 읽는 방법</h4>
                   <ul className="text-[theme(color-muted-foreground)] mt-2 text-sm">
                     <li className="flex items-center gap-1">
@@ -234,7 +234,7 @@ export default function ClassificationEvaluation({ confusionMatrix }: Classifica
               {/* 오른 위 1 */}
               <div className="mt-8 flex justify-between gap-6">
                 {/* 읽는법 */}
-                <div className="bg-[theme(color-card-background)] w-[12rem] flex-shrink-0 rounded-md p-3 shadow-sm">
+                <div className="bg-[theme(color-card-background)] w-[14rem] flex-shrink-0 truncate rounded-md p-3 shadow-sm">
                   <h4 className="text-[theme(primary-black)] text-start text-sm font-semibold">혼동 행렬 읽는 방법</h4>
                   <ul className="text-[theme(color-muted-foreground)] mt-2 text-sm">
                     <li className="flex items-center gap-1">
