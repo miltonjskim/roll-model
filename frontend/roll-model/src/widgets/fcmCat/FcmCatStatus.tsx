@@ -26,14 +26,14 @@ export default function FcmCatStatus() {
   const getAnimationSize = (status: ModelStatus) => {
     switch (status) {
       case 'LEARNING':
-        return { width: 100, height: 100 };
+        return { width: 140, height: 140 };
       case 'COMPLETED':
         return { width: 70, height: 70 };
       case 'FAILED':
         return { width: 120, height: 120 };
       case 'PREPROCESSED':
       default:
-        return { width: 120, height: 120 };
+        return { width: 180, height: 180 };
     }
   };
 
@@ -142,7 +142,7 @@ export default function FcmCatStatus() {
   };
 
   return (
-    <div className="fixed bottom-20 left-4 z-50 h-20 w-30">
+    <div className="fixed bottom-25 left-8 z-50 h-20 w-30">
       {isButtonVisible && (
         <div>
           <button className="bg-[theme(color-mint-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('기본')}>
@@ -160,10 +160,10 @@ export default function FcmCatStatus() {
         </div>
       )}
       <button onClick={() => setIsButtonVisible(!isButtonVisible)} className="opacity-[10%] hover:opacity-[30%]">
-        📦
+        .
       </button>
       {/* Lottie 컴포넌트와 애니메이션이 존재할 때만 렌더링 */}
-      <div onClick={handleReset} className={`${modelStatus === 'COMPLETED' ? 'mt-6 ml-6' : ''}`}>
+      <div onClick={handleReset} className={`${modelStatus === 'COMPLETED' ? 'mt-6 ml-6' : ''} ${modelStatus === 'LEARNING' ? 'ml-6' : ''}`}>
         {currentAnimation && Lottie && (
           <Lottie
             lottieRef={lottieRef}

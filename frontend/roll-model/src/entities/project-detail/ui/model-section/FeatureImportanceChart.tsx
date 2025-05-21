@@ -65,7 +65,7 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
               onClick={() => setShowAll(!showAll)}
               className="border-[theme(color-gray-04)] text-[theme(primary-black)] text-md hover:text-[theme(primary-white)] hover:bg-[theme(primary-black)] mt-2 h-[3rem] w-full cursor-pointer rounded-md border border-1 font-semibold shadow-sm transition-all duration-300 ease-in-out select-none"
             >
-              {showAll ? '간략히 보기' : `더보기 (${sortedData.length - 8}개 추가)`}
+              {showAll ? '간략히 보기' : `더보기`}
             </button>
           </div>
         )}
@@ -92,7 +92,7 @@ export default function FeatureImportanceChart({ featureImportance }: FeatureImp
           <div className="mt-4">
             {/* 차트 */}
             <ResponsiveContainer width="100%" height={Math.max(300, displayData.length * 40)}>
-              <BarChart data={displayData} layout="vertical" margin={{ top: 10, right: 100, left: -80 + tempLength * 6, bottom: 10 }} barSize={24}>
+              <BarChart data={displayData} layout="vertical" margin={{ top: 10, right: 100, left: -40 + tempLength * 6, bottom: 10 }} barSize={24}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e8eaec" />
                 <XAxis type="number" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]} tickFormatter={(value) => `${value}%`} tickCount={5} stroke="#7d818a" fontSize={11} />
                 <YAxis type="category" dataKey="featureName" width={tempLength * 6 + 20} tick={{ fontSize: 12, fill: '#181d2b', fontWeight: 500 }} stroke="#e8eaec" />
