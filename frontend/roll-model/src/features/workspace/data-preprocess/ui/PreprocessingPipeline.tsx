@@ -31,13 +31,17 @@ export const getStepLabel = (type: string) => {
       return '인코딩';
     case 'CLASS_BALANCING':
       return '클래스 불균형 처리';
+    case 'COL_HANDLE':
+      return '특정 컬럼 삭제/유지';
+    case 'COLUMN_MANAGEMENT':
+      return '특정 컬럼 삭제/유지';
     default:
       return '기타';
   }
 };
 
 const getStepSubLabel = (step: Step): string => {
-  const { column, method, detection, targetColumn, offset, samplingRatio, fillValue, maxThreshold, minThreshold } = step.parameters || {};
+  const { column, method, detection, targetColumn, offset, samplingRatio, fillValue, maxThreshold, minThreshold, removedColumns } = step.parameters || {};
 
   const colText = column === 'all_numeric' ? '전체 컬럼' : column ? `컬럼: ${column}` : '';
 
@@ -65,6 +69,10 @@ const getStepSubLabel = (step: Step): string => {
     case 'CLASS_BALANCING':
       return `${colText}${methodText}${samplingRatio ? ` (비율: ${samplingRatio}%)` : ''}`;
 
+    case 'COL_HANDLE':
+      return `삭제된 컬럼: ${removedColumns}`;
+    case 'COLUMN_MANAGEMENT':
+      return `삭제된 컬럼: ${removedColumns}`;
     default:
       return Object.entries(step.parameters ?? {})
         .map(([key, value]) => `${key}: ${value}`)
@@ -79,7 +87,7 @@ interface PreprocessPipelineProps {
 }
 
 const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' }: PreprocessPipelineProps) => {
-  console.log('steps:', steps);
+  // console.log('steps:', steps);
   const lastStepRef = useRef<HTMLDivElement | null>(null);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
 
@@ -102,12 +110,12 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
     <div className="mt-4">
       <div
         className={clsx(
-          'rounded-md border border-[var(--color-gray-04)] p-2',
+          'w-full rounded-md border border-[var(--color-gray-04)] p-2',
           cardStyle === 'small'
             ? 'flex max-h-[34vh] flex-col items-center gap-3 overflow-y-auto'
             : steps.filter(Boolean).length === 0
               ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto'
-              : 'flex flex-row-reverse flex-nowrap justify-end gap-3 overflow-x-auto',
+              : 'flex w-full flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto',
         )}
       >
         {/* 단계 수 표시 */}

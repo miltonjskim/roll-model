@@ -14,6 +14,7 @@ import PreprocessingInfoDialog from '@/features/workspace/data-preprocess/ui/Pre
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { ApiError } from '@/shared/model/types/apiResponse';
 import { AxiosError } from 'axios';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PreprocessingOption {
   id: string;
@@ -65,8 +66,8 @@ const preprocessingCategories: PreprocessingCategory[] = [
       { id: 'mean', name: '평균값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEAN', requireColumn: true },
       { id: 'median', name: '중앙값으로 대체', description: '이상치를 해당 컬럼의 평균값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MEDIAN', requireColumn: true },
       { id: 'mode', name: '최빈값으로 대체', description: '이상치를 해당 컬럼의 임계값으로 대체합니다.', apiEndpoint: '/outliers/imputation', method: 'MODE', requireColumn: true },
-      { id: 'remove-rows', name: '행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE', requireColumn: true },
-      { id: 'remove-cols', name: '열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE', requireColumn: true },
+      { id: 'remove-rows', name: '이상치가 있는 행 제거', description: '탐지된 이상치가 포함된 행을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'ROW_REMOVE', requireColumn: true },
+      { id: 'remove-cols', name: '이상치가 있는 열 제거', description: '탐지된 이상치가 포함된 컬럼을 삭제합니다.', apiEndpoint: '/outliers/remove', method: 'COL_REMOVE', requireColumn: true },
     ],
   },
   {
@@ -102,6 +103,16 @@ const preprocessingCategories: PreprocessingCategory[] = [
       { id: 'under', name: '언더샘플링', description: '다수 클래스의 데이터를 일부 제거하여 균형을 맞춥니다.', apiEndpoint: '/class-balancing', method: 'UNDER' },
     ],
   },
+  {
+    id: 'COL_HANDLE',
+    name: '특정 컬럼 삭제/유지',
+    icon: '🪄',
+    description: '데이터 내 특정 컬럼을 삭제하거나 유지합니다.',
+    options: [
+      { id: 'drop', name: '특정 컬럼 삭제', description: '데이터셋에서 지정된 컬럼을 제거합니다.', apiEndpoint: '/column/drop', method: 'COL_REMOVE' },
+      { id: 'keep', name: '지정된 컬럼 유지', description: '데이터셋에서 지정된 컬럼 외의 컬럼은 삭제합니다.', apiEndpoint: '/column/keep', method: 'COL_KEEP' },
+    ],
+  },
 ];
 
 interface PreprocessingOptionsProps {
@@ -120,6 +131,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
   const [targetColumn, setTargetColumn] = useState('');
   const [offset, setOffset] = useState(1.0);
   const [samplingRatio, setSamplingRatio] = useState(200);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const setPreprocessingErrorMsg = useSetAtom(preprocessErrorMsgAtom);
 
   const columnNames = uploadedDataset?.originalDatasets.columns || [];
@@ -137,23 +149,28 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
       const url = `${baseUrl}${option.apiEndpoint}`;
       const column = selectedColumn ?? null;
 
-      const body: Record<string, string | number | undefined | null> = {
-        column,
-      };
+      const body: Record<string, unknown> = {};
 
-      if (option.method) {
-        console.log('option:', option);
-
-        if (categoryId === 'OUTLIER_DETECTION') {
-          console.log('categoryId:', categoryId);
-          body.detection = option.method;
-          console.log('option.method:', option.method);
-          console.log('body.detection:', body.detection);
-        } else if (categoryId === 'OUTLIER_HANDLE') {
-          body.detection = 'ZSCORE';
-          body.method = option.method;
+      if (categoryId === 'COL_HANDLE') {
+        if (selectedColumns && selectedColumns.length > 0) {
+          body.columns = selectedColumns;
         } else {
-          body.method = option.method;
+          showErrorToast('컬럼을 선택하지 않았습니다.');
+          return;
+        }
+      } else {
+        const column = selectedColumn ?? null;
+        body.column = column;
+
+        if (option.method) {
+          if (categoryId === 'OUTLIER_DETECTION') {
+            body.detection = option.method;
+          } else if (categoryId === 'OUTLIER_HANDLE') {
+            body.detection = 'ZSCORE';
+            body.method = option.method;
+          } else {
+            body.method = option.method;
+          }
         }
       }
 
@@ -204,11 +221,15 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
             }
           : prev,
       );
+      console.log('result.removed_columns:', result.removed_columns);
+      console.log('result.remaining_columns:', result.remaining_columns);
 
       onAddStep?.({
         type: categoryId.toUpperCase(),
         parameters: {
-          column: result.column,
+          ...(categoryId !== 'COL_HANDLE' && {
+            column: result.column ?? '',
+          }),
 
           // 결측치 대체
           ...(categoryId === 'MISSING_VALUES' &&
@@ -337,6 +358,20 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
               samplingRatio: result.samplingRatio,
               sampleVariation: result.sampleVariation,
             }),
+
+          // 컬럼 핸들링: 컬럼 삭제
+          ...(categoryId === 'COL_HANDLE' &&
+            option.apiEndpoint.includes('drop') && {
+              removedColumns: result.removed_columns,
+              remainingColumns: result.remaining_columns,
+            }),
+
+          // 컬럼 핸들링: 컬럼 유지
+          ...(categoryId === 'COL_HANDLE' &&
+            option.apiEndpoint.includes('keep') && {
+              keptColumns: result.kept_columns,
+              removedColumns: result.removed_columns,
+            }),
         },
         order: Date.now(),
         active: true,
@@ -351,6 +386,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
       setTargetColumn('');
       setOffset(1.0);
       setSamplingRatio(200);
+      setSelectedColumns([]);
     } catch (error) {
       const axiosError = error as AxiosError<{ error: { message: string } }>;
       console.error('전처리 요청 실패:', axiosError);
@@ -371,7 +407,7 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
         <span className="text-[var(--color-error-text)]">*</span> 문자형 데이터는 인코딩이 꼭 필요합니다!
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className="flex-1 space-y-2 overflow-y-auto">
         {preprocessingCategories.map((cat) => {
           const isOpen = expanded.includes(cat.id);
           return (
@@ -399,8 +435,10 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
                   const needsTargetColumn = opt.apiEndpoint.includes('/target');
                   const needsOffset = opt.apiEndpoint.includes('/log');
                   const needsSampling = cat.id === 'CLASS_BALANCING';
+                  const needsColumns = cat.id === 'COL_HANDLE';
 
-                  const isValid = (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined);
+                  const isValid =
+                    (!needsTargetColumn || targetColumn) && (!needsOffset || offset !== undefined) && (!needsSampling || samplingRatio !== undefined) && (!needsColumns || selectedColumns.length > 0);
 
                   return (
                     <div
@@ -417,22 +455,24 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
                       {isSelected && (
                         <div className="space-y-3">
                           {/** 컬럼 선택 */}
-                          <div>
-                            <label className="block text-left text-xs font-medium">적용 컬럼</label>
-                            <Select value={opt.requireColumn ? selectedColumn || '' : (selectedColumn ?? '__ALL__')} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="전처리할 컬럼을 선택하세요." className="text-left text-sm" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {!opt.requireColumn && <SelectItem value="__ALL__">전체 컬럼</SelectItem>}
-                                {columnNames.map((col) => (
-                                  <SelectItem key={col} value={col}>
-                                    {col}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          {cat.id !== 'COL_HANDLE' && (
+                            <div>
+                              <label className="block text-left text-xs font-medium">적용 컬럼</label>
+                              <Select value={opt.requireColumn ? selectedColumn || '' : (selectedColumn ?? '__ALL__')} onValueChange={(val) => setSelectedColumn(val === '__ALL__' ? undefined : val)}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="전처리할 컬럼을 선택하세요." className="text-left text-sm" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {!opt.requireColumn && <SelectItem value="__ALL__">전체 컬럼</SelectItem>}
+                                  {columnNames.map((col) => (
+                                    <SelectItem key={col} value={col}>
+                                      {col}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
 
                           {needsTargetColumn && (
                             <div>
@@ -463,6 +503,25 @@ const PreprocessingOptions = ({ pipelineId, onChangeCells, onAddStep }: Preproce
                             <div>
                               <label className="block text-xs font-medium">Sampling Ratio (%)</label>
                               <Input type="number" value={samplingRatio} onChange={(e) => setSamplingRatio(Number(e.target.value))} className="w-full" />
+                            </div>
+                          )}
+
+                          {needsColumns && (
+                            <div>
+                              <label className="mb-1 block text-left text-xs font-medium">적용 컬럼 선택 (복수 선택 가능)</label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {columnNames.map((col) => (
+                                  <label key={col} className="flex items-center space-x-2 text-sm">
+                                    <Checkbox
+                                      checked={selectedColumns.includes(col)}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedColumns((prev) => (checked ? [...prev, col] : prev.filter((c) => c !== col)));
+                                      }}
+                                    />
+                                    <span>{col}</span>
+                                  </label>
+                                ))}
+                              </div>
                             </div>
                           )}
 
