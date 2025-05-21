@@ -5,6 +5,7 @@ import { isLoggedInAtom, userAtom, userToken } from '@/features/auth/model/authA
 import Image from 'next/image';
 import UserInfoPanel from '@/widgets/navbar/components/UserInfoPanel';
 import LoginButtons from '@/widgets/navbar/components/LoginButtons';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const UserMenu = () => {
   const [isLoggedIn, setIsLoggedIn] = useAtom(isLoggedInAtom);
@@ -19,21 +20,19 @@ const UserMenu = () => {
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-1 select-none">
-        <div className="group relative">
-          {/* 프로필 이미지 부분 */}
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
           <div className="bg-[theme(color-gray-01)] grid aspect-square w-10 cursor-pointer place-items-center rounded-full">
             {isLoggedIn && user ? <Image src="/profile_image.svg" alt="user profile image" width={40} height={40} /> : <p className="font-tossface cursor-pointer">❔</p>}
           </div>
+        </TooltipTrigger>
 
-          {/* 팝업 부분 */}
-          <div className="bg-[theme(primary-black)] absolute top-10 right-0 z-10 hidden w-64 rounded-md border border-[var(--color-gray-02)] p-4 text-[var(--primary-white)] opacity-90 shadow-md transition-transform duration-200 group-hover:block group-hover:scale-[1.01] hover:block">
-            {isLoggedIn && user ? <UserInfoPanel user={user} onLogout={handleLogout} /> : <LoginButtons />}
-          </div>
-        </div>
-      </div>
-    </div>
+        <TooltipContent side="bottom" align="end" className="bg-[theme(primary-black)] z-50 w-64 rounded-md p-4 text-[var(--primary-white)] opacity-95 shadow-md">
+          {isLoggedIn && user ? <UserInfoPanel user={user} onLogout={handleLogout} /> : <LoginButtons />}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
