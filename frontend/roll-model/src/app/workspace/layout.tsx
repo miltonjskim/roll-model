@@ -1,5 +1,5 @@
 const WorkspaceLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  return <div>{children}</div>;
+  return <div className="mx-auto max-w-[90vw]">{children}</div>;
 };
 
 export default WorkspaceLayout;
