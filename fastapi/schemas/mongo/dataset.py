@@ -46,6 +46,7 @@ class DatasetModel(BaseModel):
     registered_at: datetime = Field(default_factory=datetime.now())
     modified_at: datetime = Field(default_factory=datetime.now())
     etag: str  # MinIO 또는 S3의 ETag
+    object_name: str
     is_deleted: bool = False
     metadata: Optional[Dict[str, Any]] = None,
     is_preprocessed: bool = False

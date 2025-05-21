@@ -12,7 +12,6 @@ import io
 
 from service.dataset_service import replace_nan_values
 from service.db.pipeline_service import PipelineService, get_pipeline_service
-from utils.snake_to_camel import convert_dict_to_camel_case
 
 logger = logging.getLogger()
 

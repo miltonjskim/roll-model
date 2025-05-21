@@ -336,7 +336,7 @@ async def delete_preprocessing(
         return ApiResponse(
             status_code=200,
             message="삭제 성공",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(result), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(result, exclude_keys=["dataset"]), round_decimals=2))
         )
     except Exception as e:
         logger.error(f"전처리 스텝 삭제 중 오류 발생: {str(e)}")
@@ -498,7 +498,7 @@ async def complete_preprocessing(
                 "dataset": dataset_analysis["data_sample"]["data"][:30]
             }
         }
-        return jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response), round_decimals=2))
+        return jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response, exclude_keys=["dataset"]), round_decimals=2))
 
     except Exception as e:
         logger.error(f"전처리 완료 처리 중 오류 발생: {str(e)}")

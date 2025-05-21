@@ -527,7 +527,7 @@ class PipelineService:
         """
         try:
             # 파이프라인에 히스토리가 있는지 확인
-            dataset_id = None
+            object_name = None
             if not pipeline:
                 return ApiResponse(
                     status_code=400,
@@ -535,19 +535,19 @@ class PipelineService:
                 )
             if not pipeline.history:
                 # 원본 데이터 사용
-                dataset_id = pipeline.original_dataset_id
+                object_name = pipeline.original_dataset_object_name
             else:
                 latest_history = pipeline.history[-1]
                 if latest_history.preprocessing_steps:
                     # 가장 최근 전처리된 데이터 사용
                     latest_step = latest_history.preprocessing_steps[-1]
-                    dataset_id = latest_step.preprocessed_dataset_id
+                    object_name = latest_step.preprocessed_dataset_object_name
                 else:
                     # 원본 데이터 사용
-                    dataset_id = pipeline.original_dataset_id
+                    object_name = pipeline.original_dataset_object_name
                 
             datasets = get_dataset_collection()
-            dataset:DatasetModel = await datasets.find_one({"_id": ObjectId(dataset_id)})
+            dataset:DatasetModel = await datasets.find_one({"object_name": object_name})
             data_types_dict = dataset["metadata"]["data_types"]
 
             columns = []

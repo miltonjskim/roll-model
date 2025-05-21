@@ -206,7 +206,7 @@ async def get_sample_datasets_list():
         return ApiResponse(
             status_code=200,
             message="샘플 데이터셋 목록을 성공적으로 조회했습니다.",
-            data=convert_dict_to_camel_case({"samples": response_data})
+            data=convert_dict_to_camel_case({"samples": response_data}, exclude_keys=["dataset"])
         )
 
     except Exception as e:
@@ -427,7 +427,7 @@ async def reload_preprocess_pipeline(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 리로드되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data['data']), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data['data'], exclude_keys=["dataset"]), round_decimals=2))
         )
     
     except Exception as e:
@@ -508,7 +508,7 @@ async def reload_modeling_pipeline(
         return ApiResponse(
             status_code=200,
             message="파이프라인 모델링 단계가 성공적으로 리로드되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data, exclude_keys=["dataset"]), round_decimals=2))
         )
     
     except Exception as e:
@@ -688,7 +688,7 @@ async def fork_pipeline_preprocess(
         return ApiResponse(
             status_code=200,
             message="파이프라인 전처리 단계가 성공적으로 복제되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data["data"]), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data | current_step_data["data"], exclude_keys=["dataset"]), round_decimals=2))
         )
 
     except Exception as e:
@@ -783,7 +783,7 @@ async def fork_pipeline_total(
         return ApiResponse(
             status_code=200,
             message="파이프라인이 성공적으로 복제되었습니다.",
-            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data), round_decimals=2))
+            data=jsonable_encoder(replace_nan_values(convert_dict_to_camel_case(response_data, exclude_keys=["dataset"]), round_decimals=2))
         )
 
     except Exception as e:
