@@ -295,8 +295,8 @@ class PreprocessingHandler:
         dataset_object_name = self._get_dataset_object_name(pipeline)
 
         # 3. MinIO에서 초기 데이터 가져오기
-        minio_output, encoding = await self._get_data_from_minio(dataset_object_name)
-        encoding = encoding or "utf-8"
+        minio_output, etag = await self._get_data_from_minio(dataset_object_name)
+        encoding = "utf-8"
 
         # 4. 메모리 내에서 단계별 전처리 작업 수행
         current_df = pd.read_csv(io.BytesIO(minio_output), encoding=encoding)
