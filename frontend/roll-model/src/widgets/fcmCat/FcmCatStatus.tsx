@@ -142,7 +142,7 @@ export default function FcmCatStatus() {
   };
 
   return (
-    <div className="fixed bottom-40 left-4 z-50 h-20 w-30">
+    <div className="fixed bottom-20 left-4 z-50 h-20 w-30">
       {isButtonVisible && (
         <div>
           <button className="bg-[theme(color-mint-03)] m-1 cursor-pointer" onClick={() => handleStartLearning('기본')}>
