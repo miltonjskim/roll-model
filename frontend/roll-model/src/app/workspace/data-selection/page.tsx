@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { pipelineIdAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
+import { pipelineIdAtom, selectedSampleDataIdAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { SampleDataset, SampleDatasetResponse, SampleDatasetUploadResponse } from '@/entities/workspace/data-selection/model/type';
 import { projectCategoryAtom, projectDescriptionAtom, projectDomainAtom, projectIdAtom, projectPublicAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { SampleColumnModal } from '@/features/workspace/data-selection/ui/SampleColumnModal';
@@ -31,6 +31,7 @@ const SelectDataPage = () => {
   const projectPublic = useAtomValue(projectPublicAtom);
   const setPipelineId = useSetAtom(pipelineIdAtom);
   const setUploadedDataset = useSetAtom(uploadedDatasetAtom);
+  const setSelectedSampleDataId = useSetAtom(selectedSampleDataIdAtom);
 
   const fetchSampleDatasetList = async () => {
     setIsLoading(true);
@@ -87,7 +88,7 @@ const SelectDataPage = () => {
 
       setPipelineId(pipelineId);
 
-      router.push('/workspace/data-preprocess');
+      router.push('/workspace/project-meta');
     } catch (error) {
       const apiError = error as ApiError;
       showErrorToast(apiError.message);
@@ -103,7 +104,9 @@ const SelectDataPage = () => {
 
   const handleSelectSample = (dataset: SampleDataset) => {
     const sampleId = dataset.id;
-    handleCreateProject(sampleId);
+    setSelectedSampleDataId(sampleId);
+    router.push('/workspace/project-meta')
+    // handleCreateProject(sampleId);
   };
 
   const regressionSamples = samples.filter((s) => s.category === 'REGRESSION');
@@ -118,7 +121,7 @@ const SelectDataPage = () => {
     <div>
       <div className="mx-auto flex max-w-[70%] items-center justify-between">
         <div className="text-left select-none">
-          <h1 className="text-xl font-bold">3. 프로젝트 데이터 선택</h1>
+          <h1 className="text-xl font-bold">2. 프로젝트 데이터 선택</h1>
           <h2>데이터를 선택해 주세요</h2>
         </div>
         <StepProgress />

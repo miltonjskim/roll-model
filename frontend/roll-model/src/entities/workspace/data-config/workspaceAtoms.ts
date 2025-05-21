@@ -11,3 +11,4 @@ export const preprocessingStepsAtom = atom<PreviousPreprocessingSteps[] | null>(
 export const dataColumnsAtom = atom<Record<string, string>[]>([]);
 export const aiRecommendedStepsAtom = atom<Step[]>([]);
 export const preprocessErrorMsgAtom = atom('');
+export const selectedSampleDataIdAtom = atom<number>(0);

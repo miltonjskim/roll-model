@@ -23,7 +23,7 @@ const Workspace = () => {
   }, []);
 
   const handleCreateProject = () => {
-    router.push('/workspace/project-meta');
+    router.push('/workspace/data-selection');
   };
 
   const moveToMyProjectListPage = () => {

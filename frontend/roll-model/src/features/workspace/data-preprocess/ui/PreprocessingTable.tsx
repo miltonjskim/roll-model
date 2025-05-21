@@ -13,15 +13,16 @@ interface PreprocessingTableProps {
 const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
   const uploaded = useAtomValue(uploadedDatasetAtom);
   const dataset: OriginalDatasetType | null = uploaded?.originalDatasets ?? null;
+  const columns = uploaded?.originalDatasets.columns ?? [];
 
   // console.log('changedCells:', changedCells);
   // console.log('dataset:', dataset);
 
-  if (!dataset || dataset.data.length === 0) {
+  if (!dataset || dataset.data?.length === 0) {
     return <p className="mt-2 text-sm text-gray-500">표시할 데이터가 없습니다.</p>;
   }
 
-  const dynamicColumns = Array.from(new Set(dataset.data.flatMap((row) => Object.keys(row).filter((key) => key !== 'idx'))));
+  // const dynamicColumns = Array.from(new Set(dataset.data.flatMap((row) => Object.keys(row).filter((key) => key !== 'idx'))));
 
   // console.log('dynamicColumns:', dynamicColumns);
 
@@ -30,9 +31,9 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold">행</TableHead>
-            {dynamicColumns.map((col) => (
-              <TableHead className="bg-[theme(color-gray-04)] sticky top-0 z-10 text-center text-sm font-semibold" key={col}>
+            <TableHead className="sticky top-0 z-10 bg-blue-50 text-center text-sm font-semibold">행</TableHead>
+            {columns.map((col) => (
+              <TableHead className="sticky top-0 z-10 bg-blue-50 text-center text-sm font-semibold" key={col}>
                 {col}
               </TableHead>
             ))}
@@ -45,7 +46,7 @@ const PreprocessingTable = ({ changedCells }: PreprocessingTableProps) => {
             return (
               <TableRow key={String(rowKey)}>
                 <TableCell className="text-xs text-gray-500">{rowKey}</TableCell>
-                {dynamicColumns.map((col) => {
+                {columns.map((col) => {
                   const cellKey = `${rowKey}:${col}`;
                   const isChanged = changedCells?.[cellKey];
                   const value = row[col];
