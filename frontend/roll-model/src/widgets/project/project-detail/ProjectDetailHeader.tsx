@@ -14,7 +14,7 @@ import confetti from 'canvas-confetti';
 export default function ProjectDetailHeader() {
   const [projectDetail, setProjectDetail] = useAtom(projectDetailAtom);
   const [showDropdown, setShowDropdown] = useState(false);
-  const { handleAfterSchoolClick, moveToPreprocessing } = useAfterSchool();
+  const { handleAfterSchoolClick, moveToPreprocessingByNamNam } = useAfterSchool();
   const router = useRouter();
   // confetti
   const iconRef = useRef<HTMLDivElement>(null);
@@ -266,7 +266,7 @@ export default function ProjectDetailHeader() {
                 >
                   <button
                     className="cursor-pointer rounded-md border border-[var(--color-gray-01)] px-3 py-2 text-sm whitespace-nowrap text-white duration-300 ease-in-out select-none hover:border-[var(--color-rose-02)]"
-                    onClick={() => moveToPreprocessing(projectDetail.id, projectDetail.title)}
+                    onClick={() => moveToPreprocessingByNamNam(projectDetail.id, projectDetail.title)}
                   >
                     전처리부터 재학습
                   </button>
