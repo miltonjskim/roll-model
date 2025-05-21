@@ -59,9 +59,12 @@ const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: Preprocessi
   const [expanded, setExpanded] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
+    setIsLoading(true);
     const error = await requestPreprocessing();
+    setIsLoading(false);
 
     if (error) {
       setErrorMsg(error);
@@ -86,6 +89,12 @@ const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: Preprocessi
           <DialogTitle className="text-lg font-bold">AI 추천 전처리 단계 안내</DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">아래 단계들이 순차적으로 실행됩니다.</DialogDescription>
         </DialogHeader>
+
+        {isLoading && (
+          <div className="bg-opacity-70 absolute inset-0 z-10 flex items-center justify-center bg-white">
+            <span className="h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          </div>
+        )}
 
         <Collapsible open={expanded} onOpenChange={setExpanded} className="mt-3">
           <CollapsibleTrigger asChild>
