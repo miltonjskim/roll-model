@@ -15,7 +15,7 @@ interface AfterSchoolDropdownProps {
 
 export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { handleAfterSchoolClick, moveToPreprocessing, testAfterSchoolClick } = useAfterSchool();
+  const { handleAfterSchoolClick, moveToPreprocessingByNamNam, testAfterSchoolClick } = useAfterSchool();
 
   return (
     <div className="relative">
@@ -83,7 +83,7 @@ export const AfterSchoolDropdown = ({ project }: AfterSchoolDropdownProps) => {
                 className="bg-[theme(primary-black)] hover:bg-[theme(primary-black)]/90 tranition-all cursor-pointer rounded-md px-20 py-36 text-sm whitespace-nowrap text-white duration-300 ease-in-out select-none"
                 onClick={(e) => {
                   e.stopPropagation(); // 이벤트 버블링 중단
-                  moveToPreprocessing(project.id, project.title);
+                  moveToPreprocessingByNamNam(project.id, project.title);
                   setIsVisible(false);
                 }}
               >
