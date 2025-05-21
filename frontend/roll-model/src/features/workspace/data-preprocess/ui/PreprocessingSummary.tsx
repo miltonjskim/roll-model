@@ -13,8 +13,8 @@ const PreprocessingSummary = () => {
     if (!uploadedData) return null;
 
     const { totalRows, totalColumns } = uploadedData.summary;
-    const missingColumns = uploadedData.missingValues.columns;
-    const details = uploadedData.missingValues.details;
+    const missingColumns = uploadedData.missingValues?.columns;
+    const details = uploadedData.missingValues?.details;
 
     return {
       rowCount: totalRows,
@@ -36,7 +36,7 @@ const PreprocessingSummary = () => {
             <span className="font-tossface mr-1">📊</span>총 {summary.rowCount.toLocaleString()}행 · {summary.columnCount}열
           </p>
           <button onClick={() => setShowModal(true)} className="text-[var(--color-blue-01)] hover:underline">
-            <span className="font-tossface mr-1">🧩</span>결측 컬럼 {summary.missingColumnNames.length}개
+            <span className="font-tossface mr-1">🧩</span>결측 컬럼 {summary.missingColumnNames ? summary.missingColumnNames.length : '0'}개
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@ const PreprocessingSummary = () => {
             </DialogTitle>
           </DialogHeader>
 
-          {summary.missingColumnNames.length === 0 ? (
+          {!summary.missingColumnNames?.length ? (
             <p className="mt-4 text-center text-sm text-gray-500">결측 컬럼이 없습니다.</p>
           ) : (
             <ul className="mt-4 space-y-4">
