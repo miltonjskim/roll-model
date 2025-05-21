@@ -11,6 +11,14 @@ export default function ApiDownloadCard({ pipelineId }: ApiDownloadCardProps) {
       const response = await downloadYourModel(pipelineId);
       const { downloadUrl, fileName, fileSize } = response.data;
       const fileSizeMB = fileSize ? (fileSize / (1024 * 1024)).toFixed(2) : '알 수 없음';
+
+      // 2. 프록시 API 엔드포인트를 사용하여 파일을 가져옵니다
+      // URL에서 경로 부분만 추출 (http://54.180.212.247:30900 이후 부분)
+      const filePathWithParams = downloadUrl.replace(/^https?:\/\/[^\/]+/, '');
+
+      // Next.js API 경로를 통해 프록시 요청
+      const proxyDownloadUrl = `/api/proxy-download?path=${encodeURIComponent(filePathWithParams)}`;
+
       // 동적으로 a 태그 생성하여 다운로드 트리거
       const downloadLink = document.createElement('a');
       downloadLink.href = downloadUrl; // 서명된 URL 설정

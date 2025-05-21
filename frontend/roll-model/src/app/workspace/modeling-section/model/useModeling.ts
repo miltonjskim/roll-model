@@ -94,7 +94,8 @@ export const useModeling = () => {
       console.log('학습 시작 응답:', response); // 응답데이터 확인
 
       localStorage.setItem(`modelTrainingStatus`, 'LEARNING'); // 학습중 상태로 전환 (고양이)
-      alert('모델 학습이 시작되었습니다!'); // alert제거해
+      // alert('모델 학습이 시작되었습니다!'); // alert제거해
+
       await resetAtoms();
       // 로컬 스토리지 업데이트
       localStorage.setItem('modelTrainingStatus', 'LEARNING');
