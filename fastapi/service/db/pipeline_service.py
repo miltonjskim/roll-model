@@ -209,7 +209,7 @@ class PipelineService:
                                    ) -> Optional[PipelineModel]:
         """파이프라인 히스토리를 추가합니다."""
         # 히스토리 항목 추가
-        pipeline.history.append(history_item.model_copy())
+        pipeline.history=[history_item.model_copy()]
         pipeline.modified_at = datetime.now()
 
         # DB 업데이트
@@ -239,7 +239,7 @@ class PipelineService:
                     status=new_status,
                     preprocessing_steps=[]
                 )
-                pipeline.history.append(new_history_item)
+                pipeline.history=[new_history_item]
             else:
                 # 히스토리의 마지막 항목 상태 업데이트
                 current_history = pipeline.history[-1]
@@ -363,7 +363,7 @@ class PipelineService:
                         status=current_history.status,
                         preprocessing_steps=new_steps_copy
                     )
-                    pipeline.history.append(new_history_item)
+                    pipeline.history = [new_history_item]
                     logger.debug("새 히스토리 항목 추가 성공")
                 except Exception as copy_error:
                     logger.error(f"스텝 복사 또는 히스토리 항목 생성 중 오류: {copy_error}")
