@@ -25,14 +25,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link href="https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css" rel="stylesheet" type="text/css" />
       </head>
-      <body className="bg-[theme(color-background)] flex min-h-screen flex-col">
+      <body className="to-[theme(primary-white)] flex min-h-screen flex-col bg-gradient-to-b from-transparent">
         <AppProvider>
           <ClientFCMInitializer />
-          <header className="h-20">
+          <header className="group h-12 transition-all duration-300 hover:h-20">
             <Navbar />
           </header>
-          <main className="flex flex-1 items-center justify-center px-4">
-            <div className="w-full max-w-[80vw] rounded-md text-center">
+          <main className="flex flex-1 items-center justify-center">
+            <div className="w-full rounded-md text-center">
               <GlobalLoading />
               {children}
             </div>
