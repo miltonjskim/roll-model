@@ -115,7 +115,7 @@ const PreprocessingPipeline = ({ steps, cardStyle = 'large', highlight = 'none' 
             ? 'flex max-h-[34vh] flex-col items-center gap-3 overflow-y-auto'
             : steps.filter(Boolean).length === 0
               ? 'flex flex-nowrap justify-start gap-3 overflow-x-auto'
-              : 'flex w-full flex-row-reverse flex-nowrap justify-start gap-3 overflow-x-auto',
+              : 'flex w-full flex-row-reverse flex-nowrap justify-end gap-3 overflow-x-auto',
         )}
       >
         {/* 단계 수 표시 */}
