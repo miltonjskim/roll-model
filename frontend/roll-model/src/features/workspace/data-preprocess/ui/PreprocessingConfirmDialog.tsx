@@ -8,10 +8,12 @@ import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Info } from 'lucid
 import clsx from 'clsx';
 import SectionCard from '@/features/workspace/data-preprocess/ui/SectionCard';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { FaOdysee } from 'react-icons/fa6';
+import FailedAllPreprocessingRequestAlertDialog from '@/features/workspace/data-preprocess/ui/FailedAllPreprocessingRequestAlertDialog';
 
 interface PreprocessingConfirmDialogProps {
   steps: Step[];
-  requestPreprocessing: () => void;
+  requestPreprocessing: () => Promise<string | null>;
 }
 
 const sections = [
@@ -52,23 +54,21 @@ const sections = [
   },
 ];
 
-const typeMapping: Record<string, string> = {
-  // categoryId → API type
-  missing_values: 'MISSING_VALUE_IMPUTATION', // 결측치 대체
-  outlier_detection: 'OUTLIER_DETECTION',
-  outlier_handle: 'OUTLIER_IMPUTATION', // or REMOVE
-  data_transformation: 'Z_SCORE_SCALING', // etc.
-  encoding: 'ONEHOT_ENCODING', // etc.
-  class_balancing: 'CLASS_BALANCING',
-  col_handle: 'COLUMN_DROP', // or COLUMN_KEEP
-};
 const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: PreprocessingConfirmDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleConfirm = () => {
-    requestPreprocessing();
-    setOpen(false);
+  const handleConfirm = async () => {
+    const error = await requestPreprocessing();
+
+    if (error) {
+      setErrorMsg(error);
+      setShowModal(true);
+    } else {
+      setOpen(false);
+    }
   };
 
   console.log('한번에 전처리할 steps:', steps);
@@ -81,7 +81,7 @@ const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: Preprocessi
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">AI 추천 전처리 단계 안내</DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">아래 단계들이 순차적으로 실행됩니다.</DialogDescription>
@@ -129,7 +129,7 @@ const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: Preprocessi
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-red-500" />
               <p>
-                중간에 <span className="text-destructive font-semibold">오류가 발생하면</span>, 오류 발생 이전 단계까지만 적용됩니다.
+                중간에 오류가 발생하면, <span className="text-destructive font-semibold">전처리 실행이 취소됩니다.</span>
               </p>
             </div>
           </div>
@@ -144,6 +144,7 @@ const PreprocessingConfirmDialog = ({ steps, requestPreprocessing }: Preprocessi
           </Button>
         </DialogFooter>
       </DialogContent>
+      <FailedAllPreprocessingRequestAlertDialog open={showModal} onOpenChange={setShowModal} errorMsg={errorMsg} setShowModal={setShowModal} />
     </Dialog>
   );
 };

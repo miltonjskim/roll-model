@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/entities/workspace/data-config/model/types';
 import { aiRecommendedStepsAtom, completedDatasetAtom, pipelineIdAtom, preprocessErrorMsgAtom, preprocessingStepsAtom, uploadedDatasetAtom } from '@/entities/workspace/data-config/workspaceAtoms';
 import { Step } from '@/entities/workspace/data-preprocess/model/types';
+import { processClearSteps } from '@/entities/workspace/data-preprocess/utils/processClearSteps';
 import { projectCategoryAtom, projectTitleAtom } from '@/entities/workspace/model/projectAtoms';
 import { guide } from '@/features/guide/GuideProvider';
 import { registerPreprocessGuideSteps } from '@/features/guide/steps/registerPreprocessGuideSteps';
@@ -20,6 +21,7 @@ import StepProgress from '@/features/workspace/ui/StepProgress';
 import { axiosInstance } from '@/shared/lib/axios/axiosInstance';
 import { showErrorToast } from '@/shared/lib/toast/toast';
 import { globalLoadingAtom, globalLoadingMessageAtom } from '@/shared/model/atoms/GlobalLoadingAtom';
+import { AxiosError } from 'axios';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { ApiError } from 'next/dist/server/api-utils';
 import { useRouter } from 'next/navigation';
@@ -173,23 +175,33 @@ const PreprocessDataPage = () => {
     }
   };
 
-  const requestAllPreprocessingSteps = async () => {
+  const requestAllPreprocessingSteps = async (): Promise<string | null> => {
+    // setIsLoading(true);
+    // setLoadingMessage('전처리 단계를 일괄 적용 중입니다.');
     try {
+      const processedSteps = recommendedSteps.map(processClearSteps);
+
       const payload = {
-        steps: recommendedSteps.map((step) => ({
-          type: step.type,
-          ...step.parameters,
-        })),
+        steps: processedSteps,
       };
 
       console.log('전처리 일괄 요청 payload:', payload);
 
-      // const response = await axiosInstance.post(`/api/v1/pipelines/${pipelineId}/batch`, payload);
+      const response = await axiosInstance.post(`/api/v2/pipelines/${pipelineId}/preprocessing/batch`, payload);
 
-      // console.log('전처리 일괄 실행 결과:', response.data);
+      console.log('전처리 일괄 실행 결과:', response.data);
+      return null;
     } catch (error) {
+      const axiosError = error as AxiosError<unknown>;
       console.error('전처리 일괄 실행 실패:', error);
-      showErrorToast('전처리 실행 중 오류가 발생했습니다.');
+      console.log('errorMsg:', axiosError?.response?.data);
+
+      const data = axiosError?.response?.data as { error?: { message?: string } };
+      const message = data?.error?.message ?? '전처리 실행 중 오류가 발생했습니다.';
+
+      console.log('message:', message);
+
+      return message;
     }
   };
 

@@ -7,7 +7,7 @@ interface Section {
 const SectionCard = ({ section }: { section: Section }) => (
   <div className="bg-muted/50 rounded-md border p-4 shadow-sm">
     <div className="text-foreground mb-2 flex items-center gap-2 text-sm font-semibold">
-      <span className="text-xl">{section.icon}</span>
+      <span className="font-tossface text-xl">{section.icon}</span>
       {section.title}
     </div>
     {section.items.length > 0 && (
