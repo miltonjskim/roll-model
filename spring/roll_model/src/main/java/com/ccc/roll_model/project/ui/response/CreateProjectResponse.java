@@ -1,7 +1,7 @@
 package com.ccc.roll_model.project.ui.response;
 
-import com.ccc.roll_model.project.infrastructure.entity.Category;
-import com.ccc.roll_model.project.infrastructure.entity.Domain;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.Category;
+import com.ccc.roll_model.project.infrastructure.entity.mysql.Domain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 

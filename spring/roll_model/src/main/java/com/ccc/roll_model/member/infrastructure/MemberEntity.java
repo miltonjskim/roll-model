@@ -40,10 +40,6 @@ public class MemberEntity extends BaseCreatedAndUpdatedEntity {
 	@Column(length = 30, nullable = false)
 	private String email;
 
-	@Column(name = "deleted_at")
-	private LocalDateTime deletedAt;
-
-	public void delete() {
-		this.deletedAt = LocalDateTime.now();
-	}
+	@Column(name = "deleted_yn", columnDefinition = "boolean default false")
+	private Boolean deletedYn = false;
 }

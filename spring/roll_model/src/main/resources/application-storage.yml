@@ -14,9 +14,14 @@ spring:
   # MINIO STORAGE
   minio:
     endpoint: ${MINIO_ENDPOINT}
-    bucket-name: ${MINIO_BUCKET_NAME}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     secure: false
 
-
+  # MODEL MINIO STORAGE (모델 전용 MinIO)
+  model-minio:
+    endpoint: ${MODEL_MINIO_ENDPOINT}
+    bucket-name: ${MODEL_MINIO_BUCKET_NAME}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    secure: false

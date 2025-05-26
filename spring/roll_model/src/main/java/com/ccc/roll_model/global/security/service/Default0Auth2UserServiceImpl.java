@@ -41,6 +41,7 @@ public class Default0Auth2UserServiceImpl extends DefaultOAuth2UserService {
 					.email(email)
 					.nickname(name)
 					.provider(Member.Provider.valueOf(registrationId))
+					.deletedYn(false)
 					.build()
 			));
 		return new OAuth2UserDetails(member);

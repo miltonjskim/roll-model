@@ -41,7 +41,8 @@ public class JWTFilter extends OncePerRequestFilter {
 		throws ServletException, IOException {
 
 		// 1. 토큰이 필요하지 않은 API URL 리스트
-		List<String> allowedPaths = Arrays.asList("/**"
+		List<String> allowedPaths = Arrays.asList(
+			"/**"
 		);
 
 		// 2. 토큰이 필요하지 않은 URL이나 OPTIONS 요청일 경우 그냥 통과
@@ -79,9 +80,9 @@ public class JWTFilter extends OncePerRequestFilter {
 
 			// 토큰이 없거나 Bearer 형식이 아닌 경우
 			if (authorization == null) {
-				throw new JwtException("토큰이 없습니다.");
+				throw new JwtException("empty");
 			} else if (!authorization.startsWith("Bearer ")) {
-				throw new JwtException("Invalid token format");
+				throw new JwtException("invalid");
 			}
 
 			// Bearer 부분 제거 후 순수 토큰만 획득
@@ -121,6 +122,9 @@ public class JWTFilter extends OncePerRequestFilter {
 				if (e.getMessage().contains("expired")) {
 					errorMessage = "토큰이 만료되었습니다";
 					errorCode = "EXPIRED_TOKEN";
+				} else if (e.getMessage().contains("empty")) {
+					errorMessage = "토큰이 없습니다";
+					errorCode = "EMPTY_TOKEN";
 				} else {
 					errorMessage = "유효하지 않은 토큰입니다";
 					errorCode = "INVALID_TOKEN";
