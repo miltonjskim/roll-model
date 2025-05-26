@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "Diabetes Prediction Dataset",
+      "category": "CLASSIFICATION",
+      "domain": "HEALTHCARE",
+      "version": "1.0",
+      "projectPublicYn": true,
+      "pipelinePublicYn": false,
+      "ownerYn": true
+    },
+    "apiStatus": {
+      "expiresAt": "2025-08-08T23:59:59Z",
+      "accuracy": 0.92, 
+      "rSquared": null
+    },
+
+    "endpoint": {
+      "url": "https://api.testtesttesttesttesttest.com/models/proj-12345/predict",
+      "apiKey": "sk_12345abcdef67890"
+    },
+    "inputSchema": {
+      "features": [
+        {
+          "name": "feature1",
+          "type": "number",
+          "required": true,
+          "example": 25.4
+        },
+        {
+          "name": "feature2",
+          "type": "enum",
+          "required": true,
+          "options": ["category_a", "category_b", "category_c"],
+          "example": "category_a"
+        },
+        {
+          "name": "feature3",
+          "type": "string",
+          "required": true,
+          "example": "namgi"
+        },
+        {
+          "name": "feature4",
+          "type": "boolean",
+          "required": false,
+          "example": true
+        }
+      ]
+    }
+  },
+  "error": null
+}
