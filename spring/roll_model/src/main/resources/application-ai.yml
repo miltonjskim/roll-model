@@ -1,0 +1,8 @@
+spring:
+  config:
+    activate:
+      on-profile: ai
+  ai:
+    openai:
+      api-key: ${OPEN_AI_SECRET_KEY}
+      model: gpt-4o-turbo
