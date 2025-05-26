@@ -1,0 +1,126 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "Diabetes Prediction Dataset",
+      "category": "CLASSIFICATION",
+      "domain": "HEALTHCARE",
+      "version": "1.0",
+      "projectPublicYn": true,
+      "pipelinePublicYn": false,
+      "ownerYn": true
+    },
+    "algorithm": "RandomForestClassifier",
+    "modelParameters": [
+      {
+        "parameterName": "트리 개수",
+        "parameterValue": "100 개",
+        "parameterKey": "n_estimators"
+      },
+      {
+        "parameterName": "최대 깊이",
+        "parameterValue": "10 레벨",
+        "parameterKey": "max_depth"
+      }
+    ],
+    "targetInfo": [
+      {
+        "targetName": "특성 수",
+        "targetValue": "자동",
+        "targetKey": "feature_count"
+      },
+      {
+        "durationName": "학습 시간",
+        "durationValue": "5.2 초",
+        "durationKey": "learning_duration"
+      }
+    ],
+    "performanceMetrics": [
+      {
+        "metricName": "정확도 (Accuracy)",
+        "metricValue": "90%",
+        "metricDesc": "올바르게 분류한 비율",
+        "metricKey": "accuracy"
+      },
+      {
+        "metricName": "정밀도 (Precision)",
+        "metricValue": "85%",
+        "metricDesc": "양성 예측의 정확성",
+        "metricKey": "precision"
+      },
+      {
+        "metricName": "재현율 (Recall)",
+        "metricValue": "80%",
+        "metricDesc": "실제 양성 감지율",
+        "metricKey": "recall"
+      },
+      {
+        "metricName": "F1 점수",
+        "metricValue": "82%",
+        "metricDesc": "정밀도와 재현율의 조화",
+        "metricKey": "f1_score"
+      }
+    ],
+    "confusionMatrix": {
+      "labels": ["Class A", "Class B", "Class C", "Class D", "Class E", "Class F", "Class G", "Class H", "Class I", "Class J", "Class K", "Class L"],
+      "matrixData": [
+        [92, 2, 1, 0, 1, 0, 2, 0, 1, 0, 1, 0],
+        [3, 89, 2, 1, 0, 0, 1, 2, 0, 1, 0, 1],
+        [1, 3, 90, 2, 0, 1, 0, 0, 1, 0, 1, 1],
+        [0, 1, 2, 94, 0, 0, 1, 0, 0, 1, 0, 1],
+        [2, 0, 1, 0, 91, 3, 0, 1, 0, 0, 1, 1],
+        [0, 1, 0, 1, 2, 92, 1, 0, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1, 93, 2, 0, 1, 0, 1],
+        [0, 1, 1, 0, 0, 0, 3, 91, 2, 0, 1, 1],
+        [1, 0, 0, 1, 1, 2, 0, 1, 90, 3, 0, 1],
+        [1, 1, 0, 0, 0, 1, 0, 0, 2, 92, 2, 1],
+        [0, 0, 1, 1, 1, 0, 1, 1, 0, 2, 92, 1],
+        [1, 1, 0, 1, 0, 1, 0, 2, 1, 0, 1, 92]
+      ]
+    },
+    "featureImportance": [
+      {
+        "featureName": "혈당",
+        "importanceValue": "27%",
+        "importanceKey": "blood_sugar"
+      },
+      {
+        "featureName": "BMI",
+        "importanceValue": "21%",
+        "importanceKey": "bmi"
+      },
+      {
+        "featureName": "나이",
+        "importanceValue": "16%",
+        "importanceKey": "age"
+      },
+      {
+        "featureName": "혈압",
+        "importanceValue": "12%",
+        "importanceKey": "blood_pressure"
+      },
+      {
+        "featureName": "인슐린",
+        "importanceValue": "9%",
+        "importanceKey": "insulin"
+      },
+      {
+        "featureName": "피부두께",
+        "importanceValue": "7%",
+        "importanceKey": "skin_thickness"
+      },
+      {
+        "featureName": "임신횟수",
+        "importanceValue": "5%",
+        "importanceKey": "pregnancies"
+      },
+      {
+        "featureName": "당뇨병 가족력",
+        "importanceValue": "3%",
+        "importanceKey": "diabetes_pedigree"
+      }
+    ]
+  },
+  "error": null
+}
