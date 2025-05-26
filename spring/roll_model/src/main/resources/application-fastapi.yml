@@ -1,0 +1,7 @@
+spring:
+  config:
+    activate:
+      on-profile: fastapi
+fast-api:
+  server:
+    url: ${FAST_API_SERVER_URL}
