@@ -1,0 +1,152 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "projectInfo": {
+      "title": "주택 가격 예측 모델",
+      "category": "REGRESSION",
+      "domain": "HEALTHCARE",
+      "version": "1.0",
+      "projectPublicYn": true,
+      "pipelinePublicYn": false,
+      "ownerYn": true
+    },
+    "algorithm": "ElasticNet",
+    "modelParameters": [
+      {
+        "parameterName": "전체 정규화 강도",
+        "parameterValue": "0.01",
+        "parameterKey": "alpha"
+      },
+      {
+        "parameterName": "L1/L2 비율",
+        "parameterValue": "1",
+        "parameterKey": "l1_ratio"
+      }
+    ],
+    "targetInfo": [
+      {
+        "targetName": "특성 수",
+        "targetValue": "자동",
+        "targetKey": "feature_count"
+      },
+      {
+        "durationName": "학습 시간",
+        "durationValue": "5.2 초",
+        "durationKey": "learning_duration"
+      }
+    ],
+    "performanceMetrics": [
+      {
+        "metricName": "R² (결정 계수)",
+        "metricValue": "0.89",
+        "metricDesc": "모델이 설명하는 분산의 비율",
+        "metricKey": "r2_score"
+      },
+      {
+        "metricName": "MAE (평균 절대 오차)",
+        "metricValue": "2.87",
+        "metricDesc": "예측값과 실제값 차이의 절대값 평균",
+        "metricKey": "mae"
+      },
+      {
+        "metricName": "MSE (평균 제곱 오차)",
+        "metricValue": "12.45",
+        "metricDesc": "예측값과 실제값 차이의 제곱 평균",
+        "metricKey": "mse"
+      },
+      {
+        "metricName": "RMSE (평균 제곱근 오차)",
+        "metricValue": "3.53",
+        "metricDesc": "MSE의 제곱근 값",
+        "metricKey": "rmse"
+      }
+    ],
+
+    "actualVsPredicted": {
+      "data": [
+        { "actual": 142.3, "predicted": 135.8, "id": 0 },
+        { "actual": 58.7, "predicted": 62.4, "id": 1 },
+        { "actual": 89.2, "predicted": 85.6, "id": 2 },
+        { "actual": 112.5, "predicted": 118.9, "id": 3 },
+        { "actual": 76.3, "predicted": 79.1, "id": 4 },
+        { "actual": 185.6, "predicted": 179.2, "id": 5 },
+        { "actual": 95.4, "predicted": 93.7, "id": 6 },
+        { "actual": 67.8, "predicted": 71.2, "id": 7 },
+        { "actual": 128.9, "predicted": 133.4, "id": 8 },
+        { "actual": 153.2, "predicted": 147.5, "id": 9 },
+        { "actual": 72.1, "predicted": 75.8, "id": 10 },
+        { "actual": 103.5, "predicted": 99.2, "id": 11 },
+        { "actual": 83.7, "predicted": 87.4, "id": 12 },
+        { "actual": 134.2, "predicted": 129.6, "id": 13 },
+        { "actual": 92.8, "predicted": 96.3, "id": 14 },
+        { "actual": 115.6, "predicted": 110.9, "id": 15 },
+        { "actual": 168.3, "predicted": 173.7, "id": 16 },
+        { "actual": 79.5, "predicted": 83.2, "id": 17 },
+        { "actual": 107.8, "predicted": 104.3, "id": 18 },
+        { "actual": 62.4, "predicted": 65.9, "id": 19 }
+      ],
+      "xAxisLabel": "예측값 (mg/dL)",
+      "yAxisLabel": "실제값 (mg/dL)",
+      "perfectLinePoints": [
+        { "x": 0, "y": 0 },
+        { "x": 200, "y": 200 }
+      ]
+    },
+    "residualPlot": {
+      "data": [
+        { "predicted": 135.8, "residual": 6.5, "id": 0 },
+        { "predicted": 62.4, "residual": -3.7, "id": 1 },
+        { "predicted": 85.6, "residual": 3.6, "id": 2 },
+        { "predicted": 118.9, "residual": -6.4, "id": 3 },
+        { "predicted": 79.1, "residual": -2.8, "id": 4 },
+        { "predicted": 179.2, "residual": 6.4, "id": 5 },
+        { "predicted": 93.7, "residual": 1.7, "id": 6 },
+        { "predicted": 71.2, "residual": -3.4, "id": 7 },
+        { "predicted": 133.4, "residual": -4.5, "id": 8 },
+        { "predicted": 147.5, "residual": 5.7, "id": 9 },
+        { "predicted": 75.8, "residual": -3.7, "id": 10 },
+        { "predicted": 99.2, "residual": 4.3, "id": 11 },
+        { "predicted": 87.4, "residual": -3.7, "id": 12 },
+        { "predicted": 129.6, "residual": 4.6, "id": 13 },
+        { "predicted": 96.3, "residual": -3.5, "id": 14 },
+        { "predicted": 110.9, "residual": 4.7, "id": 15 },
+        { "predicted": 173.7, "residual": -5.4, "id": 16 },
+        { "predicted": 83.2, "residual": -3.7, "id": 17 },
+        { "predicted": 104.3, "residual": 3.5, "id": 18 },
+        { "predicted": 65.9, "residual": -3.5, "id": 19 }
+      ],
+      "histogram": {
+        "bins": [-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10],
+        "frequencies": [0, 0, 2, 6, 0, 1, 4, 5, 2, 0, 0]
+      },
+      "xAxisLabel": "예측값 (mg/dL)",
+      "yAxisLabel": "잔차 (실제값 - 예측값)",
+      "zeroLineY": 0
+    },
+
+    "featureImportance": [
+      {
+        "featureName": "혈당",
+        "importanceValue": "35%",
+        "importanceKey": "blood_sugar"
+      },
+      {
+        "featureName": "BMI",
+        "importanceValue": "28%",
+        "importanceKey": "bmi"
+      },
+      {
+        "featureName": "나이",
+        "importanceValue": "21%",
+        "importanceKey": "age"
+      },
+      {
+        "featureName": "혈압",
+        "importanceValue": "16%",
+        "importanceKey": "blood_pressure"
+      }
+    ]
+  },
+  "error": null
+}
