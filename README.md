@@ -101,10 +101,11 @@ roll-model은 데이터 전처리, 모델링, 평가, 배포 과정의 자동화
 ---
 ## 🧪 기술 스택
 
-- **Frontend**: React, FCM, Styled-components
-- **Backend**: FastAPI, MongoDB, Celery, Kafka
-- **ML Library**: Scikit-learn
-- **Infra**: Kubernetes, KServe, Istio, Kong API Gateway, Docker, GitHub Actions (CI/CD)
+- **Frontend**: React, FCM, Styled-components, Next.js, TanStackQuery, Jotai, Jest
+- **Backend**: FastAPI, Spring, Celery, Kafka
+- **DB**: MongoDB, MySQL
+- **Storage**: MINIO
+- **Infra**: Kubernetes, KServe, NginX, Istio, Kong API Gateway, Docker, Jenkins (CI/CD), mlflow, Scikit-learn, Jinja
 
 ---
 
