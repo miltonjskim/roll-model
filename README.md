@@ -101,7 +101,7 @@ roll-model은 데이터 전처리, 모델링, 평가, 배포 과정의 자동화
 ---
 ## 🧪 기술 스택
 
-- **Frontend**: React, FCM, Styled-components, Next.js, TanStackQuery, Jotai, Jest
+- **Frontend**: Next.js, React, FCM, TailwindCSS, TanStackQuery, Jotai, Jest
 - **Backend**: FastAPI, Spring, Celery, Kafka
 - **DB**: MongoDB, MySQL
 - **Storage**: MINIO
